@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+  
+ .product-form {
+      display: none;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 7px;
+      margin-top: 20px;
+    }
+
+    .product-table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    .product-table th, .product-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+  
+    body {
+      margin: 0;
+      padding-top: 60px; /* Adjust this to match the height of your header */
+      overflow-y: scroll;
+    }
+.fixed-header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: #111;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      z-index: 1000; /* Ensure the header stays on top of other elements */
+    }
+    .sidebar {
+      height: 100%;
+      width: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      transition: 0.3s;
+      padding-top: 60px;
+    }
+
+    .sidebar a {
+      padding: 10px 16px;
+      text-decoration: none;
+      font-size: 20px;
+      color: white;
+      display: block;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover {
+      color: #ff8c00;
+    }
+
+    .content {
+      margin-left: 200px;
+      padding: 20px;
+    }
+
+    .tabcontent {
+      display: none;
+    }
+
+    .tabcontent.active {
+      display: block;
+    }
+
+    /* Estilos para los botones */
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    button.tablink {
+      background-color: #333;
+      color: white;
+    }
+
+    button.tablink:hover {
+      background-color: #555;
+    }
+
+    button.add-button {
+      background-color: green;
+      color: white;
+    }
+
+    button.add-button:hover {
+      background-color: darkgreen;
+    }
+
+    #taskForm {
+      width: calc(100% - 22px);
+      padding: 10px;
+      border-radius: 7px;
+      background-color: #f9f9f9;
+    }
+
+    #taskForm label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    #taskForm input,
+    #taskForm textarea,
+    #taskForm button {
+      width: calc(100% - 22px);
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+<div class="fixed-header">
+  <img src="path/to/your/logo.png" alt="Logo" height="30" width="30">
+  Your Header Text
+</div>
+<div class="sidebar">
+</div>
+
+<div class="content">
+  <button class="tablink" onclick="openTab('enProgreso')">En Progreso</button>
+  <button class="tablink" onclick="openTab('hecho')">Hecho</button>
+    <button class="tablink inventario-button" onclick="openTab('inventario')">Inventario</button>
+
+
+  <div id="enProgreso" class="tabcontent active">
+  
+    <button class="add-button" onclick="openForm('+Tarea')">Ingresar Nueva Tarea</button>
+    <div id="taskForm" style="display: none;">
+      <h3>Nueva +Tarea</h3>
+      <label for="titulo">Título:</label>
+      <input type="text" id="titulo" required><br>
+      <label for="descripcion">Descripción:</label>
+      <textarea id="descripcion" required></textarea><br>
+      <label for="fecha">Fecha de vencimiento:</label>
+      <input type="date" id="fecha" required><br>
+      <button class="add-button" onclick="crearTarea()">Crear</button>
+    </div>
+    <ul id="enProgresoTasks">
+      <!-- Lista de tareas en progreso -->
+    </ul>
+  </div>
+
+  <div id="hecho" class="tabcontent">
+   <button class="add-button" onclick="borrarTareas()">Borrar Tareas Completadas</button>
+    <ul id="hechoTasks">
+      <!-- Lista de tareas hechas -->
+    </ul>
+  </div>
+  
+  <div id="inventario" class="tabcontent">
+ <button class="add-button" onclick="showProductForm()">Ingresar Nuevo Producto</button>
+
+    <!-- Formulario para ingresar nuevos productos -->
+    <div id="productForm" class="product-form">
+      <h3>Ingrese un Nuevo Producto</h3>
+      <label for="productName">Nombre del Producto:</label>
+      <input type="text" id="productName" required><br>
+      <label for="productBrand">Marca:</label>
+      <input type="text" id="productBrand" required><br>
+      <label for="productType">Tipo:</label>
+      <select id="productType" required>
+        <option value="Accesorios">Accesorios</option>
+        <option value="Repuestos">Repuestos</option>
+      </select><br>
+      <label for="productStock">Cantidad en Stock:</label>
+      <input type="number" id="productStock" required><br>
+      <button class="add-button" onclick="addProduct()">Agregar</button>
+    </div>
+
+    <!-- Tabla para mostrar los productos ingresados -->
+    <table id="productTable" class="product-table">
+      <thead>
+        <tr>
+          <th>Nombre del Producto</th>
+          <th>Marca</th>
+          <th>Tipo</th>
+          <th>Cantidad en Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Filas de la tabla para los productos -->
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+
+<script>
+  function openTab(tabName) {
+    const tabs = document.getElementsByClassName('tabcontent');
+    for (let i = 0; i < tabs.length; i++) {
+      tabs[i].classList.remove('active');
+    }
+    document.getElementById(tabName).classList.add('active');
+  }
+
+  function openForm(formType) {
+    const taskForm = document.getElementById('taskForm');
+    taskForm.style.display = 'block';
+    taskForm.innerHTML = `<h3>Nueva ${formType}</h3>
+      <label for="titulo">Título:</label>
+      <input type="text" id="titulo" required><br>
+      <label for="descripcion">Descripción:</label>
+      <textarea id="descripcion" required></textarea><br>
+      <label for="fecha">Fecha de vencimiento:</label>
+      <input type="date" id="fecha" required><br>
+      <button class="add-button" onclick="crearTarea()">Crear</button>`;
+  }
+
+  function crearTarea() {
+    const titulo = document.getElementById('titulo').value;
+    const descripcion = document.getElementById('descripcion').value;
+    const fecha = document.getElementById('fecha').value;
+
+    if (titulo && descripcion && fecha) {
+      const tarea = document.createElement('li');
+      tarea.innerHTML = `
+        <input type="checkbox" onclick="moverTarea(this)">
+        <strong>Título:</strong> ${titulo}<br>
+        <strong>Descripción:</strong> ${descripcion}<br>
+        <strong>Fecha de vencimiento:</strong> ${fecha}
+      `;
+
+      const enProgresoTasks = document.getElementById('enProgresoTasks');
+      enProgresoTasks.appendChild(tarea);
+      document.getElementById('taskForm').style.display = 'none';
+    } else {
+      alert('Por favor, complete todos los campos.');
+    }
+  }
+
+  function moverTarea(checkbox) {
+  if (checkbox.checked) {
+    const tarea = checkbox.parentElement;
+
+    // Obtener tareas completadas existentes del almacenamiento local
+    const storedCompletedTasks = JSON.parse(localStorage.getItem('tareasCompletadas')) || [];
+
+    // Agregar la tarea completada
+    storedCompletedTasks.push({
+      titulo: tarea.querySelector('strong').innerText,
+      descripcion: tarea.querySelector('strong').nextSibling.nodeValue.trim(),
+      fecha: tarea.querySelector('strong').nextSibling.nextSibling.nextSibling.nodeValue.trim()
+    });
+
+    // Guardar las tareas completadas actualizadas en el almacenamiento local
+    localStorage.setItem('tareasCompletadas', JSON.stringify(storedCompletedTasks));
+
+    const hechoTasks = document.getElementById('hechoTasks');
+    hechoTasks.appendChild(tarea);
+  }
+}
+
+
+ function borrarTareas() {
+  const hechoTasks = document.getElementById('hechoTasks');
+  hechoTasks.innerHTML = '';  // Limpiar la lista de tareas completadas
+
+  // Limpiar las tareas completadas almacenadas en el almacenamiento local
+  localStorage.removeItem('tareasCompletadas');
+}
+  
+  
+  // Función para mostrar el formulario de ingreso de productos
+  function showProductForm() {
+    const productForm = document.getElementById('productForm');
+    productForm.style.display = 'block';
+  }
+
+  // Función para agregar un producto a la tabla
+  function addProduct() {
+    const productName = document.getElementById('productName').value;
+    const productBrand = document.getElementById('productBrand').value;
+    const productType = document.getElementById('productType').value;
+    const productStock = document.getElementById('productStock').value;
+
+    const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
+    const newRow = productTable.insertRow(productTable.rows.length);
+
+    const cell1 = newRow.insertCell(0);
+    const cell2 = newRow.insertCell(1);
+    const cell3 = newRow.insertCell(2);
+    const cell4 = newRow.insertCell(3);
+
+    cell1.innerHTML = productName;
+    cell2.innerHTML = productBrand;
+    cell3.innerHTML = productType;
+    cell4.innerHTML = productStock;
+
+    // Limpiar el formulario y ocultarlo
+    document.getElementById('productForm').style.display = 'none';
+    document.getElementById('productName').value = '';
+    document.getElementById('productBrand').value = '';
+    document.getElementById('productType').value = 'Accesorios';
+    document.getElementById('productStock').value = '';
+  }
+  
+  function crearTarea() {
+  const titulo = document.getElementById('titulo').value;
+  const descripcion = document.getElementById('descripcion').value;
+  const fecha = document.getElementById('fecha').value;
+
+  if (titulo && descripcion && fecha) {
+    const tarea = {
+      titulo: titulo,
+      descripcion: descripcion,
+      fecha: fecha
+    };
+
+    // Obtener tareas existentes del almacenamiento local
+    const storedTasks = JSON.parse(localStorage.getItem('tareas')) || [];
+    
+    // Agregar la nueva tarea
+    storedTasks.push(tarea);
+
+    // Guardar las tareas actualizadas en el almacenamiento local
+    localStorage.setItem('tareas', JSON.stringify(storedTasks));
+
+    actualizarListaTareas();  // Actualizar la lista de tareas en la interfaz
+    document.getElementById('taskForm').style.display = 'none';
+  } else {
+    alert('Por favor, complete todos los campos.');
+  }
+}
+
+function addProduct() {
+  const productName = document.getElementById('productName').value;
+  const productBrand = document.getElementById('productBrand').value;
+  const productType = document.getElementById('productType').value;
+  const productStock = document.getElementById('productStock').value;
+
+  const product = {
+    productName: productName,
+    productBrand: productBrand,
+    productType: productType,
+    productStock: productStock
+  };
+
+  // Obtener productos existentes del almacenamiento local
+  const storedProducts = JSON.parse(localStorage.getItem('productos')) || [];
+  
+  // Agregar el nuevo producto
+  storedProducts.push(product);
+
+  // Guardar los productos actualizados en el almacenamiento local
+  localStorage.setItem('productos', JSON.stringify(storedProducts));
+
+  actualizarTablaProductos();  // Actualizar la tabla de productos en la interfaz
+
+  // Limpiar el formulario y ocultarlo
+  document.getElementById('productForm').style.display = 'none';
+  document.getElementById('productName').value = '';
+  document.getElementById('productBrand').value = '';
+  document.getElementById('productType').value = 'Accesorios';
+  document.getElementById('productStock').value = '';
+}
+
+function actualizarListaTareas() {
+  const enProgresoTasks = document.getElementById('enProgresoTasks');
+  enProgresoTasks.innerHTML = '';  // Limpiar la lista de tareas
+
+  // Obtener tareas del almacenamiento local
+  const storedTasks = JSON.parse(localStorage.getItem('tareas')) || [];
+
+  // Mostrar las tareas en la lista
+  storedTasks.forEach(tarea => {
+    const tareaElement = document.createElement('li');
+    tareaElement.innerHTML = `
+      <input type="checkbox" onclick="moverTarea(this)">
+      <strong>Título:</strong> ${tarea.titulo}<br>
+      <strong>Descripción:</strong> ${tarea.descripcion}<br>
+      <strong>Fecha de vencimiento:</strong> ${tarea.fecha}
+    `;
+    enProgresoTasks.appendChild(tareaElement);
+  });
+}
+
+function actualizarTablaProductos() {
+  const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
+  productTable.innerHTML = '';  // Limpiar la tabla de productos
+
+  // Obtener productos del almacenamiento local
+  const storedProducts = JSON.parse(localStorage.getItem('productos')) || [];
+
+  // Mostrar los productos en la tabla
+  storedProducts.forEach(product => {
+    const newRow = productTable.insertRow(productTable.rows.length);
+    const cell1 = newRow.insertCell(0);
+    const cell2 = newRow.insertCell(1);
+    const cell3 = newRow.insertCell(2);
+    const cell4 = newRow.insertCell(3);
+
+    cell1.innerHTML = product.productName;
+    cell2.innerHTML = product.productBrand;
+    cell3.innerHTML = product.productType;
+    cell4.innerHTML = product.productStock;
+  });
+}
+
+// Llamar a estas funciones al cargar la página para cargar las tareas y productos almacenados
+actualizarListaTareas();
+actualizarTablaProductos();
+
+
+
+
+function cargarTareasCompletadas() {
+  const storedCompletedTasks = JSON.parse(localStorage.getItem('tareasCompletadas')) || [];
+
+  const hechoTasks = document.getElementById('hechoTasks');
+  storedCompletedTasks.forEach(tarea => {
+    const tareaElement = document.createElement('li');
+    tareaElement.innerHTML = `
+      <input type="checkbox" checked disabled>
+      <strong>${tarea.titulo}</strong><br>
+      <strong>${tarea.descripcion}</strong><br>
+      <strong>${tarea.fecha}</strong>
+    `;
+    hechoTasks.appendChild(tareaElement);
+  });
+}
+
+cargarTareasCompletadas();  // Llamar al cargar la página para cargar las tareas completadas almacenadas
+</script>
+
+</body>
+</html>

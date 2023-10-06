@@ -201,6 +201,31 @@
 
 
 <script>
+function obtenerTareasDesdeLocalStorage() {
+      const enProgresoTasks = JSON.parse(localStorage.getItem('enProgresoTasks')) || [];
+      const hechoTasks = JSON.parse(localStorage.getItem('hechoTasks')) || [];
+
+      // Cargar tareas en progreso
+      const enProgresoTasksList = document.getElementById('enProgresoTasks');
+      enProgresoTasksList.innerHTML = enProgresoTasks.join('');
+
+      // Cargar tareas hechas
+      const hechoTasksList = document.getElementById('hechoTasks');
+      hechoTasksList.innerHTML = hechoTasks.join('');
+    }
+    
+    
+    
+    function guardarTareasEnLocalStorage() {
+      const enProgresoTasks = Array.from(document.getElementById('enProgresoTasks').children).map(task => task.outerHTML);
+      const hechoTasks = Array.from(document.getElementById('hechoTasks').children).map(task => task.outerHTML);
+
+      localStorage.setItem('enProgresoTasks', JSON.stringify(enProgresoTasks));
+      localStorage.setItem('hechoTasks', JSON.stringify(hechoTasks));
+    }
+
+
+
   function openTab(tabName) {
     const tabs = document.getElementsByClassName('tabcontent');
     for (let i = 0; i < tabs.length; i++) {
@@ -245,15 +270,18 @@
       const enProgresoTasks = document.getElementById('enProgresoTasks');
       enProgresoTasks.appendChild(tarea);
       document.getElementById('taskForm').style.display = 'none';
+        
+      
     } else {
       alert('Por favor, complete todos los campos.');
-    }
+   guardarTareasEnLocalStorage(); }
   }
 
   function moverTarea(checkbox) {
   if (checkbox.checked) {
     const tarea = checkbox.parentElement;
     const hechoTasks = document.getElementById('hechoTasks');
+    const enProgresoTasks = document.getElementById('enProgresoTasks');
 
     // Clonar la tarea para quitar el checkbox
     const tareaHecho = tarea.cloneNode(true);
@@ -263,11 +291,14 @@
     hechoTasks.appendChild(tareaHecho);
 
     // Eliminar la tarea de la lista "En Progreso"
-    tarea.remove();
+    enProgresoTasks.removeChild(tarea);
   }
 }
 
   function borrarTareas() {
+  
+  const hechoTasksList = document.getElementById('hechoTasks');
+      hechoTasksList.innerHTML = '';
     const hechoTasks = document.getElementById('hechoTasks');
     hechoTasks.innerHTML = '';  // Limpiar todas las tareas completadas
   }
@@ -279,9 +310,12 @@
     const productForm = document.getElementById('productForm');
     if (productForm.style.display === 'none' || productForm.style.display === '') {
       productForm.style.display = 'block';
+         
+
     } else {
       productForm.style.display = 'none';
     }
+       guardarTareasEnLocalStorage();
   }
 
   // Función para agregar un producto a la tabla
@@ -312,6 +346,9 @@
     document.getElementById('productStock').value = '';
   }
   
+   window.onload = function() {
+      obtenerTareasDesdeLocalStorage();
+    };
   
 </script>
 

@@ -126,13 +126,9 @@
   </style>
 </head>
 <body>
-
-
-
-
 <div class="fixed-header">
-  <img src="path/to/your/logo.png" alt="Logo" height="30" width="30">
-  Your Header Text
+  
+ Control de Tareas Nextcom Multiservice
 </div>
 <div class="sidebar">
 </div>
@@ -144,10 +140,8 @@
 
 
   <div id="enProgreso" class="tabcontent active">
-  
     <button class="add-button" onclick="openForm('+Tarea')">Ingresar Nueva Tarea</button>
     <div id="taskForm" style="display: none;">
-      <h3>Nueva +Tarea</h3>
       <label for="titulo">Título:</label>
       <input type="text" id="titulo" required><br>
       <label for="descripcion">Descripción:</label>
@@ -162,7 +156,7 @@
   </div>
 
   <div id="hecho" class="tabcontent">
-   <button class="add-button" onclick="borrarTareas()">Borrar Tareas Completadas</button>
+    <button class="add-button" onclick="borrarTareas()">Borrar Tareas Completadas</button>
     <ul id="hechoTasks">
       <!-- Lista de tareas hechas -->
     </ul>
@@ -173,7 +167,6 @@
 
     <!-- Formulario para ingresar nuevos productos -->
     <div id="productForm" class="product-form">
-      <h3>Ingrese un Nuevo Producto</h3>
       <label for="productName">Nombre del Producto:</label>
       <input type="text" id="productName" required><br>
       <label for="productBrand">Marca:</label>
@@ -217,8 +210,13 @@
 
   function openForm(formType) {
     const taskForm = document.getElementById('taskForm');
-    taskForm.style.display = 'block';
-    taskForm.innerHTML = `<h3>Nueva ${formType}</h3>
+    if (taskForm.style.display === 'none' || taskForm.style.display === '') {
+      taskForm.style.display = 'block';
+    } else {
+      taskForm.style.display = 'none';
+    }
+
+    taskForm.innerHTML = `
       <label for="titulo">Título:</label>
       <input type="text" id="titulo" required><br>
       <label for="descripcion">Descripción:</label>
@@ -227,6 +225,7 @@
       <input type="date" id="fecha" required><br>
       <button class="add-button" onclick="crearTarea()">Crear</button>`;
   }
+
 
   function crearTarea() {
     const titulo = document.getElementById('titulo').value;
@@ -251,41 +250,28 @@
   }
 
   function moverTarea(checkbox) {
-  if (checkbox.checked) {
-    const tarea = checkbox.parentElement;
-
-    // Obtener tareas completadas existentes del almacenamiento local
-    const storedCompletedTasks = JSON.parse(localStorage.getItem('tareasCompletadas')) || [];
-
-    // Agregar la tarea completada
-    storedCompletedTasks.push({
-      titulo: tarea.querySelector('strong').innerText,
-      descripcion: tarea.querySelector('strong').nextSibling.nodeValue.trim(),
-      fecha: tarea.querySelector('strong').nextSibling.nextSibling.nextSibling.nodeValue.trim()
-    });
-
-    // Guardar las tareas completadas actualizadas en el almacenamiento local
-    localStorage.setItem('tareasCompletadas', JSON.stringify(storedCompletedTasks));
-
-    const hechoTasks = document.getElementById('hechoTasks');
-    hechoTasks.appendChild(tarea);
+    if (checkbox.checked) {
+      const tarea = checkbox.parentElement;
+      const hechoTasks = document.getElementById('hechoTasks');
+      hechoTasks.appendChild(tarea);
+    }
   }
-}
 
-
- function borrarTareas() {
-  const hechoTasks = document.getElementById('hechoTasks');
-  hechoTasks.innerHTML = '';  // Limpiar la lista de tareas completadas
-
-  // Limpiar las tareas completadas almacenadas en el almacenamiento local
-  localStorage.removeItem('tareasCompletadas');
-}
+  function borrarTareas() {
+    const hechoTasks = document.getElementById('hechoTasks');
+    hechoTasks.innerHTML = '';  // Limpiar todas las tareas completadas
+  }
+  
   
   
   // Función para mostrar el formulario de ingreso de productos
-  function showProductForm() {
+ function showProductForm() {
     const productForm = document.getElementById('productForm');
-    productForm.style.display = 'block';
+    if (productForm.style.display === 'none' || productForm.style.display === '') {
+      productForm.style.display = 'block';
+    } else {
+      productForm.style.display = 'none';
+    }
   }
 
   // Función para agregar un producto a la tabla
@@ -316,132 +302,7 @@
     document.getElementById('productStock').value = '';
   }
   
-  function crearTarea() {
-  const titulo = document.getElementById('titulo').value;
-  const descripcion = document.getElementById('descripcion').value;
-  const fecha = document.getElementById('fecha').value;
-
-  if (titulo && descripcion && fecha) {
-    const tarea = {
-      titulo: titulo,
-      descripcion: descripcion,
-      fecha: fecha
-    };
-
-    // Obtener tareas existentes del almacenamiento local
-    const storedTasks = JSON.parse(localStorage.getItem('tareas')) || [];
-    
-    // Agregar la nueva tarea
-    storedTasks.push(tarea);
-
-    // Guardar las tareas actualizadas en el almacenamiento local
-    localStorage.setItem('tareas', JSON.stringify(storedTasks));
-
-    actualizarListaTareas();  // Actualizar la lista de tareas en la interfaz
-    document.getElementById('taskForm').style.display = 'none';
-  } else {
-    alert('Por favor, complete todos los campos.');
-  }
-}
-
-function addProduct() {
-  const productName = document.getElementById('productName').value;
-  const productBrand = document.getElementById('productBrand').value;
-  const productType = document.getElementById('productType').value;
-  const productStock = document.getElementById('productStock').value;
-
-  const product = {
-    productName: productName,
-    productBrand: productBrand,
-    productType: productType,
-    productStock: productStock
-  };
-
-  // Obtener productos existentes del almacenamiento local
-  const storedProducts = JSON.parse(localStorage.getItem('productos')) || [];
   
-  // Agregar el nuevo producto
-  storedProducts.push(product);
-
-  // Guardar los productos actualizados en el almacenamiento local
-  localStorage.setItem('productos', JSON.stringify(storedProducts));
-
-  actualizarTablaProductos();  // Actualizar la tabla de productos en la interfaz
-
-  // Limpiar el formulario y ocultarlo
-  document.getElementById('productForm').style.display = 'none';
-  document.getElementById('productName').value = '';
-  document.getElementById('productBrand').value = '';
-  document.getElementById('productType').value = 'Accesorios';
-  document.getElementById('productStock').value = '';
-}
-
-function actualizarListaTareas() {
-  const enProgresoTasks = document.getElementById('enProgresoTasks');
-  enProgresoTasks.innerHTML = '';  // Limpiar la lista de tareas
-
-  // Obtener tareas del almacenamiento local
-  const storedTasks = JSON.parse(localStorage.getItem('tareas')) || [];
-
-  // Mostrar las tareas en la lista
-  storedTasks.forEach(tarea => {
-    const tareaElement = document.createElement('li');
-    tareaElement.innerHTML = `
-      <input type="checkbox" onclick="moverTarea(this)">
-      <strong>Título:</strong> ${tarea.titulo}<br>
-      <strong>Descripción:</strong> ${tarea.descripcion}<br>
-      <strong>Fecha de vencimiento:</strong> ${tarea.fecha}
-    `;
-    enProgresoTasks.appendChild(tareaElement);
-  });
-}
-
-function actualizarTablaProductos() {
-  const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
-  productTable.innerHTML = '';  // Limpiar la tabla de productos
-
-  // Obtener productos del almacenamiento local
-  const storedProducts = JSON.parse(localStorage.getItem('productos')) || [];
-
-  // Mostrar los productos en la tabla
-  storedProducts.forEach(product => {
-    const newRow = productTable.insertRow(productTable.rows.length);
-    const cell1 = newRow.insertCell(0);
-    const cell2 = newRow.insertCell(1);
-    const cell3 = newRow.insertCell(2);
-    const cell4 = newRow.insertCell(3);
-
-    cell1.innerHTML = product.productName;
-    cell2.innerHTML = product.productBrand;
-    cell3.innerHTML = product.productType;
-    cell4.innerHTML = product.productStock;
-  });
-}
-
-// Llamar a estas funciones al cargar la página para cargar las tareas y productos almacenados
-actualizarListaTareas();
-actualizarTablaProductos();
-
-
-
-
-function cargarTareasCompletadas() {
-  const storedCompletedTasks = JSON.parse(localStorage.getItem('tareasCompletadas')) || [];
-
-  const hechoTasks = document.getElementById('hechoTasks');
-  storedCompletedTasks.forEach(tarea => {
-    const tareaElement = document.createElement('li');
-    tareaElement.innerHTML = `
-      <input type="checkbox" checked disabled>
-      <strong>${tarea.titulo}</strong><br>
-      <strong>${tarea.descripcion}</strong><br>
-      <strong>${tarea.fecha}</strong>
-    `;
-    hechoTasks.appendChild(tareaElement);
-  });
-}
-
-cargarTareasCompletadas();  // Llamar al cargar la página para cargar las tareas completadas almacenadas
 </script>
 <script type="module">
   // Import the functions you need from the SDKs you need
@@ -468,3 +329,4 @@ cargarTareasCompletadas();  // Llamar al cargar la página para cargar las tarea
 </script>
 </body>
 </html>
+

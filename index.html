@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-  
   <style>
+  
   
  .product-form {
       display: none;
@@ -252,12 +251,21 @@
   }
 
   function moverTarea(checkbox) {
-    if (checkbox.checked) {
-      const tarea = checkbox.parentElement;
-      const hechoTasks = document.getElementById('hechoTasks');
-      hechoTasks.appendChild(tarea);
-    }
+  if (checkbox.checked) {
+    const tarea = checkbox.parentElement;
+    const hechoTasks = document.getElementById('hechoTasks');
+
+    // Clonar la tarea para quitar el checkbox
+    const tareaHecho = tarea.cloneNode(true);
+    tareaHecho.querySelector('input[type="checkbox"]').remove();
+
+    // Añadir la tarea a la lista "Hecho" sin checkbox
+    hechoTasks.appendChild(tareaHecho);
+
+    // Eliminar la tarea de la lista "En Progreso"
+    tarea.remove();
   }
+}
 
   function borrarTareas() {
     const hechoTasks = document.getElementById('hechoTasks');
@@ -305,7 +313,7 @@
   }
   
   
+</script>
 
 </body>
 </html>
-

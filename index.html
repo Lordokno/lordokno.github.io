@@ -1,355 +1,366 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <style>
-  
-  
- .product-form {
-      display: none;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 7px;
-      margin-top: 20px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandra Express // Logística Transnacional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb; /* Azul Corporativo */
+            --primary-dark: #1e40af;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 8px;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
 
-    .product-table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-    }
+        * { box-sizing: border-box; outline: none; }
+        body { 
+            margin: 0; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
 
-    .product-table th, .product-table td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-  
-    body {
-      margin: 0;
-      padding-top: 60px; /* Adjust this to match the height of your header */
-      overflow-y: scroll;
-    }
-.fixed-header {
-      position: fixed;
-      top: 0;
-      width: 100%;
-      background-color: #111;
-      color: white;
-      text-align: center;
-      padding: 10px;
-      z-index: 1000; /* Ensure the header stays on top of other elements */
-    }
-    .sidebar {
-      height: 100%;
-      width: 200px;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background-color: #111;
-      overflow-x: hidden;
-      transition: 0.3s;
-      padding-top: 60px;
-    }
+        /* Header Elegante */
+        header {
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
 
-    .sidebar a {
-      padding: 10px 16px;
-      text-decoration: none;
-      font-size: 20px;
-      color: white;
-      display: block;
-      transition: 0.3s;
-    }
+        header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; }
+        .status-badge { background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
 
-    .sidebar a:hover {
-      color: #ff8c00;
-    }
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            padding: 2rem;
+            flex: 1;
+            overflow-y: auto;
+        }
 
-    .content {
-      margin-left: 200px;
-      padding: 20px;
-    }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
 
-    .tabcontent {
-      display: none;
-    }
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-    .tabcontent.active {
-      display: block;
-    }
+        /* Formulario Flat */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .full-width { grid-column: span 2; }
 
-    /* Estilos para los botones */
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-right: 10px;
-    }
+        label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
 
-    button.tablink {
-      background-color: #333;
-      color: white;
-    }
+        /* Botones Flat */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; width: 100%; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #f1f5f9; }
 
-    button.tablink:hover {
-      background-color: #555;
-    }
+        /* Tabla de Carga */
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th { text-align: left; padding: 12px; font-size: 0.75rem; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+        td { padding: 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+        .row-state { padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; color: white; }
 
-    button.add-button {
-      background-color: green;
-      color: white;
-    }
-
-    button.add-button:hover {
-      background-color: darkgreen;
-    }
-
-    #taskForm {
-      width: calc(100% - 22px);
-      padding: 10px;
-      border-radius: 7px;
-      background-color: #f9f9f9;
-    }
-
-    #taskForm label {
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    #taskForm input,
-    #taskForm textarea,
-    #taskForm button {
-      width: calc(100% - 22px);
-      margin-bottom: 10px;
-    }
-  </style>
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
-<div class="fixed-header">
-  
- Control de Tareas Nextcom Multiservice
-</div>
-<div class="sidebar">
-</div>
 
-<div class="content">
-  <button class="tablink" onclick="openTab('enProgreso')">En Progreso</button>
-  <button class="tablink" onclick="openTab('hecho')">Hecho</button>
-    <button class="tablink inventario-button" onclick="openTab('inventario')">Inventario</button>
-
-
-  <div id="enProgreso" class="tabcontent active">
-    <button class="add-button" onclick="openForm('+Tarea')">Ingresar Nueva Tarea</button>
-    <div id="taskForm" style="display: none;">
-      <label for="titulo">Título:</label>
-      <input type="text" id="titulo" required><br>
-      <label for="descripcion">Descripción:</label>
-      <textarea id="descripcion" required></textarea><br>
-      <label for="fecha">Fecha de vencimiento:</label>
-      <input type="date" id="fecha" required><br>
-      <button class="add-button" onclick="crearTarea()">Crear</button>
+<header>
+    <h1>SANDRA<span style="font-weight: 300; color: var(--text-muted);">EXPRESS</span></h1>
+    <div style="display: flex; gap: 20px; align-items: center;">
+        <span id="date-display" style="font-size: 0.85rem; color: var(--text-muted);"></span>
+        <span class="status-badge">SISTEMA ACTIVO</span>
     </div>
-    <ul id="enProgresoTasks">
-      <!-- Lista de tareas en progreso -->
-    </ul>
-  </div>
+</header>
 
-  <div id="hecho" class="tabcontent">
-    <button class="add-button" onclick="borrarTareas()">Borrar Tareas Completadas</button>
-    <ul id="hechoTasks">
-      <!-- Lista de tareas hechas -->
-    </ul>
-  </div>
-  
-  <div id="inventario" class="tabcontent">
- <button class="add-button" onclick="showProductForm()">Ingresar Nuevo Producto</button>
+<div class="main-container">
+    <div class="content-area">
+        <div class="card">
+            <div class="card-title">📦 Datos del Envío Global</div>
+            <div class="form-grid">
+                <div class="full-width">
+                    <label>CONTENIDO DEL PAQUETE</label>
+                    <input id="p-desc" placeholder="Ej: Ropa, calzado, electrónicos...">
+                </div>
+                <div>
+                    <label>PESO (LIBRAS)</label>
+                    <input id="p-peso" type="number" placeholder="0.00">
+                </div>
+                <div>
+                    <label>NÚMERO DE PAQUETE</label>
+                    <input id="p-num" placeholder="Ejem: 1/3">
+                </div>
+                <div class="full-width" style="text-align: right; margin-top: 10px;">
+                    <button class="btn btn-primary" onclick="addToQueue()">+ AGREGAR A LA LISTA</button>
+                </div>
+            </div>
+        </div>
 
-    <!-- Formulario para ingresar nuevos productos -->
-    <div id="productForm" class="product-form">
-      <label for="productName">Nombre del Producto:</label>
-      <input type="text" id="productName" required><br>
-      <label for="productBrand">Marca:</label>
-      <input type="text" id="productBrand" required><br>
-      <label for="productType">Tipo:</label>
-      <select id="productType" required>
-        <option value="Accesorios">Accesorios</option>
-        <option value="Repuestos">Repuestos</option>
-      </select><br>
-      <label for="productStock">Cantidad en Stock:</label>
-      <input type="number" id="productStock" required><br>
-      <button class="add-button" onclick="addProduct()">Agregar</button>
+        <div class="card">
+            <div class="card-title">📋 Resumen de Carga Actual</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th># PACK</th>
+                        <th>ESTADO DESTINO</th>
+                        <th>PESO (LB)</th>
+                        <th>CONTENIDO</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="queue-body">
+                    </tbody>
+            </table>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-success" style="flex: 2;" onclick="generateLabels()">📄 GENERAR ETIQUETAS PDF</button>
+                <button class="btn btn-outline" style="flex: 1;" onclick="clearQueue()">LIMPIAR LISTA</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Tabla para mostrar los productos ingresados -->
-    <table id="productTable" class="product-table">
-      <thead>
-        <tr>
-          <th>Nombre del Producto</th>
-          <th>Marca</th>
-          <th>Tipo</th>
-          <th>Cantidad en Stock</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Filas de la tabla para los productos -->
-      </tbody>
-    </table>
-  </div>
-  </div>
+    <aside class="sidebar-area">
+        <div class="card">
+            <div class="card-title">📍 Origen (SV)</div>
+            <label>NOMBRE REMITENTE</label>
+            <input id="rem-nom" placeholder="Nombre completo">
+            <label>TELÉFONO SV</label>
+            <input id="rem-tel" placeholder="7000-0000">
+            <label>DIRECCIÓN RECOLECCIÓN</label>
+            <textarea id="rem-dir" rows="2" placeholder="Dirección exacta en El Salvador"></textarea>
+        </div>
 
+        <div class="card">
+            <div class="card-title">🇺🇸 Destino (USA)</div>
+            <label>NOMBRE QUIEN RECIBE</label>
+            <input id="des-nom" placeholder="Nombre completo">
+            <label>TELÉFONO USA</label>
+            <input id="des-tel" placeholder="+1 ...">
+            <label>ESTADO</label>
+            <select id="des-est">
+                <option value="">Seleccione Estado...</option>
+                <option value="California">California</option>
+                <option value="Texas">Texas</option>
+                <option value="Florida">Florida</option>
+                <option value="New York">New York</option>
+                <option value="Virginia">Virginia</option>
+                <option value="Maryland">Maryland</option>
+            </select>
+            <label>DIRECCIÓN COMPLETA</label>
+            <textarea id="des-dir" rows="3" placeholder="Street, Apt, City, Zip Code"></textarea>
+        </div>
+    </aside>
+</div>
+
+<div id="toast">Tarea completada</div>
 
 <script>
-function obtenerTareasDesdeLocalStorage() {
-      const enProgresoTasks = JSON.parse(localStorage.getItem('enProgresoTasks')) || [];
-      const hechoTasks = JSON.parse(localStorage.getItem('hechoTasks')) || [];
-
-      // Cargar tareas en progreso
-      const enProgresoTasksList = document.getElementById('enProgresoTasks');
-      enProgresoTasksList.innerHTML = enProgresoTasks.join('');
-
-      // Cargar tareas hechas
-      const hechoTasksList = document.getElementById('hechoTasks');
-      hechoTasksList.innerHTML = hechoTasks.join('');
-    }
-    
-    
-    
-    function guardarTareasEnLocalStorage() {
-      const enProgresoTasks = Array.from(document.getElementById('enProgresoTasks').children).map(task => task.outerHTML);
-      const hechoTasks = Array.from(document.getElementById('hechoTasks').children).map(task => task.outerHTML);
-
-      localStorage.setItem('enProgresoTasks', JSON.stringify(enProgresoTasks));
-      localStorage.setItem('hechoTasks', JSON.stringify(hechoTasks));
-    }
-
-
-
-  function openTab(tabName) {
-    const tabs = document.getElementsByClassName('tabcontent');
-    for (let i = 0; i < tabs.length; i++) {
-      tabs[i].classList.remove('active');
-    }
-    document.getElementById(tabName).classList.add('active');
-  }
-
-  function openForm(formType) {
-    const taskForm = document.getElementById('taskForm');
-    if (taskForm.style.display === 'none' || taskForm.style.display === '') {
-      taskForm.style.display = 'block';
-    } else {
-      taskForm.style.display = 'none';
-    }
-
-    taskForm.innerHTML = `
-      <label for="titulo">Título:</label>
-      <input type="text" id="titulo" required><br>
-      <label for="descripcion">Descripción:</label>
-      <textarea id="descripcion" required></textarea><br>
-      <label for="fecha">Fecha de vencimiento:</label>
-      <input type="date" id="fecha" required><br>
-      <button class="add-button" onclick="crearTarea()">Crear</button>`;
-  }
-
-
-  function crearTarea() {
-    const titulo = document.getElementById('titulo').value;
-    const descripcion = document.getElementById('descripcion').value;
-    const fecha = document.getElementById('fecha').value;
-
-    if (titulo && descripcion && fecha) {
-      const tarea = document.createElement('li');
-      tarea.innerHTML = `
-        <input type="checkbox" onclick="moverTarea(this)">
-        <strong>Título:</strong> ${titulo}<br>
-        <strong>Descripción:</strong> ${descripcion}<br>
-        <strong>Fecha de vencimiento:</strong> ${fecha}
-      `;
-
-      const enProgresoTasks = document.getElementById('enProgresoTasks');
-      enProgresoTasks.appendChild(tarea);
-      document.getElementById('taskForm').style.display = 'none';
-        
-      
-    } else {
-      alert('Por favor, complete todos los campos.');
-   guardarTareasEnLocalStorage(); }
-  }
-
-  function moverTarea(checkbox) {
-  if (checkbox.checked) {
-    const tarea = checkbox.parentElement;
-    const hechoTasks = document.getElementById('hechoTasks');
-    const enProgresoTasks = document.getElementById('enProgresoTasks');
-
-    // Clonar la tarea para quitar el checkbox
-    const tareaHecho = tarea.cloneNode(true);
-    tareaHecho.querySelector('input[type="checkbox"]').remove();
-
-    // Añadir la tarea a la lista "Hecho" sin checkbox
-    hechoTasks.appendChild(tareaHecho);
-
-    // Eliminar la tarea de la lista "En Progreso"
-    enProgresoTasks.removeChild(tarea);
-  }
-}
-
-  function borrarTareas() {
-  
-  const hechoTasksList = document.getElementById('hechoTasks');
-      hechoTasksList.innerHTML = '';
-    const hechoTasks = document.getElementById('hechoTasks');
-    hechoTasks.innerHTML = '';  // Limpiar todas las tareas completadas
-  }
-  
-  
-  
-  // Función para mostrar el formulario de ingreso de productos
- function showProductForm() {
-    const productForm = document.getElementById('productForm');
-    if (productForm.style.display === 'none' || productForm.style.display === '') {
-      productForm.style.display = 'block';
-         
-
-    } else {
-      productForm.style.display = 'none';
-    }
-       guardarTareasEnLocalStorage();
-  }
-
-  // Función para agregar un producto a la tabla
-  function addProduct() {
-    const productName = document.getElementById('productName').value;
-    const productBrand = document.getElementById('productBrand').value;
-    const productType = document.getElementById('productType').value;
-    const productStock = document.getElementById('productStock').value;
-
-    const productTable = document.getElementById('productTable').getElementsByTagName('tbody')[0];
-    const newRow = productTable.insertRow(productTable.rows.length);
-
-    const cell1 = newRow.insertCell(0);
-    const cell2 = newRow.insertCell(1);
-    const cell3 = newRow.insertCell(2);
-    const cell4 = newRow.insertCell(3);
-
-    cell1.innerHTML = productName;
-    cell2.innerHTML = productBrand;
-    cell3.innerHTML = productType;
-    cell4.innerHTML = productStock;
-
-    // Limpiar el formulario y ocultarlo
-    document.getElementById('productForm').style.display = 'none';
-    document.getElementById('productName').value = '';
-    document.getElementById('productBrand').value = '';
-    document.getElementById('productType').value = 'Accesorios';
-    document.getElementById('productStock').value = '';
-  }
-  
-   window.onload = function() {
-      obtenerTareasDesdeLocalStorage();
+    // Configuración de Colores de Estado (Elegantes)
+    const stateColors = {
+        "California": "#1e40af",
+        "Texas": "#b91c1c",
+        "Florida": "#0369a1",
+        "New York": "#334155",
+        "Virginia": "#6d28d9",
+        "Maryland": "#c2410c"
     };
-  
+
+    let queue = [];
+
+    function addToQueue() {
+        const item = {
+            desc: document.getElementById('p-desc').value,
+            peso: document.getElementById('p-peso').value,
+            num: document.getElementById('p-num').value,
+            estado: document.getElementById('des-est').value,
+            // Datos persistentes del formulario
+            remitente: document.getElementById('rem-nom').value,
+            recibe: document.getElementById('des-nom').value,
+            direccion: document.getElementById('des-dir').value
+        };
+
+        if(!item.desc || !item.estado) {
+            notify("Complete el contenido y el estado");
+            return;
+        }
+
+        queue.push(item);
+        renderTable();
+        
+        // Limpiar solo los campos del paquete
+        document.getElementById('p-desc').value = '';
+        document.getElementById('p-peso').value = '';
+        document.getElementById('p-num').value = '';
+        notify("Paquete añadido");
+    }
+
+    function renderTable() {
+        const body = document.getElementById('queue-body');
+        body.innerHTML = '';
+        queue.forEach((p, i) => {
+            const color = stateColors[p.estado] || '#64748b';
+            body.innerHTML += `
+                <tr>
+                    <td><strong>${p.num}</strong></td>
+                    <td><span class="row-state" style="background:${color}">${p.estado}</span></td>
+                    <td>${p.peso} Lbs</td>
+                    <td>${p.desc}</td>
+                    <td><button onclick="removeItem(${i})" style="color:var(--danger); background:none; border:none; cursor:pointer; font-weight:bold;">Eliminar</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function removeItem(idx) {
+        queue.splice(idx, 1);
+        renderTable();
+    }
+
+    function clearQueue() {
+        if(confirm("¿Vaciar toda la lista?")) {
+            queue = [];
+            renderTable();
+        }
+    }
+
+    function generateLabels() {
+        if(queue.length === 0) return notify("No hay paquetes en la lista");
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        queue.forEach((p, i) => {
+            if (i > 0 && i % 2 === 0) doc.addPage();
+            
+            // Posición Y: 0 para el primero de la página, 150 para el segundo
+            const y = (i % 2 === 0) ? 10 : 150;
+            const accentColor = stateColors[p.estado] || "#000000";
+
+            // Encabezado Etiqueta
+            doc.setFillColor(accentColor);
+            doc.rect(10, y, 190, 25, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text(`SANDRA EXPRESS - ${p.estado.toUpperCase()}`, 105, y + 17, { align: 'center' });
+
+            // Cuerpo de la Etiqueta
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            
+            // Sección Destinatario
+            doc.setFont("helvetica", "bold");
+            doc.text("DESTINATARIO (USA):", 15, y + 40);
+            doc.setFont("helvetica", "normal");
+            doc.text(p.recibe.toUpperCase(), 15, y + 48);
+            doc.setFontSize(10);
+            doc.text(p.direccion, 15, y + 55, { maxWidth: 180 });
+
+            // Línea divisoria
+            doc.setDrawColor(200, 200, 200);
+            doc.line(15, y + 80, 195, y + 80);
+
+            // Sección Remitente
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("REMITENTE (SV):", 15, y + 90);
+            doc.setFont("helvetica", "normal");
+            doc.text(p.remitente, 15, y + 98);
+
+            // Detalles del paquete
+            doc.setFillColor(245, 245, 245);
+            doc.rect(15, y + 110, 180, 20, 'F');
+            doc.setFont("helvetica", "bold");
+            doc.text(`PAQUETE: ${p.num}`, 25, y + 122);
+            doc.text(`PESO: ${p.peso} LBS`, 85, y + 122);
+            doc.text(`CONTENIDO: ${p.desc.substring(0, 20)}`, 140, y + 122);
+        });
+
+        doc.save(`Etiquetas_SandraExpress_${new Date().getTime()}.pdf`);
+        notify("PDF Generado con éxito");
+    }
+
+    function notify(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    // Fecha actual
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('date-display').innerText = new Date().toLocaleDateString('es-ES', options);
+
 </script>
 
 </body>

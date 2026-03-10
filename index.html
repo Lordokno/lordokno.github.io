@@ -1,754 +1,586 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM AETERNA | Enterprise Management Ecosystem</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>ReparaCel - Sistema de Gestión de Talleres | NEXTCOM AETERNA</title>
     
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
-        /* NEXTCOM AETERNA DESIGN SYSTEM
-           Color Palette: Deep Space & Electric Blue
-        */
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
-
         :root {
-            --bg-ultra: #020203;
-            --bg-panel: #0a0a0c;
-            --bg-card: #111114;
-            --bg-input: #050505;
+            --bg-deep: #050505;
+            --glass: rgba(15, 15, 18, 0.7);
             --accent: #2563eb;
-            --accent-light: #60a5fa;
-            --accent-glow: rgba(37, 99, 235, 0.25);
-            --border: rgba(255, 255, 255, 0.07);
-            --text-high: #ffffff;
-            --text-mid: #94a3b8;
-            --text-low: #475569;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --radius-xl: 28px;
-            --radius-lg: 18px;
-            --font-main: 'Plus Jakarta Sans', sans-serif;
-            --font-code: 'JetBrains Mono', monospace;
-            --shadow-sm: 0 4px 20px rgba(0,0,0,0.5);
+            --accent-glow: rgba(37, 99, 235, 0.2);
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        
         body {
-            font-family: var(--font-main);
-            background: var(--bg-ultra);
-            color: var(--text-high);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            letter-spacing: -0.01em;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- SIDEBAR ARCHITECTURE --- */
-        aside {
-            width: 320px;
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 2.5rem 1.5rem;
-            z-index: 100;
-        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 3.5rem;
-            padding-left: 10px;
-        }
-
-        .brand-logo {
-            width: 42px;
-            height: 42px;
-            background: var(--accent);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px var(--accent-glow);
-        }
-
-        .brand-text h1 { font-size: 24px; font-weight: 900; letter-spacing: -1.5px; }
-        .brand-text p { font-size: 9px; font-weight: 800; color: var(--accent); letter-spacing: 3px; margin-top: -4px; }
-
-        .nav-group { margin-bottom: 2rem; }
-        .nav-label { font-size: 10px; font-weight: 800; color: var(--text-low); margin-bottom: 12px; padding-left: 12px; letter-spacing: 1.5px; }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 14px 18px;
-            border-radius: var(--radius-lg);
-            color: var(--text-mid);
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .nav-link:hover { background: rgba(255,255,255,0.03); color: white; }
-        .nav-link.active { background: var(--accent); color: white; box-shadow: 0 10px 30px var(--accent-glow); }
-
-        .user-status {
-            margin-top: auto;
-            background: var(--bg-card);
-            padding: 20px;
-            border-radius: 20px;
+        /* Estilo Glassmorphism Pro */
+        .glass-dark {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
             border: 1px solid var(--border);
         }
 
-        /* --- MAIN VIEWPORT --- */
-        main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 3rem;
-            background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.05), transparent);
+        /* Animaciones de entrada */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .view-section { display: none; opacity: 0; transform: translateY(20px); }
-        .view-section.active { display: block; opacity: 1; transform: translateY(0); animation: fadeIn 0.6s forwards; }
+        .animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-
-        /* --- TITAN UI COMPONENTS --- */
-        .glass-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-            padding: 2.5rem;
-            margin-bottom: 2.5rem;
+        /* Barra de Navegación */
+        nav {
+            transition: all 0.4s ease;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 3rem;
+        /* Viewport Control */
+        .view-container { display: none; }
+        .view-container.active { display: block; animation: slideUp 0.5s ease-out; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Input Styles */
+        input, textarea, select {
+            background: rgba(0,0,0,0.4) !important;
+            border: 1px solid var(--border) !important;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 4px var(--accent-glow) !important;
         }
 
-        .stat-item {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            padding: 2rem;
-            border-radius: var(--radius-lg);
-            position: relative;
-            overflow: hidden;
-        }
+        /* Table Styles */
+        tr { transition: background 0.2s; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
 
-        .stat-item h4 { font-size: 11px; font-weight: 800; color: var(--text-mid); text-transform: uppercase; margin-bottom: 10px; }
-        .stat-item .val { font-size: 32px; font-weight: 900; letter-spacing: -1px; }
-        .stat-item .icon { position: absolute; right: 20px; top: 20px; opacity: 0.1; color: var(--accent); }
+        /* Status Badges */
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-ready { background: rgba(16, 185, 129, 0.1); color: #10b981; }
 
-        /* --- TABLES & LISTS --- */
-        .table-container {
-            width: 100%;
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border);
-            overflow: hidden;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(255,255,255,0.01); padding: 1.5rem; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-low); text-transform: uppercase; border-bottom: 1px solid var(--border); }
-        td { padding: 1.5rem; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text-mid); }
-        tr:hover td { background: rgba(255,255,255,0.02); color: white; }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 800;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .b-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .b-success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-
-        /* --- FORMS --- */
-        .grid-forms { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
-        .input-group { margin-bottom: 1.5rem; }
-        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--text-mid); margin-bottom: 8px; text-transform: uppercase; }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 16px 20px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            color: white;
-            font-family: var(--font-main);
-            transition: all 0.3s;
-        }
-
-        input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
-
-        .btn {
-            padding: 16px 30px;
-            border-radius: 14px;
-            font-weight: 800;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: 0.3s;
-        }
-
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px var(--accent-glow); }
-
-        /* --- ANALYTICS BARS --- */
-        .bar-chart {
-            display: flex;
-            align-items: flex-end;
-            gap: 10px;
-            height: 150px;
-            padding-top: 20px;
-        }
-
-        .bar {
-            flex: 1;
-            background: var(--accent);
-            border-radius: 6px 6px 0 0;
-            position: relative;
-            min-height: 5px;
-            transition: height 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* --- TERMINAL (CLI) --- */
-        .terminal-box {
-            background: #000;
-            border-radius: 15px;
-            padding: 20px;
-            font-family: var(--font-code);
-            color: var(--success);
-            font-size: 13px;
-            border: 1px solid var(--border);
-            height: 300px;
-            overflow-y: auto;
-        }
-
-        /* --- NOTIFICATIONS --- */
-        #notify-hub { position: fixed; bottom: 30px; right: 30px; z-index: 1000; }
-        .toast {
-            background: white; color: black; padding: 18px 25px; border-radius: 20px;
-            font-weight: 800; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            display: flex; align-items: center; gap: 15px; margin-top: 10px;
-            animation: slideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-        /* --- PRINT --- */
-        #print-zone { display: none; }
+        /* Print Area */
+        #print-ticket { display: none; }
         @media print {
-            aside, main { display: none !important; }
-            #print-zone { display: block; background: white; color: black; padding: 20px; }
+            body * { visibility: hidden; }
+            #print-ticket, #print-ticket * { visibility: visible; }
+            #print-ticket { position: absolute; left: 0; top: 0; width: 100%; display: block; color: black; background: white; }
         }
-
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    <aside>
-        <div class="brand">
-            <div class="brand-logo"><i data-lucide="cpu" color="white"></i></div>
-            <div class="brand-text">
-                <h1>NEXTCOM</h1>
-                <p>AETERNA OS</p>
-            </div>
-        </div>
+    <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div class="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 rounded-full blur-[140px] animate-pulse"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px]"></div>
+    </div>
 
-        <div class="nav-group">
-            <div class="nav-label">OPERACIONES PRINCIPALES</div>
-            <div class="nav-link active" onclick="nav('dash', this)"><i data-lucide="grid"></i> Dashboard</div>
-            <div class="nav-link" onclick="nav('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
-            <div class="nav-link" onclick="nav('inv', this)"><i data-lucide="package"></i> Inventario</div>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-label">FINANZAS & CRM</div>
-            <div class="nav-link" onclick="nav('money', this)"><i data-lucide="banknote"></i> Caja Registradora</div>
-            <div class="nav-link" onclick="nav('crm', this)"><i data-lucide="users-2"></i> Clientes Pro</div>
-            <div class="nav-link" onclick="nav('staff', this)"><i data-lucide="shield-check"></i> Equipo Técnico</div>
-        </div>
-
-        <div class="nav-group">
-            <div class="nav-label">SISTEMA</div>
-            <div class="nav-link" onclick="nav('cli', this)"><i data-lucide="terminal"></i> Consola CLI</div>
-            <div class="nav-link" onclick="nav('logs', this)"><i data-lucide="database"></i> Logs del Sistema</div>
-        </div>
-
-        <div class="user-status">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--success); box-shadow: 0 0 10px var(--success);"></div>
-                <span style="font-size: 12px; font-weight: 800;">ROOT ADMIN</span>
-            </div>
-            <p style="font-size: 10px; color: var(--text-low); margin-top: 5px;">Licencia: Enterprise Infinito</p>
-        </div>
-    </aside>
-
-    <main>
-        
-        <section id="v-dash" class="view-section active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
-                <div>
-                    <h1 style="font-size: 42px; font-weight: 900; letter-spacing: -2px;">Panel <span style="color:var(--accent)">Global</span></h1>
-                    <p id="cur-date" style="color: var(--text-mid); margin-top: 5px;"></p>
+    <nav class="fixed top-0 w-full z-50 px-6 py-6">
+        <div class="max-w-7xl mx-auto flex items-center justify-between glass-dark px-6 py-4 rounded-[32px] shadow-2xl">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('landing')">
+                <div class="p-2.5 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-lg shadow-blue-500/20">
+                    <i data-lucide="smartphone" class="w-6 h-6 text-white"></i>
                 </div>
-                <button class="btn btn-primary" onclick="nav('lab', document.querySelector('.nav-link:nth-child(3)'))">
-                    <i data-lucide="plus-circle"></i> NUEVA ORDEN
-                </button>
+                <span class="text-xl font-black tracking-tighter uppercase italic">Repara<span class="text-blue-500">Cel</span></span>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <i data-lucide="wallet" class="icon" size="48"></i>
-                    <h4>Utilidad Neta</h4>
-                    <div class="val" id="stat-cash">$0.00</div>
-                </div>
-                <div class="stat-item">
-                    <i data-lucide="clock" class="icon" size="48"></i>
-                    <h4>Equipos en Lab</h4>
-                    <div class="val" id="stat-pending">0</div>
-                </div>
-                <div class="stat-item">
-                    <i data-lucide="trending-up" class="icon" size="48"></i>
-                    <h4>Eficiencia</h4>
-                    <div class="val" id="stat-efficiency">0%</div>
-                </div>
-                <div class="stat-item">
-                    <i data-lucide="box" class="icon" size="48"></i>
-                    <h4>Stock Crítico</h4>
-                    <div class="val" id="stat-stock" style="color: var(--danger);">0</div>
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" onclick="switchView('tracking')" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-colors">Rastrear Equipo</a>
+                <a href="#" onclick="switchView('admin')" class="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-colors border-l border-white/10 pl-8">¿Eres un Taller?</a>
+                <button onclick="switchView('admin')" class="px-6 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-[10px] font-black uppercase tracking-widest">Panel de Control</button>
+            </div>
+        </div>
+    </nav>
+
+    <main id="v-landing" class="view-container active flex-1 flex flex-col items-center justify-center pt-48 pb-32 px-6">
+        <div class="max-w-5xl w-full text-center space-y-12 animate-slide-up">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-green-500/20 bg-green-500/5 text-green-400 text-[10px] font-black uppercase tracking-widest">
+                <i data-lucide="circle-check-big" class="w-3 h-3"></i> Reparaciones con Certificación de Confianza
+            </div>
+            
+            <h1 class="text-6xl md:text-9xl font-black tracking-tighter leading-[0.85] uppercase italic">Repara tu vida sin estrés</h1>
+            <p class="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto font-medium">Digitaliza tu taller con ReparaCel. Control total de reparaciones, clientes, inventario y finanzas en una sola plataforma.</p>
+
+            <div class="max-w-2xl mx-auto relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-[32px] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                <div class="relative flex items-center bg-[#0a0a0a] rounded-[32px] p-2 border border-white/10 shadow-2xl">
+                    <i data-lucide="map-pin" class="ml-6 w-6 h-6 text-blue-500"></i>
+                    <input id="search-input" type="text" placeholder="Ingresa el ID de tu orden o modelo" class="w-full bg-transparent border-none text-white focus:outline-none px-4 py-5 text-lg font-bold">
+                    <button onclick="searchAction()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-5 rounded-[24px] font-black uppercase tracking-widest text-xs transition-all shadow-lg active:scale-95">Buscar</button>
                 </div>
             </div>
 
-            <div class="grid-forms" style="grid-template-columns: 1fr 1fr;">
-                <div class="glass-card">
-                    <h3 style="margin-bottom: 2rem; font-weight: 800;">RENDIMIENTO SEMANAL</h3>
-                    <div class="bar-chart" id="dash-bars">
+            <div class="pt-20 grid grid-cols-1 md:grid-cols-3 gap-12 max-w-4xl mx-auto">
+                <div class="flex flex-col items-center gap-2">
+                    <div class="p-3 bg-white/5 rounded-2xl mb-2"><i data-lucide="star" class="w-5 h-5 text-yellow-500 fill-current"></i></div>
+                    <span class="text-sm font-black uppercase tracking-widest">4.9/5 Calificación</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="p-3 bg-white/5 rounded-2xl mb-2"><i data-lucide="shield" class="w-5 h-5 text-blue-500"></i></div>
+                    <span class="text-sm font-black uppercase tracking-widest">Garantía Real</span>
+                </div>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="p-3 bg-white/5 rounded-2xl mb-2"><i data-lucide="zap" class="w-5 h-5 text-green-500"></i></div>
+                    <span class="text-sm font-black uppercase tracking-widest">Tracking Live</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main id="v-admin" class="view-container flex-1 max-w-[1600px] mx-auto pt-32 pb-20 px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <div class="lg:col-span-3 space-y-4">
+                <div class="glass-dark rounded-[32px] p-6 space-y-2">
+                    <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-2 mb-4">Menú de Gestión</p>
+                    <button onclick="tab('orders')" class="tab-btn w-full flex items-center gap-4 px-5 py-4 rounded-2xl bg-blue-600 text-white font-bold transition-all"><i data-lucide="wrench"></i> Laboratorio</button>
+                    <button onclick="tab('inventory')" class="tab-btn w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 hover:bg-white/5 font-bold transition-all"><i data-lucide="package"></i> Inventario</button>
+                    <button onclick="tab('finance')" class="tab-btn w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 hover:bg-white/5 font-bold transition-all"><i data-lucide="banknote"></i> Finanzas Pro</button>
+                    <button onclick="tab('crm')" class="tab-btn w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-400 hover:bg-white/5 font-bold transition-all"><i data-lucide="users"></i> Clientes</button>
+                    <hr class="border-white/5 my-4">
+                    <button onclick="exportDB()" class="w-full flex items-center gap-4 px-5 py-2 rounded-xl text-xs text-gray-500 hover:text-white transition-all"><i data-lucide="download" class="w-4 h-4"></i> Backup Data</button>
+                </div>
+
+                <div class="glass-dark rounded-[32px] p-8">
+                    <h4 class="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Caja del Día</h4>
+                    <div id="stat-revenue" class="text-3xl font-black italic">$0.00</div>
+                    <p class="text-[10px] text-gray-500 mt-2 font-bold">GANANCIA NETA ESTIMADA</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-9 space-y-8">
+                
+                <div id="t-orders" class="tab-content">
+                    <div class="glass-dark rounded-[40px] p-10 space-y-8">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <h2 class="text-3xl font-black uppercase italic tracking-tighter">Nueva Orden de Servicio</h2>
+                                <p class="text-gray-500 font-medium">Registro de ingreso técnico con firma digital.</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] font-black text-gray-600 uppercase">Ticket ID</span>
+                                <div id="next-id" class="text-xl font-mono font-bold text-blue-500">#---</div>
+                            </div>
                         </div>
-                </div>
-                <div class="glass-card">
-                    <h3 style="margin-bottom: 2rem; font-weight: 800;">AUDITORÍA RÁPIDA</h3>
-                    <div class="table-container">
-                        <table>
-                            <tbody id="dash-recent-logs"></tbody>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Datos del Cliente</label>
+                                <input id="f-name" type="text" placeholder="Nombre completo" class="w-full p-4 rounded-2xl">
+                                <input id="f-phone" type="text" placeholder="WhatsApp / Teléfono" class="w-full p-4 rounded-2xl">
+                            </div>
+                            <div class="space-y-4">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Información del Equipo</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input id="f-brand" type="text" placeholder="Marca" class="w-full p-4 rounded-2xl">
+                                    <input id="f-model" type="text" placeholder="Modelo" class="w-full p-4 rounded-2xl">
+                                </div>
+                                <input id="f-pattern" type="text" placeholder="PIN / Patrón de desbloqueo" class="w-full p-4 rounded-2xl">
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Diagnóstico Inicial y Fallas</label>
+                            <textarea id="f-issue" rows="3" placeholder="Describa el problema detalladamente..." class="w-full p-4 rounded-2xl"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                            <div class="md:col-span-1">
+                                <label class="text-[10px] font-black uppercase tracking-widest text-gray-400">Presupuesto ($)</label>
+                                <input id="f-price" type="number" value="0" class="w-full p-4 rounded-2xl text-2xl font-black text-green-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <button onclick="saveOrder()" class="w-full bg-blue-600 hover:bg-blue-700 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-xl shadow-blue-500/20 transition-all active:scale-95">Generar Orden & WhatsApp</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-12 glass-dark rounded-[40px] overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="border-b border-white/5">
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">ID</th>
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">Cliente</th>
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">Equipo</th>
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">Estado</th>
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">Monto</th>
+                                    <th class="p-6 text-[10px] font-black uppercase text-gray-500">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-list"></tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-        </section>
 
-        <section id="v-lab" class="view-section">
-            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Centro de <span style="color:var(--accent)">Ingeniería</span></h1>
-            
-            <div class="grid-forms">
-                <div class="glass-card">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="input-group">
-                            <label>Propietario / Cliente</label>
-                            <input type="text" id="l-cliente" placeholder="Nombre completo">
+                <div id="t-inventory" class="tab-content hidden">
+                    <div class="glass-dark rounded-[40px] p-10 space-y-8">
+                        <h2 class="text-3xl font-black uppercase italic">Control de Stock</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <input id="i-name" type="text" placeholder="Repuesto / Producto" class="md:col-span-2 p-4 rounded-2xl">
+                            <input id="i-stock" type="number" placeholder="Cant." class="p-4 rounded-2xl">
+                            <button onclick="addStock()" class="bg-green-600 p-4 rounded-2xl font-black uppercase text-xs">Añadir</button>
                         </div>
-                        <div class="input-group">
-                            <label>Teléfono de Contacto</label>
-                            <input type="text" id="l-tel" placeholder="WhatsApp">
+                        <div id="inventory-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-4"></div>
+                    </div>
+                </div>
+
+                <div id="t-finance" class="tab-content hidden">
+                    <div class="glass-dark rounded-[40px] p-10 space-y-8">
+                        <h2 class="text-3xl font-black uppercase italic text-yellow-500">Libro Contable</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="bg-green-500/10 p-6 rounded-3xl border border-green-500/20">
+                                <p class="text-[10px] font-black uppercase text-green-500">Total Ingresos</p>
+                                <div id="fin-in" class="text-3xl font-black mt-2">$0.00</div>
+                            </div>
+                            <div class="bg-red-500/10 p-6 rounded-3xl border border-red-500/20">
+                                <p class="text-[10px] font-black uppercase text-red-500">Gastos / Egresos</p>
+                                <div id="fin-out" class="text-3xl font-black mt-2">$0.00</div>
+                            </div>
+                            <div class="bg-blue-500/10 p-6 rounded-3xl border border-blue-500/20">
+                                <p class="text-[10px] font-black uppercase text-blue-500">Balance Neto</p>
+                                <div id="fin-net" class="text-3xl font-black mt-2">$0.00</div>
+                            </div>
                         </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                        <div class="input-group"><label>Marca</label><input type="text" id="l-marca" placeholder="Apple"></div>
-                        <div class="input-group"><label>Modelo</label><input type="text" id="l-modelo" placeholder="iPhone 15"></div>
-                        <div class="input-group"><label>Acceso (PIN)</label><input type="text" id="l-pin" placeholder="0000"></div>
-                    </div>
-                    <div class="input-group">
-                        <label>Diagnóstico Técnico & Fallas Reportadas</label>
-                        <textarea id="l-falla" rows="4" placeholder="Describa el comportamiento del equipo..."></textarea>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: flex-end;">
-                        <div class="input-group">
-                            <label>Costo Estimado del Servicio ($)</label>
-                            <input type="number" id="l-costo" value="0.00" style="font-size: 28px; font-weight: 900; color: var(--success);">
-                        </div>
-                        <div class="input-group">
-                            <button class="btn btn-primary" style="height: 60px; width: 100%;" onclick="createOrder()">
-                                <i data-lucide="check-circle"></i> EMITIR ORDEN & TICKET
-                            </button>
+                        
+                        <div class="bg-white/5 p-8 rounded-[32px] space-y-4">
+                            <h4 class="font-bold text-sm uppercase">Registrar Gasto Manual</h4>
+                            <div class="flex gap-4">
+                                <input id="exp-desc" type="text" placeholder="Ej: Renta, Herramientas, Repuestos" class="flex-1 p-4 rounded-2xl">
+                                <input id="exp-amt" type="number" placeholder="Monto" class="w-32 p-4 rounded-2xl">
+                                <button onclick="addExpense()" class="bg-red-600 px-8 rounded-2xl font-black uppercase text-xs">Registrar</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="glass-card" style="background: rgba(255,255,255,0.01);">
-                    <h3 style="margin-bottom: 1.5rem; font-size: 14px;">ACCIONES DE BÚSQUEDA</h3>
-                    <input type="text" placeholder="Filtrar por ID o Cliente..." onkeyup="filterTable('lab-table', this)" style="margin-bottom: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn btn-primary" style="background: var(--bg-ultra); border: 1px solid var(--border);" onclick="exportData()">
-                            <i data-lucide="download"></i> RESPALDO JSON
-                        </button>
-                        <button class="btn btn-primary" style="background: var(--bg-ultra); border: 1px solid var(--border);" onclick="importData()">
-                            <i data-lucide="upload"></i> CARGAR RESPALDO
-                        </button>
-                    </div>
-                </div>
             </div>
-
-            <div class="table-container" style="margin-top: 30px;">
-                <table id="lab-table">
-                    <thead>
-                        <tr><th>ID</th><th>Ingreso</th><th>Cliente</th><th>Equipo</th><th>Costo</th><th>Estado</th><th>Acción</th></tr>
-                    </thead>
-                    <tbody id="lab-list"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="v-inv" class="view-section">
-            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Almacén & <span style="color:var(--success)">Suministros</span></h1>
-            
-            <div class="glass-card">
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 20px; align-items: flex-end;">
-                    <div class="input-group"><label>Producto / Repuesto</label><input type="text" id="i-name" placeholder="Pantalla OLED S23"></div>
-                    <div class="input-group"><label>Cantidad</label><input type="number" id="i-qty" value="1"></div>
-                    <div class="input-group"><label>Costo ($)</label><input type="number" id="i-price" value="0.00"></div>
-                    <div class="input-group"><button class="btn btn-primary" onclick="addInventory()" style="height: 55px; width: 100%;"><i data-lucide="plus"></i> STOCK</button></div>
-                </div>
-            </div>
-
-            <div id="inv-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
-                </div>
-        </section>
-
-        <section id="v-cli" class="view-section">
-            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Aeterna <span style="color:var(--success)">Command Center</span></h1>
-            <div class="terminal-box" id="cli-out">
-                <div>[SYSTEM] NEXTCOM AETERNA CLI V1.0.0 READY...</div>
-                <div>[SYSTEM] Escribe 'help' para ver los comandos disponibles.</div>
-            </div>
-            <input type="text" id="cli-in" placeholder="esperando comando..." 
-                   style="margin-top: 15px; font-family: var(--font-code); border-color: var(--success);"
-                   onkeypress="handleCLI(event)">
-        </section>
-
-        <section id="v-logs" class="view-section">
-            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Auditoría de <span style="color:var(--text-low)">Sistema</span></h1>
-            <div class="table-container">
-                <table style="font-family: var(--font-code); font-size: 12px;">
-                    <thead>
-                        <tr><th>Timestamp</th><th>Categoría</th><th>Evento / Acción</th><th>Usuario</th></tr>
-                    </thead>
-                    <tbody id="log-list"></tbody>
-                </table>
-            </div>
-        </section>
-
+        </div>
     </main>
 
-    <div id="notify-hub"></div>
+    <main id="v-tracking" class="view-container flex-1 flex items-center justify-center pt-48 px-6">
+        <div class="max-w-xl w-full glass-dark rounded-[48px] p-12 text-center space-y-8">
+            <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto">
+                <i data-lucide="search" class="w-10 h-10 text-blue-500"></i>
+            </div>
+            <h2 class="text-4xl font-black uppercase italic tracking-tighter">Estado de Equipo</h2>
+            <p class="text-gray-500">Ingresa el código de 5 dígitos proporcionado en tu ticket.</p>
+            <input id="track-id" type="text" maxlength="5" placeholder="Ejem: 45281" class="w-full text-center p-6 rounded-3xl text-3xl font-mono font-bold tracking-[0.5em] text-blue-500">
+            <button onclick="trackOrder()" class="w-full bg-blue-600 py-6 rounded-3xl font-black uppercase tracking-widest text-sm hover:scale-105 transition-all">Consultar Ahora</button>
+            <div id="track-result" class="hidden mt-8 p-6 bg-white/5 rounded-3xl text-left border border-white/10 animate-in fade-in zoom-in"></div>
+        </div>
+    </main>
 
-    <div id="print-zone"></div>
+    <div id="print-ticket">
+        <div style="padding: 20px; font-family: monospace; width: 300px; margin: 0 auto; text-align: center; border: 1px solid #eee;">
+            <h2 id="p-taller">ReparaCel Pro</h2>
+            <p id="p-date"></p>
+            <hr style="border-style: dashed;">
+            <div style="text-align: left; font-size: 12px;">
+                <p><strong>ORDEN:</strong> <span id="p-id"></span></p>
+                <p><strong>CLIENTE:</strong> <span id="p-name"></span></p>
+                <p><strong>EQUIPO:</strong> <span id="p-model"></span></p>
+                <p><strong>FALLA:</strong> <span id="p-issue"></span></p>
+                <p><strong>ACCESO:</strong> <span id="p-pin"></span></p>
+            </div>
+            <hr style="border-style: dashed;">
+            <h3 style="font-size: 20px;">TOTAL: <span id="p-total"></span></h3>
+            <p style="font-size: 8px;">Garantía de 30 días en software y hardware instalado. Equipos mojados no tienen garantía.</p>
+            <p><strong>Gracias por tu confianza</strong></p>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-10 right-10 z-[1000] flex flex-col gap-4"></div>
 
     <script>
-        /**
-         * NEXTCOM AETERNA OS - CORE LOGIC ENGINE
-         * Todas las funciones han sido expandidas para mantener persistencia y lógica avanzada.
-         */
-
-        // 1. DATA STATE MANAGEMENT
-        let AETERNA_DB = JSON.parse(localStorage.getItem('AETERNA_DATA')) || {
+        // --- 1. DATA CENTER ---
+        let DB = JSON.parse(localStorage.getItem('RCEL_DATA')) || {
             orders: [],
             inventory: [],
-            finances: [],
-            logs: [],
-            staff: [
-                {id: 1, name: 'Admin Root', role: 'Master'},
-                {id: 2, name: 'Tec. Carlos', role: 'Hardware'}
-            ],
-            settings: { currency: '$', company: 'NEXTCOM' }
+            expenses: [],
+            config: { name: 'ReparaCel Central', currency: '$' }
         };
 
-        // 2. BOOTSTRAP & INITIALIZATION
+        // --- 2. BOOTSTRAP ---
         window.onload = () => {
-            document.getElementById('cur-date').innerText = new Date().toLocaleDateString('es-ES', { 
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            });
-            syncAll();
-            notify("Sistema Aeterna Inicializado");
-            logSys("INIT", "Arranque de sistema exitoso", "ROOT");
+            lucide.createIcons();
+            sync();
+            updateNextId();
         };
 
-        function syncAll() {
-            localStorage.setItem('AETERNA_DATA', JSON.stringify(AETERNA_DB));
-            renderDash();
-            renderLab();
-            renderInv();
-            renderLogs();
+        function sync() {
+            localStorage.setItem('RCEL_DATA', JSON.stringify(DB));
+            renderOrders();
+            renderInventory();
+            renderFinance();
             updateStats();
+        }
+
+        // --- 3. VIEW CONTROLLER ---
+        function switchView(viewId) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.getElementById('v-' + viewId).classList.add('active');
+            window.scrollTo(0, 0);
             lucide.createIcons();
         }
 
-        // 3. NAVIGATION SYSTEM
-        function nav(id, el) {
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById('v-' + id).classList.add('active');
-            el.classList.add('active');
+        function tab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white');
+                b.classList.add('text-gray-400');
+            });
+
+            document.getElementById('t-' + tabId).classList.remove('hidden');
+            event.currentTarget.classList.add('bg-blue-600', 'text-white');
             lucide.createIcons();
         }
 
-        // 4. ORDER MANAGEMENT (LABORATORIO)
-        function createOrder() {
-            const data = {
-                id: 'NX' + Math.floor(Math.random() * 89999 + 10000),
+        // --- 4. ORDER ENGINE ---
+        function updateNextId() {
+            const next = DB.orders.length > 0 ? parseInt(DB.orders[0].id) + 1 : 45000;
+            document.getElementById('next-id').innerText = '#' + next;
+        }
+
+        function saveOrder() {
+            const order = {
+                id: document.getElementById('next-id').innerText.replace('#', ''),
                 date: new Date().toLocaleString(),
-                customer: document.getElementById('l-cliente').value,
-                tel: document.getElementById('l-tel').value,
-                brand: document.getElementById('l-marca').value,
-                model: document.getElementById('l-modelo').value,
-                pin: document.getElementById('l-pin').value,
-                issue: document.getElementById('l-falla').value,
-                cost: parseFloat(document.getElementById('l-costo').value) || 0,
-                status: 'PENDIENTE',
-                technician: 'Root Admin'
+                customer: document.getElementById('f-name').value,
+                phone: document.getElementById('f-phone').value,
+                brand: document.getElementById('f-brand').value,
+                model: document.getElementById('f-model').value,
+                pin: document.getElementById('f-pattern').value,
+                issue: document.getElementById('f-issue').value,
+                total: parseFloat(document.getElementById('f-price').value) || 0,
+                status: 'PENDIENTE'
             };
 
-            if(!data.customer || !data.model) return notify("Error: Datos incompletos", "danger");
+            if(!order.customer || !order.model) return notify("Completa los campos obligatorios", "error");
 
-            AETERNA_DB.orders.unshift(data);
-            AETERNA_DB.finances.push({ type: 'IN', amount: data.cost, ref: data.id, date: data.date });
-            
-            logSys("LAB", `Nueva orden generada: ${data.id}`, "ROOT");
-            printOrder(data);
-            clearLabForm();
-            syncAll();
-            notify(`Orden ${data.id} registrada`);
+            DB.orders.unshift(order);
+            sync();
+            updateNextId();
+            printAction(order);
+            clearForm();
+            notify("Orden #" + order.id + " Generada con éxito", "success");
         }
 
-        function toggleOrderStatus(id) {
-            const order = AETERNA_DB.orders.find(o => o.id === id);
-            order.status = order.status === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
-            logSys("LAB", `Cambio de estado orden ${id} a ${order.status}`, "ROOT");
-            syncAll();
+        function clearForm() {
+            ['f-name', 'f-phone', 'f-brand', 'f-model', 'f-pattern', 'f-issue', 'f-price'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            document.getElementById('f-price').value = 0;
         }
 
-        function deleteOrder(id) {
-            if(confirm("¿Seguro de eliminar este registro?")) {
-                AETERNA_DB.orders = AETERNA_DB.orders.filter(o => o.id !== id);
-                logSys("DB", `Orden eliminada: ${id}`, "ROOT");
-                syncAll();
-            }
+        function toggleStatus(id) {
+            const ord = DB.orders.find(o => o.id === id);
+            ord.status = ord.status === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
+            sync();
+            notify("Estado actualizado para la orden #" + id);
         }
 
-        // 5. INVENTORY ENGINE
-        function addInventory() {
+        // --- 5. INVENTORY ENGINE ---
+        function addStock() {
             const item = {
                 id: Date.now(),
                 name: document.getElementById('i-name').value,
-                qty: parseInt(document.getElementById('i-qty').value) || 0,
-                price: parseFloat(document.getElementById('i-price').value) || 0
+                stock: parseInt(document.getElementById('i-stock').value) || 0
             };
-
             if(!item.name) return;
-            AETERNA_DB.inventory.unshift(item);
-            logSys("INV", `Stock añadido: ${item.name}`, "ROOT");
-            syncAll();
+            DB.inventory.unshift(item);
+            sync();
             document.getElementById('i-name').value = '';
+            document.getElementById('i-stock').value = '';
         }
 
-        function modStock(id, val) {
-            const item = AETERNA_DB.inventory.find(i => i.id === id);
-            item.qty = Math.max(0, item.qty + val);
-            syncAll();
+        function modStock(id, delta) {
+            const item = DB.inventory.find(i => i.id === id);
+            item.stock = Math.max(0, item.stock + delta);
+            sync();
         }
 
-        // 6. RENDER ENGINES
-        function renderDash() {
-            // Render Bars
-            const chart = document.getElementById('dash-bars');
-            chart.innerHTML = '';
-            const days = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
-            days.forEach(d => {
-                const h = Math.floor(Math.random() * 80) + 20;
-                chart.innerHTML += `<div class="bar" style="height: ${h}%"><span style="font-size: 10px; position: absolute; bottom: -20px;">${d}</span></div>`;
-            });
-
-            // Recent Logs
-            const logBox = document.getElementById('dash-recent-logs');
-            logBox.innerHTML = AETERNA_DB.logs.slice(0, 5).map(l => `
-                <tr>
-                    <td style="color:var(--accent)">[${l.cat}]</td>
-                    <td style="font-size:12px">${l.msg}</td>
-                </tr>
-            `).join('');
+        // --- 6. FINANCE ENGINE ---
+        function addExpense() {
+            const exp = {
+                id: Date.now(),
+                desc: document.getElementById('exp-desc').value,
+                amt: parseFloat(document.getElementById('exp-amt').value) || 0,
+                date: new Date().toLocaleDateString()
+            };
+            if(!exp.desc || exp.amt === 0) return;
+            DB.expenses.unshift(exp);
+            sync();
+            document.getElementById('exp-desc').value = '';
+            document.getElementById('exp-amt').value = '';
+            notify("Gasto registrado correctamente");
         }
 
-        function renderLab() {
-            const list = document.getElementById('lab-list');
-            list.innerHTML = AETERNA_DB.orders.map(o => `
-                <tr>
-                    <td><b>${o.id}</b></td>
-                    <td>${o.date.split(',')[0]}</td>
-                    <td>${o.customer}</td>
-                    <td>${o.brand} ${o.model}</td>
-                    <td style="color:var(--success); font-weight:800">$${o.cost.toFixed(2)}</td>
-                    <td><span class="badge ${o.status==='PENDIENTE'?'b-pending':'b-success'}" onclick="toggleOrderStatus('${o.id}')">${o.status}</span></td>
-                    <td>
-                        <button onclick="deleteOrder('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash-2" size="16"></i></button>
+        // --- 7. RENDERS ---
+        function renderOrders() {
+            const list = document.getElementById('orders-list');
+            list.innerHTML = DB.orders.map(o => `
+                <tr class="border-b border-white/5">
+                    <td class="p-6 font-mono text-blue-500 font-bold">${o.id}</td>
+                    <td class="p-6">
+                        <div class="font-bold">${o.customer}</div>
+                        <div class="text-[10px] text-gray-500 font-mono">${o.phone}</div>
+                    </td>
+                    <td class="p-6">
+                        <div class="text-sm font-bold uppercase">${o.brand} ${o.model}</div>
+                        <div class="text-[10px] text-gray-600 truncate max-w-[150px] italic">"${o.issue}"</div>
+                    </td>
+                    <td class="p-6">
+                        <span onclick="toggleStatus('${o.id}')" class="badge ${o.status==='PENDIENTE'?'badge-pending':'badge-ready'} px-4 py-2 rounded-xl text-[9px] font-black uppercase cursor-pointer transition-transform active:scale-90 inline-block">
+                            ${o.status}
+                        </span>
+                    </td>
+                    <td class="p-6 font-black text-green-500">$${o.total.toFixed(2)}</td>
+                    <td class="p-6">
+                        <div class="flex gap-2">
+                            <button onclick="printTicketById('${o.id}')" class="p-2 hover:text-blue-500 transition-colors"><i data-lucide="printer" class="w-4 h-4"></i></button>
+                            <button onclick="deleteOrder('${o.id}')" class="p-2 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
             lucide.createIcons();
         }
 
-        function renderInv() {
-            const grid = document.getElementById('inv-grid');
-            grid.innerHTML = AETERNA_DB.inventory.map(i => `
-                <div class="stat-item" style="border-bottom: 2px solid ${i.qty < 5 ? 'var(--danger)' : 'var(--border)'}">
-                    <h4 style="font-size:14px; color:white;">${i.name}</h4>
-                    <div class="val">$${i.price.toFixed(2)}</div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px;">
-                        <span style="font-weight:800; color:var(--text-mid)">STOCK: ${i.qty}</span>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="modStock(${i.id}, -1)" style="padding:5px 10px; background:var(--bg-input); border:1px solid var(--border); color:white; cursor:pointer;">-</button>
-                            <button onclick="modStock(${i.id}, 1)" style="padding:5px 10px; background:var(--bg-input); border:1px solid var(--border); color:white; cursor:pointer;">+</button>
-                        </div>
+        function renderInventory() {
+            const container = document.getElementById('inventory-grid');
+            container.innerHTML = DB.inventory.map(i => `
+                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-sm text-gray-300 uppercase">${i.name}</h4>
+                        <div class="text-2xl font-black mt-1">${i.stock} <span class="text-[10px] text-gray-600 uppercase">uds</span></div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="modStock(${i.id}, 1)" class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">+</button>
+                        <button onclick="modStock(${i.id}, -1)" class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center font-bold">-</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderLogs() {
-            const area = document.getElementById('log-list');
-            area.innerHTML = AETERNA_DB.logs.map(l => `
-                <tr>
-                    <td>${l.time}</td>
-                    <td style="color:var(--accent)">${l.cat}</td>
-                    <td>${l.msg}</td>
-                    <td>${l.user}</td>
-                </tr>
-            `).join('');
+        function renderFinance() {
+            const revenue = DB.orders.reduce((a, b) => a + b.total, 0);
+            const expenses = DB.expenses.reduce((a, b) => a + b.amt, 0);
+            
+            document.getElementById('fin-in').innerText = '$' + revenue.toFixed(2);
+            document.getElementById('fin-out').innerText = '$' + expenses.toFixed(2);
+            document.getElementById('fin-net').innerText = '$' + (revenue - expenses).toFixed(2);
+            document.getElementById('stat-revenue').innerText = '$' + (revenue - expenses).toFixed(2);
         }
 
-        function updateStats() {
-            const cash = AETERNA_DB.finances.reduce((a, b) => a + b.amount, 0);
-            const pending = AETERNA_DB.orders.filter(o => o.status === 'PENDIENTE').length;
-            const efficiency = AETERNA_DB.orders.length > 0 ? 
-                Math.round(((AETERNA_DB.orders.length - pending) / AETERNA_DB.orders.length) * 100) : 0;
-            const stockLow = AETERNA_DB.inventory.filter(i => i.qty < 5).length;
+        // --- 8. TRACKING SYSTEM ---
+        function trackOrder() {
+            const id = document.getElementById('track-id').value.trim();
+            const resultDiv = document.getElementById('track-result');
+            const order = DB.orders.find(o => o.id === id);
 
-            document.getElementById('stat-cash').innerText = `$${cash.toFixed(2)}`;
-            document.getElementById('stat-pending').innerText = pending;
-            document.getElementById('stat-efficiency').innerText = `${efficiency}%`;
-            document.getElementById('stat-stock').innerText = stockLow;
-        }
-
-        // 7. CLI HANDLER
-        function handleCLI(e) {
-            if(e.key === 'Enter') {
-                const input = document.getElementById('cli-in');
-                const out = document.getElementById('cli-out');
-                const cmd = input.value.toLowerCase().trim();
-                
-                out.innerHTML += `<div><span style="color:white">></span> ${input.value}</div>`;
-                
-                if(cmd === 'help') {
-                    out.innerHTML += `<div>- cls: limpiar terminal<br>- stats: ver métricas raw<br>- purge: borrar logs<br>- whoami: usuario actual</div>`;
-                } else if(cmd === 'cls') {
-                    out.innerHTML = '';
-                } else if(cmd === 'stats') {
-                    out.innerHTML += `<div>ORD: ${AETERNA_DB.orders.length} | INV: ${AETERNA_DB.inventory.length}</div>`;
-                } else if(cmd === 'whoami') {
-                    out.innerHTML += `<div>ROOT_ADMINISTRATOR_UID: 0</div>`;
-                } else {
-                    out.innerHTML += `<div style="color:var(--danger)">Error: Comando '${cmd}' no reconocido.</div>`;
-                }
-                
-                input.value = '';
-                out.scrollTop = out.scrollHeight;
+            if(!order) {
+                notify("Código no encontrado", "error");
+                return;
             }
-        }
 
-        // 8. UTILS
-        function logSys(cat, msg, user) {
-            AETERNA_DB.logs.unshift({
-                time: new Date().toLocaleTimeString(),
-                cat, msg, user
-            });
-            if(AETERNA_DB.logs.length > 100) AETERNA_DB.logs.pop();
-        }
-
-        function notify(msg) {
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.innerHTML = `<i data-lucide="bell"></i> <span>${msg}</span>`;
-            document.getElementById('notify-hub').appendChild(t);
-            lucide.createIcons();
-            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 500); }, 3000);
-        }
-
-        function clearLabForm() {
-            ['l-cliente', 'l-tel', 'l-marca', 'l-modelo', 'l-pin', 'l-falla'].forEach(i => document.getElementById(i).value = '');
-            document.getElementById('l-costo').value = 0;
-        }
-
-        function printOrder(o) {
-            const p = document.getElementById('print-zone');
-            p.innerHTML = `
-                <div style="font-family: monospace; width: 300px; padding: 20px; border: 1px solid #000;">
-                    <h2 style="text-align:center">NEXTCOM</h2>
-                    <p style="text-align:center; font-size:10px;">AETERNA OS - TICKETING SYSTEM</p>
-                    <hr>
-                    <p><b>ORDEN:</b> ${o.id}</p>
-                    <p><b>CLIENTE:</b> ${o.customer}</p>
-                    <p><b>EQUIPO:</b> ${o.brand} ${o.model}</p>
-                    <p><b>FALLA:</b> ${o.issue}</p>
-                    <hr>
-                    <p style="text-align:right; font-size:18px;"><b>TOTAL: $${o.cost}</b></p>
-                    <hr>
-                    <p style="font-size:8px;">Garantía de 30 días. No mojados.</p>
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-black uppercase text-blue-500 tracking-widest">Orden Encontrada</span>
+                        <span class="text-xs font-mono">#${order.id}</span>
+                    </div>
+                    <h3 class="text-2xl font-black italic uppercase">${order.brand} ${order.model}</h3>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500" style="width: ${order.status==='PENDIENTE'?'40%':'100%'}"></div>
+                        </div>
+                        <span class="text-[10px] font-black uppercase">${order.status}</span>
+                    </div>
+                    <p class="text-xs text-gray-400"><strong>Última actualización:</strong> ${order.date}</p>
                 </div>
             `;
-            // window.print(); // Descomentar para activar impresión física
         }
 
-        function filterTable(tableId, input) {
-            const filter = input.value.toUpperCase();
-            const rows = document.getElementById(tableId).getElementsByTagName("tr");
-            for (let i = 1; i < rows.length; i++) {
-                rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
+        // --- 9. UTILITIES ---
+        function notify(msg, type = 'success') {
+            const t = document.createElement('div');
+            t.className = `toast p-5 rounded-2xl glass-dark border border-white/10 shadow-2xl flex items-center gap-4 animate-in slide-in-from-right-10 duration-300`;
+            t.innerHTML = `
+                <div class="w-8 h-8 rounded-full ${type==='success'?'bg-green-500':'bg-red-500'} flex items-center justify-center">
+                    <i data-lucide="${type==='success'?'check':'alert-circle'}" class="w-4 h-4 text-white"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-black uppercase tracking-tight">${msg}</p>
+                </div>
+            `;
+            document.getElementById('toast-container').appendChild(t);
+            lucide.createIcons();
+            setTimeout(() => {
+                t.classList.add('fade-out');
+                setTimeout(() => t.remove(), 500);
+            }, 4000);
+        }
+
+        function printAction(o) {
+            document.getElementById('p-date').innerText = o.date;
+            document.getElementById('p-id').innerText = o.id;
+            document.getElementById('p-name').innerText = o.customer;
+            document.getElementById('p-model').innerText = o.brand + ' ' + o.model;
+            document.getElementById('p-issue').innerText = o.issue;
+            document.getElementById('p-pin').innerText = o.pin;
+            document.getElementById('p-total').innerText = '$' + o.total.toFixed(2);
+            window.print();
+        }
+
+        function printTicketById(id) {
+            const o = DB.orders.find(x => x.id === id);
+            printAction(o);
+        }
+
+        function deleteOrder(id) {
+            if(confirm("¿Seguro de borrar esta orden definitivamente?")) {
+                DB.orders = DB.orders.filter(o => o.id !== id);
+                sync();
+                notify("Orden eliminada", "error");
             }
         }
 
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(AETERNA_DB));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "nextcom_backup.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-            notify("Respaldo descargado");
+        function exportDB() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(DB));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", "ReparaCel_Backup.json");
+            dl.click();
         }
 
-        // Lógica de importación dummy (requiere file input para ser real)
-        function importData() {
-            notify("Selecciona el archivo en la consola CLI (Feature en desarrollo)");
+        function searchAction() {
+            const val = document.getElementById('search-input').value.trim();
+            if(val.length >= 5) {
+                document.getElementById('track-id').value = val;
+                switchView('tracking');
+                trackOrder();
+            } else {
+                notify("Ingresa un código válido", "error");
+            }
         }
 
     </script>

@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Courier+Prime&display=swap');
         :root {
             --bg-body: #050505; --bg-card: #0c0c0c; --accent: #2563eb;
             --border: rgba(255, 255, 255, 0.08); --text-main: #ffffff;
@@ -17,42 +17,50 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Navegación */
         aside { width: 260px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; }
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; color: var(--text-dim); border: none; background: none; width: 100%; cursor: pointer; font-weight: 600; margin-bottom: 8px; transition: 0.3s; }
         .nav-link.active { color: #fff; background: var(--accent); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); }
-        .nav-link:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
-
-        /* Contenedor Principal */
+        
         main { flex: 1; overflow-y: auto; padding: 2.5rem; position: relative; }
         .view { display: none; animation: fadeIn 0.4s ease forwards; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Componentes UI */
         .glass-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; margin-bottom: 2rem; }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2rem; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; border-bottom: 3px solid var(--border); }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; }
         
-        input, textarea, select { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; font-family: inherit; font-size: 14px; }
-        input:focus { border-color: var(--accent); outline: none; background: #161616; }
-
-        .btn-primary { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; transition: 0.2s; }
+        input, textarea, select { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; font-family: inherit; }
+        .btn-primary { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; }
         .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid var(--border); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
 
-        /* Tablas Pro */
         .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
         td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 14px; }
 
-        .badge { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+
+        /* ESTILOS TICKET SUPERMERCADO */
+        #ticket-print { 
+            display: none; width: 300px; background: #fff; color: #000; padding: 20px; 
+            font-family: 'Courier Prime', monospace; font-size: 12px; line-height: 1.2;
+        }
+        .t-center { text-align: center; }
+        .t-bold { font-weight: bold; }
+        .t-line { border-bottom: 1px dashed #000; margin: 10px 0; }
+        .t-terms { font-size: 9px; margin-top: 15px; text-align: justify; }
 
         #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; }
-        .toast { background: #fff; color: #000; padding: 15px 25px; border-radius: 15px; font-weight: 800; display: flex; align-items: center; gap: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); margin-top: 10px; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .toast { background: #fff; color: #000; padding: 15px 25px; border-radius: 15px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #ticket-print, #ticket-print * { visibility: visible; }
+            #ticket-print { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -72,27 +80,16 @@
 
     <main>
         <section id="view-dash" class="view active">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem;">
-                <div>
-                    <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -2px;">SISTEMA <span style="color:var(--accent)">READY</span></h1>
-                    <p style="color:var(--text-dim)">Resumen de operaciones del taller</p>
-                </div>
-                <div style="width: 300px; position: relative;">
-                    <i data-lucide="search" style="position:absolute; left: 15px; top: 12px; width: 18px; color: var(--text-dim);"></i>
-                    <input type="text" id="dash-search" placeholder="Buscar cliente o equipo..." style="padding-left: 45px; border-radius: 30px;" onkeyup="searchDash()">
-                </div>
-            </div>
-
+            <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 2rem;">VISTA <span style="color:var(--accent)">GENERAL</span></h1>
             <div class="stats-grid">
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px;">INGRESOS TOTALES</p><h2 id="st-ingresos">$0.00</h2></div>
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px;">ÓRDENES ACTIVAS</p><h2 id="st-activas">0</h2></div>
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px;">STOCK BAJO</p><h2 id="st-stock">0</h2></div>
-                <div class="stat-card" style="border-bottom-color: var(--success);"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px;">BALANCE NETO</p><h2 id="st-balance" style="color: var(--success);">$0.00</h2></div>
+                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">INGRESOS</p><h2 id="st-ingresos">$0.00</h2></div>
+                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">ACTIVAS</p><h2 id="st-activas">0</h2></div>
+                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">STOCK</p><h2 id="st-stock">0</h2></div>
+                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">BALANCE</p><h2 id="st-balance" style="color: var(--success);">$0.00</h2></div>
             </div>
-
             <div class="table-container">
                 <table id="table-dash">
-                    <thead><tr><th>ID</th><th>Cliente</th><th>Dispositivo</th><th>Presupuesto</th><th>Estado</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -100,7 +97,7 @@
 
         <section id="view-taller" class="view">
             <div style="display:flex; justify-content: space-between; margin-bottom: 2rem;">
-                <h1 style="font-size: 2.5rem; font-weight: 800;">CENTRO DE <span style="color:var(--accent)">MANDO</span></h1>
+                <h1 style="font-size: 2.5rem; font-weight: 800;">LABORATORIO</h1>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn-secondary" onclick="toggleTaller('form')">NUEVA ORDEN</button>
                     <button class="btn-secondary" onclick="toggleTaller('list')">GESTIONAR LISTA</button>
@@ -111,95 +108,78 @@
                 <input type="hidden" id="tk-id-edit">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <div>
-                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">DATOS DEL CLIENTE</label>
-                        <input type="text" id="tk-cliente" placeholder="Nombre Completo" style="margin: 10px 0;">
-                        <input type="text" id="tk-tel" placeholder="Número de contacto" style="margin-bottom: 20px;">
-                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">REPORTE TÉCNICO / FALLA</label>
-                        <textarea id="tk-falla" rows="6" placeholder="Describa el problema detalladamente..." style="margin-top: 10px;"></textarea>
+                        <input type="text" id="tk-cliente" placeholder="Nombre Completo" style="margin-bottom: 10px;">
+                        <input type="text" id="tk-tel" placeholder="WhatsApp (Ej: 503...)" style="margin-bottom: 10px;">
+                        <textarea id="tk-falla" rows="6" placeholder="Falla reportada..."></textarea>
                     </div>
                     <div>
-                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">DATOS DEL DISPOSITIVO</label>
-                        <div style="display: flex; gap: 10px; margin: 10px 0;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                             <input type="text" id="tk-marca" placeholder="Marca">
                             <input type="text" id="tk-modelo" placeholder="Modelo">
                         </div>
-                        <div style="background: rgba(245, 158, 11, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(245,158,11,0.2); margin-bottom: 20px;">
-                            <p style="font-size: 10px; color: var(--warning); font-weight: 800; margin-bottom: 10px;">SEGURIDAD DE ACCESO</p>
-                            <input type="text" id="tk-pin" placeholder="PIN, Patrón o Contraseña">
-                        </div>
-                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">PRESUPUESTO ESTIMADO ($)</label>
-                        <input type="number" id="tk-costo" value="0" style="font-size: 2.5rem; font-weight: 800; color: var(--success); background: none; border: none; padding: 0;">
+                        <input type="text" id="tk-pin" placeholder="PIN / Acceso" style="margin-bottom: 10px;">
+                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">COSTO ($)</label>
+                        <input type="number" id="tk-costo" value="0" style="font-size: 2rem; color: var(--success); font-weight: 800; background: none; border: none;">
                     </div>
                 </div>
-                <button class="btn-primary" style="width: 100%; margin-top: 30px; height: 60px;" id="tk-btn-save" onclick="handleOrden()">
-                    <i data-lucide="save"></i> GUARDAR ORDEN DE SERVICIO
-                </button>
+                <button class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="handleOrden()">GUARDAR ORDEN</button>
             </div>
 
             <div id="lab-list" style="display: none;" class="table-container">
                 <table id="table-lab-full">
-                    <thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Cliente</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
 
-        <section id="view-inventario" class="view">
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem;">INVENTARIO & <span style="color:var(--accent)">PRODUCTOS</span></h1>
-            <div style="display: grid; grid-template-columns: 1fr 380px; gap: 20px; height: 65vh;">
-                <div style="overflow-y: auto; padding-right: 15px;" id="inv-render">
-                    </div>
-                <div class="glass-panel" style="height: fit-content;">
-                    <h3 style="margin-bottom: 20px; font-size: 14px;">REGISTRAR ARTÍCULO</h3>
-                    <input type="hidden" id="inv-id">
-                    <select id="inv-tipo" style="margin-bottom: 15px;"><option>Repuesto</option><option>Accesorio / Venta</option></select>
-                    <input type="text" id="inv-nombre" placeholder="Nombre del artículo" style="margin-bottom: 15px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <input type="number" id="inv-stock" placeholder="Stock">
-                        <input type="number" id="inv-precio" placeholder="Precio ($)">
-                    </div>
-                    <button class="btn-primary" style="width: 100%;" onclick="handleInv()">REGISTRAR EN STOCK</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-finanzas" class="view">
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem;">MOVIMIENTOS DE <span style="color:var(--success)">CAJA</span></h1>
-            <div class="table-container">
-                <table id="table-finanzas">
-                    <thead><tr><th>Fecha</th><th>Descripción</th><th>Tipo</th><th>Monto</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </section>
+        <section id="view-inventario" class="view"><h1>STOCK</h1><div id="inv-render"></div></section>
+        <section id="view-finanzas" class="view"><h1>CAJA</h1><div id="table-finanzas"></div></section>
     </main>
+
+    <div id="ticket-print">
+        <div class="t-center t-bold" style="font-size: 16px;">NEXTCOM SYSTEMS</div>
+        <div class="t-center">Servicio Técnico Profesional</div>
+        <div class="t-center" id="tick-id">ID: 0000</div>
+        <div class="t-line"></div>
+        <div>FECHA: <span id="tick-fecha"></span></div>
+        <div>CLIENTE: <span id="tick-cliente"></span></div>
+        <div>TEL: <span id="tick-tel"></span></div>
+        <div class="t-line"></div>
+        <div class="t-bold">EQUIPO:</div>
+        <div id="tick-equipo"></div>
+        <div class="t-bold" style="margin-top:5px;">FALLA:</div>
+        <div id="tick-falla"></div>
+        <div class="t-line"></div>
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+            <span>TOTAL:</span>
+            <span id="tick-total">$0.00</span>
+        </div>
+        <div class="t-line"></div>
+        <div class="t-center t-bold">TÉRMINOS Y CONDICIONES</div>
+        <div class="t-terms">
+            * Todo equipo dejado por más de 30 días será declarado en abandono.<br>
+            * No nos hacemos responsables por pérdida de información.<br>
+            * Garantía de 15 días solo por la pieza reparada.<br>
+            * Equipos mojados o golpeados no tienen garantía.
+        </div>
+        <div class="t-line"></div>
+        <div class="t-center t-bold">¡GRACIAS POR SU CONFIANZA!</div>
+    </div>
 
     <div id="toast-container"></div>
 
     <script>
-        // --- BASE DE DATOS LOCAL ---
-        let DB = JSON.parse(localStorage.getItem('NEXTCOM_DB')) || {
-            ordenes: [],
-            inventario: [],
-            finanzas: []
-        };
+        let DB = JSON.parse(localStorage.getItem('NEXTCOM_FINAL')) || { ordenes: [], inventario: [], finanzas: [] };
 
-        // --- INICIALIZACIÓN ---
-        window.onload = () => {
-            updateDashboard();
-            lucide.createIcons();
-        };
+        window.onload = () => { updateDashboard(); lucide.createIcons(); };
 
-        // --- NAVEGACIÓN ---
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.getElementById('view-' + id).classList.add('active');
             event.currentTarget.classList.add('active');
-            
             if(id === 'dash') updateDashboard();
-            if(id === 'inventario') renderInventario();
-            if(id === 'finanzas') renderFinanzas();
             lucide.createIcons();
         }
 
@@ -209,11 +189,10 @@
             if(mode === 'list') renderLabTable();
         }
 
-        // --- LÓGICA LABORATORIO (ÓRDENES) ---
         function handleOrden() {
             const editId = document.getElementById('tk-id-edit').value;
             const data = {
-                id: editId || 'NX-' + (Math.floor(Math.random() * 9000) + 1000),
+                id: editId || 'NX-' + (Math.floor(Math.random()*9000)+1000),
                 fecha: new Date().toLocaleDateString(),
                 cliente: document.getElementById('tk-cliente').value,
                 tel: document.getElementById('tk-tel').value,
@@ -222,101 +201,40 @@
                 modelo: document.getElementById('tk-modelo').value,
                 pin: document.getElementById('tk-pin').value,
                 costo: parseFloat(document.getElementById('tk-costo').value) || 0,
-                estado: DB.ordenes.find(o => o.id === editId)?.estado || 'PENDIENTE'
+                estado: 'PENDIENTE'
             };
-
-            if(!data.cliente || !data.modelo) return notify("Nombre y Modelo son obligatorios", "error");
-
+            if(!data.cliente) return alert("Falta Cliente");
             if(editId) {
                 const idx = DB.ordenes.findIndex(o => o.id === editId);
                 DB.ordenes[idx] = data;
-                notify("Orden Actualizada Correctamente");
             } else {
                 DB.ordenes.unshift(data);
-                DB.finanzas.unshift({ fecha: data.fecha, desc: `Ingreso Orden ${data.id}`, tipo: 'IN', monto: data.costo });
-                notify("Nueva Orden Registrada");
             }
-
-            saveDB();
-            clearLabForm();
+            save();
+            clearForm();
             toggleTaller('list');
         }
 
         function toggleEstado(id) {
-            const index = DB.ordenes.findIndex(o => o.id === id);
-            if(index !== -1) {
-                DB.ordenes[index].estado = DB.ordenes[index].estado === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
-                saveDB();
-                renderLabTable();
-                updateDashboard();
-                notify(`Estado de ${id} actualizado`);
-            }
-        }
-
-        function editOrden(id) {
             const o = DB.ordenes.find(x => x.id === id);
-            document.getElementById('tk-id-edit').value = o.id;
-            document.getElementById('tk-cliente').value = o.cliente;
-            document.getElementById('tk-tel').value = o.tel;
-            document.getElementById('tk-falla').value = o.falla;
-            document.getElementById('tk-marca').value = o.marca;
-            document.getElementById('tk-modelo').value = o.modelo;
-            document.getElementById('tk-pin').value = o.pin;
-            document.getElementById('tk-costo').value = o.costo;
-            document.getElementById('tk-btn-save').innerHTML = '<i data-lucide="refresh-cw"></i> ACTUALIZAR DATOS';
-            toggleTaller('form');
-            lucide.createIcons();
+            o.estado = o.estado === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
+            save();
+            renderLabTable();
+            updateDashboard();
         }
 
-        function deleteOrden(id) {
-            if(confirm("¿Seguro de borrar permanentemente esta orden?")) {
-                DB.ordenes = DB.ordenes.filter(o => o.id !== id);
-                saveDB();
-                renderLabTable();
-                notify("Orden eliminada", "warning");
-            }
-        }
-
-        // --- LÓGICA INVENTARIO ---
-        function handleInv() {
-            const item = {
-                id: Date.now(),
-                tipo: document.getElementById('inv-tipo').value,
-                nombre: document.getElementById('inv-nombre').value,
-                stock: parseInt(document.getElementById('inv-stock').value) || 0,
-                precio: parseFloat(document.getElementById('inv-precio').value) || 0
-            };
-            if(!item.nombre) return;
-            DB.inventario.unshift(item);
-            saveDB();
-            renderInventario();
-            notify("Stock Actualizado");
-        }
-
-        function modStock(id, val) {
-            const i = DB.inventario.find(x => x.id === id);
-            i.stock = Math.max(0, i.stock + val);
-            saveDB();
-            renderInventario();
-        }
-
-        // --- RENDERS ---
-        function updateDashboard() {
-            const total = DB.ordenes.reduce((acc, o) => acc + o.costo, 0);
-            document.getElementById('st-ingresos').innerText = `$${total.toFixed(2)}`;
-            document.getElementById('st-activas').innerText = DB.ordenes.filter(o => o.estado === 'PENDIENTE').length;
-            document.getElementById('st-balance').innerText = `$${total.toFixed(2)}`;
+        // FUNCIÓN DESCARGAR/GENERAR TICKET
+        function printTicket(id) {
+            const o = DB.ordenes.find(x => x.id === id);
+            document.getElementById('tick-id').innerText = `ID: ${o.id}`;
+            document.getElementById('tick-fecha').innerText = o.fecha;
+            document.getElementById('tick-cliente').innerText = o.cliente;
+            document.getElementById('tick-tel').innerText = o.tel;
+            document.getElementById('tick-equipo').innerText = `${o.marca} ${o.modelo}`;
+            document.getElementById('tick-falla').innerText = o.falla;
+            document.getElementById('tick-total').innerText = `$${o.costo.toFixed(2)}`;
             
-            const tbody = document.getElementById('table-dash').querySelector('tbody');
-            tbody.innerHTML = DB.ordenes.slice(0, 8).map(o => `
-                <tr>
-                    <td><b>${o.id}</b></td>
-                    <td>${o.cliente}</td>
-                    <td>${o.marca} ${o.modelo}</td>
-                    <td style="color:var(--success); font-weight:800;">$${o.costo}</td>
-                    <td><span onclick="toggleEstado('${o.id}')" class="badge ${o.estado === 'PENDIENTE' ? 'badge-pending' : 'badge-done'}">${o.estado}</span></td>
-                </tr>
-            `).join('');
+            window.print(); // Esto abrirá el menú de impresión, donde puedes elegir "Guardar como PDF" para enviar por WhatsApp.
         }
 
         function renderLabTable() {
@@ -325,71 +243,35 @@
                 <tr>
                     <td><b>${o.id}</b></td>
                     <td>${o.cliente}</td>
-                    <td>${o.modelo}</td>
-                    <td><span onclick="toggleEstado('${o.id}')" class="badge ${o.estado === 'PENDIENTE' ? 'badge-pending' : 'badge-done'}">${o.estado}</span></td>
+                    <td><span onclick="toggleEstado('${o.id}')" class="badge ${o.estado==='PENDIENTE'?'badge-pending':'badge-done'}">${o.estado}</span></td>
                     <td>
-                        <button onclick="editOrden('${o.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer;"><i data-lucide="edit-3" style="width:18px"></i></button>
-                        <button onclick="deleteOrden('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; margin-left:15px;"><i data-lucide="trash-2" style="width:18px"></i></button>
+                        <button onclick="printTicket('${o.id}')" style="background:none; border:none; color:var(--success); cursor:pointer;"><i data-lucide="printer"></i></button>
+                        <button onclick="deleteOrden('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; margin-left:10px;"><i data-lucide="trash-2"></i></button>
                     </td>
                 </tr>
             `).join('');
             lucide.createIcons();
         }
 
-        function renderInventario() {
-            const cont = document.getElementById('inv-render');
-            cont.innerHTML = DB.inventario.map(i => `
-                <div class="stat-card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div>
-                        <p style="font-size:9px; color:var(--accent); font-weight:800;">${i.tipo}</p>
-                        <h4 style="margin:5px 0;">${i.nombre}</h4>
-                        <p style="color:var(--success); font-weight:800;">$${i.precio}</p>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:15px; background:#111; padding:10px; border-radius:12px;">
-                        <button onclick="modStock(${i.id}, -1)" style="background:none; border:none; color:#fff; cursor:pointer;">-</button>
-                        <span style="font-weight:800; min-width:20px; text-align:center;">${i.stock}</span>
-                        <button onclick="modStock(${i.id}, 1)" style="background:none; border:none; color:#fff; cursor:pointer;">+</button>
-                    </div>
-                </div>
+        function deleteOrden(id) {
+            if(confirm("Eliminar?")) { DB.ordenes = DB.ordenes.filter(o => o.id !== id); save(); renderLabTable(); }
+        }
+
+        function updateDashboard() {
+            const total = DB.ordenes.reduce((a, b) => a + b.costo, 0);
+            document.getElementById('st-ingresos').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('st-activas').innerText = DB.ordenes.filter(o => o.estado === 'PENDIENTE').length;
+            document.getElementById('st-balance').innerText = `$${total.toFixed(2)}`;
+            
+            document.getElementById('table-dash').querySelector('tbody').innerHTML = DB.ordenes.slice(0,5).map(o => `
+                <tr><td>${o.id}</td><td>${o.cliente}</td><td>${o.modelo}</td><td>${o.estado}</td></tr>
             `).join('');
         }
 
-        function renderFinanzas() {
-            const tbody = document.getElementById('table-finanzas').querySelector('tbody');
-            tbody.innerHTML = DB.finanzas.map(f => `
-                <tr>
-                    <td>${f.fecha}</td>
-                    <td>${f.desc}</td>
-                    <td style="color:var(--success); font-weight:800;">${f.tipo}</td>
-                    <td>$${f.monto.toFixed(2)}</td>
-                </tr>
-            `).join('');
-        }
-
-        // --- UTILIDADES ---
-        function saveDB() { localStorage.setItem('NEXTCOM_DB', JSON.stringify(DB)); }
-        
-        function clearLabForm() {
-            ['tk-id-edit','tk-cliente','tk-tel','tk-falla','tk-marca','tk-modelo','tk-pin'].forEach(i => document.getElementById(i).value = '');
+        function save() { localStorage.setItem('NEXTCOM_FINAL', JSON.stringify(DB)); }
+        function clearForm() { 
+            ['tk-id-edit','tk-cliente','tk-tel','tk-falla','tk-marca','tk-modelo','tk-pin'].forEach(i=>document.getElementById(i).value='');
             document.getElementById('tk-costo').value = 0;
-            document.getElementById('tk-btn-save').innerHTML = '<i data-lucide="save"></i> GUARDAR ORDEN DE SERVICIO';
-        }
-
-        function notify(msg, type = "success") {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-triangle'}"></i> ${msg}`;
-            document.getElementById('toast-container').appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => toast.remove(), 3000);
-        }
-
-        function searchDash() {
-            const s = document.getElementById('dash-search').value.toLowerCase();
-            const rows = document.getElementById('table-dash').querySelectorAll('tbody tr');
-            rows.forEach(r => {
-                r.style.display = r.innerText.toLowerCase().includes(s) ? '' : 'none';
-            });
         }
     </script>
 </body>

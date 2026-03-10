@@ -3,72 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM // Enterprise Workshop OS</title>
+    <title>NEXTCOM // Enterprise Workshop & Inventory OS</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Courier+Prime&display=swap');
+        
         :root {
-            --bg-body: #050505; --bg-card: #0c0c0c; --accent: #2563eb;
-            --border: rgba(255, 255, 255, 0.08); --text-main: #ffffff;
-            --text-dim: #71717a; --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+            --bg-body: #050505;
+            --bg-card: #0c0c0c;
+            --accent: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.2);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-dim: #71717a;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --ticket-bg: #ffffff;
         }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        aside { width: 260px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; }
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; color: var(--text-dim); border: none; background: none; width: 100%; cursor: pointer; font-weight: 600; margin-bottom: 8px; transition: 0.3s; }
-        .nav-link.active { color: #fff; background: var(--accent); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); }
-        
-        main { flex: 1; overflow-y: auto; padding: 2.5rem; position: relative; }
-        .view { display: none; animation: fadeIn 0.4s ease forwards; }
-        .view.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        .glass-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; margin-bottom: 2rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2rem; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; }
-        
-        input, textarea, select { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; font-family: inherit; }
-        .btn-primary { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; }
-        .btn-secondary { background: #1a1a1a; color: #fff; border: 1px solid var(--border); padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; }
-
-        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
-        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 14px; }
-
-        .badge { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-
-        /* ESTILOS TICKET SUPERMERCADO */
-        #ticket-print { 
-            display: none; width: 300px; background: #fff; color: #000; padding: 20px; 
-            font-family: 'Courier Prime', monospace; font-size: 12px; line-height: 1.2;
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
         }
-        .t-center { text-align: center; }
-        .t-bold { font-weight: bold; }
-        .t-line { border-bottom: 1px dashed #000; margin: 10px 0; }
-        .t-terms { font-size: 9px; margin-top: 15px; text-align: justify; }
 
-        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; }
-        .toast { background: #fff; color: #000; padding: 15px 25px; border-radius: 15px; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        /* --- SIDEBAR NAVIGATION --- */
+        aside { 
+            width: 280px; 
+            background: #000; 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            padding: 2rem;
+            z-index: 100;
+        }
+
+        .brand { margin-bottom: 3rem; }
+        .brand h2 { font-weight: 800; font-style: italic; font-size: 24px; letter-spacing: -1px; }
+        .brand p { font-size: 9px; color: var(--accent); letter-spacing: 3px; font-weight: 800; text-transform: uppercase; }
+
+        nav { flex: 1; }
+        .nav-link { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            padding: 14px; 
+            border-radius: 12px; 
+            color: var(--text-dim); 
+            border: none; 
+            background: none; 
+            width: 100%; 
+            cursor: pointer; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .nav-link.active { 
+            color: #fff; 
+            background: var(--accent); 
+            box-shadow: 0 10px 20px var(--accent-glow); 
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        main { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 2.5rem; 
+            position: relative;
+            background: radial-gradient(circle at top right, #0a0a0a, #050505);
+        }
+
+        .view { display: none; animation: viewFade 0.5s ease forwards; }
+        .view.active { display: block; }
+        @keyframes viewFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- UI COMPONENTS --- */
+        .glass-panel { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            padding: 2rem; 
+            border-radius: 28px; 
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+        }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2.5rem; }
+        .stat-card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            padding: 1.5rem; 
+            border-radius: 22px; 
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .stat-label { font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px; text-transform: uppercase; }
+        .stat-value { font-size: 24px; font-weight: 800; }
+
+        /* --- FORMS & INPUTS --- */
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-size: 11px; font-weight: 800; color: var(--text-dim); margin-bottom: 8px; margin-left: 5px; }
         
+        input, textarea, select { 
+            background: #121212; 
+            border: 1px solid var(--border); 
+            border-radius: 14px; 
+            padding: 14px; 
+            color: #fff; 
+            width: 100%; 
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); outline: none; background: #161616; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+
+        .btn-primary { 
+            background: var(--accent); 
+            color: #fff; 
+            border: none; 
+            padding: 16px 28px; 
+            border-radius: 14px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            justify-content: center; 
+            transition: 0.3s;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: scale(0.98); }
+        
+        .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-dim); transition: 0.2s; }
+        .btn-icon:hover { color: #fff; }
+
+        /* --- TABLES --- */
+        .table-container { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            overflow: hidden; 
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+        tr:hover td { background: rgba(255,255,255,0.01); }
+
+        .badge { 
+            padding: 6px 14px; 
+            border-radius: 100px; 
+            font-size: 10px; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            cursor: pointer;
+            display: inline-block;
+        }
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+
+        /* --- INVENTORY GRID & SCROLL --- */
+        .inv-layout { display: grid; grid-template-columns: 1fr 400px; gap: 25px; height: calc(100vh - 250px); }
+        .inv-scroll { 
+            overflow-y: auto; 
+            padding-right: 15px; 
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .inv-scroll::-webkit-scrollbar { width: 6px; }
+        .inv-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .item-card { 
+            background: #0f0f0f; 
+            border: 1px solid var(--border); 
+            padding: 20px; 
+            border-radius: 20px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: 0.3s;
+        }
+        .item-card:hover { border-color: var(--accent); background: #121212; }
+        
+        .stock-control { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            background: #1a1a1a; 
+            padding: 8px 18px; 
+            border-radius: 14px; 
+            border: 1px solid var(--border);
+        }
+        .btn-qty { background: none; border: none; color: #fff; cursor: pointer; font-size: 18px; font-weight: bold; width: 25px; }
+
+        /* --- TICKET THERMAL STYLE --- */
+        #ticket-wrapper { display: none; }
+        .thermal-ticket { 
+            width: 300px; 
+            background: #fff; 
+            color: #000; 
+            padding: 25px; 
+            font-family: 'Courier Prime', monospace; 
+            font-size: 12px; 
+            line-height: 1.3;
+        }
+        .thermal-header { text-align: center; margin-bottom: 15px; }
+        .thermal-divider { border-bottom: 1px dashed #000; margin: 12px 0; }
+        .thermal-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .thermal-footer { font-size: 9px; margin-top: 15px; text-align: justify; border-top: 1px dashed #000; padding-top: 10px; }
+
+        /* --- NOTIFICATIONS --- */
+        #toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10000; }
+        .toast { 
+            background: #fff; 
+            color: #000; 
+            padding: 16px 28px; 
+            border-radius: 18px; 
+            font-weight: 800; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7); 
+            margin-top: 12px; 
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes toastIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
         @media print {
             body * { visibility: hidden; }
-            #ticket-print, #ticket-print * { visibility: visible; }
-            #ticket-print { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+            #ticket-wrapper, #ticket-wrapper * { visibility: visible; }
+            #ticket-wrapper { position: absolute; left: 0; top: 0; width: 300px; display: block; }
         }
     </style>
 </head>
 <body>
 
     <aside>
-        <div style="margin-bottom: 3rem; padding: 1rem;">
-            <h2 style="font-weight: 800; font-style: italic; font-size: 22px;">NEXTCOM</h2>
-            <p style="font-size: 9px; color: var(--accent); letter-spacing: 3px; font-weight: 800;">ENTERPRISE OS</p>
+        <div class="brand">
+            <h2>NEXTCOM</h2>
+            <p>Laboratory System</p>
         </div>
         <nav>
             <button class="nav-link active" onclick="showView('dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
@@ -76,203 +255,468 @@
             <button class="nav-link" onclick="showView('inventario')"><i data-lucide="box"></i> Inventario</button>
             <button class="nav-link" onclick="showView('finanzas')"><i data-lucide="banknote"></i> Finanzas</button>
         </nav>
+        <div style="padding: 10px; border-top: 1px solid var(--border);">
+            <p style="font-size: 10px; color: var(--text-dim);">Versión 10.4.0 Professional</p>
+        </div>
     </aside>
 
     <main>
         <section id="view-dash" class="view active">
-            <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 2rem;">VISTA <span style="color:var(--accent)">GENERAL</span></h1>
+            <header style="margin-bottom: 3rem;">
+                <h1 style="font-size: 3.5rem; font-weight: 800; letter-spacing: -3px;">CENTRAL <span style="color:var(--accent)">DASHBOARD</span></h1>
+                <p style="color:var(--text-dim); font-size: 18px;">Control operativo en tiempo real</p>
+            </header>
+
             <div class="stats-grid">
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">INGRESOS</p><h2 id="st-ingresos">$0.00</h2></div>
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">ACTIVAS</p><h2 id="st-activas">0</h2></div>
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">STOCK</p><h2 id="st-stock">0</h2></div>
-                <div class="stat-card"><p style="font-size: 11px; color: var(--text-dim); font-weight: 800;">BALANCE</p><h2 id="st-balance" style="color: var(--success);">$0.00</h2></div>
+                <div class="stat-card">
+                    <p class="stat-label">Ingresos del Mes</p>
+                    <h2 class="stat-value" id="st-total-cash">$0.00</h2>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Reparaciones Pendientes</p>
+                    <h2 class="stat-value" id="st-pending-count">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Artículos en Stock</p>
+                    <h2 class="stat-value" id="st-stock-count">0</h2>
+                </div>
+                <div class="stat-card" style="border-bottom: 4px solid var(--success);">
+                    <p class="stat-label">Eficiencia</p>
+                    <h2 class="stat-value" style="color:var(--success)">98.2%</h2>
+                </div>
             </div>
-            <div class="table-container">
-                <table id="table-dash">
-                    <thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+
+            <div class="glass-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-weight: 800; letter-spacing: 1px;">ÚLTIMOS MOVIMIENTOS</h3>
+                    <input type="text" id="global-search" placeholder="Filtrar por nombre o ID..." style="width: 300px; padding: 10px 20px; border-radius: 30px;" onkeyup="filterTable('table-dash-body')">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>ID</th><th>Cliente</th><th>Dispositivo</th><th>Presupuesto</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody id="table-dash-body"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <section id="view-taller" class="view">
-            <div style="display:flex; justify-content: space-between; margin-bottom: 2rem;">
-                <h1 style="font-size: 2.5rem; font-weight: 800;">LABORATORIO</h1>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn-secondary" onclick="toggleTaller('form')">NUEVA ORDEN</button>
-                    <button class="btn-secondary" onclick="toggleTaller('list')">GESTIONAR LISTA</button>
+            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800;">LABORATORIO <span style="color:var(--accent)">& REPARACIÓN</span></h1>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn-primary" onclick="switchLabTab('form')"><i data-lucide="plus-circle"></i> NUEVA ORDEN</button>
+                    <button class="btn-secondary" onclick="switchLabTab('list')"><i data-lucide="list"></i> HISTORIAL COMPLETO</button>
                 </div>
-            </div>
+            </header>
 
-            <div id="lab-form" class="glass-panel">
-                <input type="hidden" id="tk-id-edit">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                    <div>
-                        <input type="text" id="tk-cliente" placeholder="Nombre Completo" style="margin-bottom: 10px;">
-                        <input type="text" id="tk-tel" placeholder="WhatsApp (Ej: 503...)" style="margin-bottom: 10px;">
-                        <textarea id="tk-falla" rows="6" placeholder="Falla reportada..."></textarea>
-                    </div>
-                    <div>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="text" id="tk-marca" placeholder="Marca">
-                            <input type="text" id="tk-modelo" placeholder="Modelo">
+            <div id="lab-form-container">
+                <div class="glass-panel">
+                    <input type="hidden" id="edit-mode-id">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                        <div>
+                            <h4 style="color:var(--accent); margin-bottom: 20px; font-size: 12px; font-weight: 800;">CLIENTE & CONTACTO</h4>
+                            <div class="input-group">
+                                <label>NOMBRE DEL CLIENTE</label>
+                                <input type="text" id="lab-cliente" placeholder="Ej: Juan Pérez">
+                            </div>
+                            <div class="input-group">
+                                <label>TELÉFONO / WHATSAPP</label>
+                                <input type="text" id="lab-tel" placeholder="Ej: 503 7788-9900">
+                            </div>
+                            <div class="input-group">
+                                <label>DESCRIPCIÓN DE LA FALLA</label>
+                                <textarea id="lab-falla" rows="5" placeholder="El equipo no enciende, pantalla rota..."></textarea>
+                            </div>
                         </div>
-                        <input type="text" id="tk-pin" placeholder="PIN / Acceso" style="margin-bottom: 10px;">
-                        <label style="font-size: 11px; font-weight: 800; color: var(--text-dim);">COSTO ($)</label>
-                        <input type="number" id="tk-costo" value="0" style="font-size: 2rem; color: var(--success); font-weight: 800; background: none; border: none;">
+                        <div>
+                            <h4 style="color:var(--accent); margin-bottom: 20px; font-size: 12px; font-weight: 800;">INFORMACIÓN TÉCNICA</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div class="input-group">
+                                    <label>MARCA</label>
+                                    <input type="text" id="lab-marca" placeholder="Samsung">
+                                </div>
+                                <div class="input-group">
+                                    <label>MODELO</label>
+                                    <input type="text" id="lab-modelo" placeholder="S23 Ultra">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label>PIN / CONTRASEÑA DE ACCESO</label>
+                                <input type="text" id="lab-pin" placeholder="Dejar vacío si no tiene">
+                            </div>
+                            <div class="input-group">
+                                <label>PRESUPUESTO ESTIMADO ($)</label>
+                                <input type="number" id="lab-costo" value="0" style="font-size: 2.5rem; font-weight: 800; color:var(--success); border:none; background:none; padding:0;">
+                            </div>
+                        </div>
                     </div>
+                    <button class="btn-primary" id="btn-save-orden" style="width: 100%; margin-top: 20px; height: 65px; font-size: 18px;" onclick="saveOrden()">
+                        GUARDAR ORDEN DE SERVICIO
+                    </button>
                 </div>
-                <button class="btn-primary" style="width: 100%; margin-top: 20px;" onclick="handleOrden()">GUARDAR ORDEN</button>
             </div>
 
-            <div id="lab-list" style="display: none;" class="table-container">
-                <table id="table-lab-full">
-                    <thead><tr><th>ID</th><th>Cliente</th><th>Estado</th><th>Acciones</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+            <div id="lab-list-container" style="display: none;">
+                <div class="table-container">
+                    <table id="table-lab-full">
+                        <thead>
+                            <tr><th>ID</th><th>Ingreso</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody id="table-lab-body"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <section id="view-inventario" class="view"><h1>STOCK</h1><div id="inv-render"></div></section>
-        <section id="view-finanzas" class="view"><h1>CAJA</h1><div id="table-finanzas"></div></section>
+        <section id="view-inventario" class="view">
+            <header style="margin-bottom: 2.5rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800;">INVENTARIO <span style="color:var(--accent)">ACTIVO</span></h1>
+            </header>
+
+            <div class="inv-layout">
+                <div class="inv-scroll" id="inventory-list-container">
+                    </div>
+
+                <div class="glass-panel" style="height: fit-content; position: sticky; top: 0;">
+                    <h3 style="margin-bottom: 20px; font-size: 14px; letter-spacing: 1px;">AÑADIR ARTÍCULO</h3>
+                    <div class="input-group">
+                        <label>CATEGORÍA</label>
+                        <select id="inv-tipo">
+                            <option value="Repuesto">Repuesto (Pantalla, Pin, etc)</option>
+                            <option value="Accesorio">Accesorio (Cargador, Funda)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>NOMBRE DEL PRODUCTO</label>
+                        <input type="text" id="inv-nombre" placeholder="Nombre completo">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="input-group">
+                            <label>STOCK</label>
+                            <input type="number" id="inv-stock" value="1">
+                        </div>
+                        <div class="input-group">
+                            <label>PRECIO VENTA ($)</label>
+                            <input type="number" id="inv-precio" value="0">
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="width: 100%;" onclick="addInventoryItem()">GUARDAR EN INVENTARIO</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-finanzas" class="view">
+            <header style="margin-bottom: 2.5rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800;">REGISTRO DE <span style="color:var(--success)">CAJA</span></h1>
+            </header>
+            <div class="glass-panel">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr><th>Fecha</th><th>Concepto / Referencia</th><th>Tipo</th><th>Monto</th></tr>
+                        </thead>
+                        <tbody id="table-finanzas-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <div id="ticket-print">
-        <div class="t-center t-bold" style="font-size: 16px;">NEXTCOM SYSTEMS</div>
-        <div class="t-center">Servicio Técnico Profesional</div>
-        <div class="t-center" id="tick-id">ID: 0000</div>
-        <div class="t-line"></div>
-        <div>FECHA: <span id="tick-fecha"></span></div>
-        <div>CLIENTE: <span id="tick-cliente"></span></div>
-        <div>TEL: <span id="tick-tel"></span></div>
-        <div class="t-line"></div>
-        <div class="t-bold">EQUIPO:</div>
-        <div id="tick-equipo"></div>
-        <div class="t-bold" style="margin-top:5px;">FALLA:</div>
-        <div id="tick-falla"></div>
-        <div class="t-line"></div>
-        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
-            <span>TOTAL:</span>
-            <span id="tick-total">$0.00</span>
+    <div id="ticket-wrapper">
+        <div class="thermal-ticket">
+            <div class="thermal-header">
+                <h2 style="font-size: 18px;">NEXTCOM</h2>
+                <p>SERVICIO TÉCNICO ESPECIALIZADO</p>
+                <p id="t-tick-id" style="font-weight: bold; font-size: 14px;"></p>
+            </div>
+            <div class="thermal-divider"></div>
+            <div class="thermal-row"><span>FECHA:</span><span id="t-tick-fecha"></span></div>
+            <div class="thermal-row"><span>CLIENTE:</span><span id="t-tick-cliente"></span></div>
+            <div class="thermal-row"><span>TEL:</span><span id="t-tick-tel"></span></div>
+            <div class="thermal-divider"></div>
+            <div class="thermal-row"><span class="t-bold">EQUIPO:</span><span id="t-tick-equipo"></span></div>
+            <div class="thermal-row"><span class="t-bold">PIN:</span><span id="t-tick-pin"></span></div>
+            <div class="thermal-divider"></div>
+            <div class="t-bold">FALLA REPORTADA:</div>
+            <div id="t-tick-falla" style="margin: 5px 0;"></div>
+            <div class="thermal-divider"></div>
+            <div class="thermal-row" style="font-size: 16px; font-weight: bold;">
+                <span>TOTAL A PAGAR:</span>
+                <span id="t-tick-total"></span>
+            </div>
+            <div class="thermal-footer">
+                TÉRMINOS Y CONDICIONES:<br>
+                1. Equipos mojados no poseen garantía de reparación.<br>
+                2. NEXTCOM no se responsabiliza por pérdida de información.<br>
+                3. Equipos no retirados después de 60 días se declaran en abandono legal.<br>
+                4. La garantía solo cubre la pieza sustituida (30 días).
+            </div>
+            <div class="thermal-divider"></div>
+            <p style="text-align: center; font-weight: bold;">¡GRACIAS POR PREFERIRNOS!</p>
         </div>
-        <div class="t-line"></div>
-        <div class="t-center t-bold">TÉRMINOS Y CONDICIONES</div>
-        <div class="t-terms">
-            * Todo equipo dejado por más de 30 días será declarado en abandono.<br>
-            * No nos hacemos responsables por pérdida de información.<br>
-            * Garantía de 15 días solo por la pieza reparada.<br>
-            * Equipos mojados o golpeados no tienen garantía.
-        </div>
-        <div class="t-line"></div>
-        <div class="t-center t-bold">¡GRACIAS POR SU CONFIANZA!</div>
     </div>
 
     <div id="toast-container"></div>
 
     <script>
-        let DB = JSON.parse(localStorage.getItem('NEXTCOM_FINAL')) || { ordenes: [], inventario: [], finanzas: [] };
+        /* --- CORE DATA ENGINE --- */
+        let NEXTCOM_DB = JSON.parse(localStorage.getItem('NEXTCOM_ULTRA_DB')) || {
+            ordenes: [],
+            inventario: [],
+            finanzas: []
+        };
 
-        window.onload = () => { updateDashboard(); lucide.createIcons(); };
+        function saveToDisk() {
+            localStorage.setItem('NEXTCOM_ULTRA_DB', JSON.stringify(NEXTCOM_DB));
+            refreshAllUI();
+        }
 
-        function showView(id) {
+        /* --- UI CONTROLLER --- */
+        function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById('view-' + id).classList.add('active');
+            
+            document.getElementById('view-' + viewId).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(id === 'dash') updateDashboard();
+            
             lucide.createIcons();
         }
 
-        function toggleTaller(mode) {
-            document.getElementById('lab-form').style.display = mode === 'form' ? 'block' : 'none';
-            document.getElementById('lab-list').style.display = mode === 'list' ? 'block' : 'none';
-            if(mode === 'list') renderLabTable();
+        function switchLabTab(tab) {
+            document.getElementById('lab-form-container').style.display = tab === 'form' ? 'block' : 'none';
+            document.getElementById('lab-list-container').style.display = tab === 'list' ? 'block' : 'none';
         }
 
-        function handleOrden() {
-            const editId = document.getElementById('tk-id-edit').value;
-            const data = {
-                id: editId || 'NX-' + (Math.floor(Math.random()*9000)+1000),
+        /* --- LABORATORIO LOGIC --- */
+        function saveOrden() {
+            const editId = document.getElementById('edit-mode-id').value;
+            
+            const orden = {
+                id: editId || 'NX-' + Math.floor(1000 + Math.random() * 9000),
                 fecha: new Date().toLocaleDateString(),
-                cliente: document.getElementById('tk-cliente').value,
-                tel: document.getElementById('tk-tel').value,
-                falla: document.getElementById('tk-falla').value,
-                marca: document.getElementById('tk-marca').value,
-                modelo: document.getElementById('tk-modelo').value,
-                pin: document.getElementById('tk-pin').value,
-                costo: parseFloat(document.getElementById('tk-costo').value) || 0,
+                cliente: document.getElementById('lab-cliente').value,
+                tel: document.getElementById('lab-tel').value,
+                falla: document.getElementById('lab-falla').value,
+                marca: document.getElementById('lab-marca').value,
+                modelo: document.getElementById('lab-modelo').value,
+                pin: document.getElementById('lab-pin').value,
+                costo: parseFloat(document.getElementById('lab-costo').value) || 0,
                 estado: 'PENDIENTE'
             };
-            if(!data.cliente) return alert("Falta Cliente");
+
+            if(!orden.cliente || !orden.modelo) return notify("Nombre y Modelo son requeridos", "error");
+
             if(editId) {
-                const idx = DB.ordenes.findIndex(o => o.id === editId);
-                DB.ordenes[idx] = data;
+                const idx = NEXTCOM_DB.ordenes.findIndex(o => o.id === editId);
+                NEXTCOM_DB.ordenes[idx] = orden;
+                notify("Orden actualizada correctamente");
             } else {
-                DB.ordenes.unshift(data);
+                NEXTCOM_DB.ordenes.unshift(orden);
+                // Registro financiero automático
+                NEXTCOM_DB.finanzas.unshift({
+                    fecha: orden.fecha,
+                    concepto: `Reparación: ${orden.marca} ${orden.modelo} (ID: ${orden.id})`,
+                    tipo: 'INGRESO',
+                    monto: orden.costo
+                });
+                notify("Nueva orden registrada exitosamente");
             }
-            save();
-            clearForm();
-            toggleTaller('list');
+
+            clearLabForm();
+            saveToDisk();
+            switchLabTab('list');
         }
 
         function toggleEstado(id) {
-            const o = DB.ordenes.find(x => x.id === id);
-            o.estado = o.estado === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
-            save();
-            renderLabTable();
-            updateDashboard();
-        }
-
-        // FUNCIÓN DESCARGAR/GENERAR TICKET
-        function printTicket(id) {
-            const o = DB.ordenes.find(x => x.id === id);
-            document.getElementById('tick-id').innerText = `ID: ${o.id}`;
-            document.getElementById('tick-fecha').innerText = o.fecha;
-            document.getElementById('tick-cliente').innerText = o.cliente;
-            document.getElementById('tick-tel').innerText = o.tel;
-            document.getElementById('tick-equipo').innerText = `${o.marca} ${o.modelo}`;
-            document.getElementById('tick-falla').innerText = o.falla;
-            document.getElementById('tick-total').innerText = `$${o.costo.toFixed(2)}`;
-            
-            window.print(); // Esto abrirá el menú de impresión, donde puedes elegir "Guardar como PDF" para enviar por WhatsApp.
-        }
-
-        function renderLabTable() {
-            const tbody = document.getElementById('table-lab-full').querySelector('tbody');
-            tbody.innerHTML = DB.ordenes.map(o => `
-                <tr>
-                    <td><b>${o.id}</b></td>
-                    <td>${o.cliente}</td>
-                    <td><span onclick="toggleEstado('${o.id}')" class="badge ${o.estado==='PENDIENTE'?'badge-pending':'badge-done'}">${o.estado}</span></td>
-                    <td>
-                        <button onclick="printTicket('${o.id}')" style="background:none; border:none; color:var(--success); cursor:pointer;"><i data-lucide="printer"></i></button>
-                        <button onclick="deleteOrden('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; margin-left:10px;"><i data-lucide="trash-2"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
+            const orden = NEXTCOM_DB.ordenes.find(o => o.id === id);
+            if(orden) {
+                orden.estado = orden.estado === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
+                saveToDisk();
+                notify("Estado de orden actualizado");
+            }
         }
 
         function deleteOrden(id) {
-            if(confirm("Eliminar?")) { DB.ordenes = DB.ordenes.filter(o => o.id !== id); save(); renderLabTable(); }
+            if(confirm("¿Estás seguro de eliminar permanentemente esta orden?")) {
+                NEXTCOM_DB.ordenes = NEXTCOM_DB.ordenes.filter(o => o.id !== id);
+                saveToDisk();
+                notify("Orden eliminada", "warning");
+            }
         }
 
-        function updateDashboard() {
-            const total = DB.ordenes.reduce((a, b) => a + b.costo, 0);
-            document.getElementById('st-ingresos').innerText = `$${total.toFixed(2)}`;
-            document.getElementById('st-activas').innerText = DB.ordenes.filter(o => o.estado === 'PENDIENTE').length;
-            document.getElementById('st-balance').innerText = `$${total.toFixed(2)}`;
+        function prepareEdit(id) {
+            const o = NEXTCOM_DB.ordenes.find(x => x.id === id);
+            document.getElementById('edit-mode-id').value = o.id;
+            document.getElementById('lab-cliente').value = o.cliente;
+            document.getElementById('lab-tel').value = o.tel;
+            document.getElementById('lab-falla').value = o.falla;
+            document.getElementById('lab-marca').value = o.marca;
+            document.getElementById('lab-modelo').value = o.modelo;
+            document.getElementById('lab-pin').value = o.pin;
+            document.getElementById('lab-costo').value = o.costo;
             
-            document.getElementById('table-dash').querySelector('tbody').innerHTML = DB.ordenes.slice(0,5).map(o => `
-                <tr><td>${o.id}</td><td>${o.cliente}</td><td>${o.modelo}</td><td>${o.estado}</td></tr>
-            `).join('');
+            document.getElementById('btn-save-orden').innerHTML = '<i data-lucide="refresh-cw"></i> ACTUALIZAR DATOS DE ORDEN';
+            switchLabTab('form');
+            lucide.createIcons();
         }
 
-        function save() { localStorage.setItem('NEXTCOM_FINAL', JSON.stringify(DB)); }
-        function clearForm() { 
-            ['tk-id-edit','tk-cliente','tk-tel','tk-falla','tk-marca','tk-modelo','tk-pin'].forEach(i=>document.getElementById(i).value='');
-            document.getElementById('tk-costo').value = 0;
+        /* --- INVENTARIO LOGIC --- */
+        function addInventoryItem() {
+            const item = {
+                id: Date.now(),
+                tipo: document.getElementById('inv-tipo').value,
+                nombre: document.getElementById('inv-nombre').value,
+                stock: parseInt(document.getElementById('inv-stock').value) || 0,
+                precio: parseFloat(document.getElementById('inv-precio').value) || 0
+            };
+
+            if(!item.nombre) return notify("Nombre del artículo necesario", "error");
+            
+            NEXTCOM_DB.inventario.unshift(item);
+            saveToDisk();
+            document.getElementById('inv-nombre').value = '';
+            notify("Artículo añadido al inventario");
         }
+
+        function modifyStock(id, delta) {
+            const item = NEXTCOM_DB.inventario.find(i => i.id === id);
+            if(item) {
+                item.stock = Math.max(0, item.stock + delta);
+                saveToDisk();
+            }
+        }
+
+        function deleteInvItem(id) {
+            if(confirm("¿Eliminar del inventario?")) {
+                NEXTCOM_DB.inventario = NEXTCOM_DB.inventario.filter(i => i.id !== id);
+                saveToDisk();
+            }
+        }
+
+        /* --- TICKET SYSTEM --- */
+        function printTicket(id) {
+            const o = NEXTCOM_DB.ordenes.find(x => x.id === id);
+            document.getElementById('t-tick-id').innerText = `ORDEN: ${o.id}`;
+            document.getElementById('t-tick-fecha').innerText = o.fecha;
+            document.getElementById('t-tick-cliente').innerText = o.cliente;
+            document.getElementById('t-tick-tel').innerText = o.tel;
+            document.getElementById('t-tick-equipo').innerText = `${o.marca} ${o.modelo}`;
+            document.getElementById('t-tick-pin').innerText = o.pin || 'SIN CLAVE';
+            document.getElementById('t-tick-falla').innerText = o.falla;
+            document.getElementById('t-tick-total').innerText = `$${o.costo.toFixed(2)}`;
+            
+            window.print();
+        }
+
+        /* --- RENDERING ENGINE --- */
+        function refreshAllUI() {
+            // Stats Dashboard
+            const ingresos = NEXTCOM_DB.finanzas.reduce((acc, curr) => acc + curr.monto, 0);
+            document.getElementById('st-total-cash').innerText = `$${ingresos.toFixed(2)}`;
+            document.getElementById('st-balance').innerText = `$${ingresos.toFixed(2)}`;
+            document.getElementById('st-pending-count').innerText = NEXTCOM_DB.ordenes.filter(o => o.estado === 'PENDIENTE').length;
+            document.getElementById('st-stock-count').innerText = NEXTCOM_DB.inventario.reduce((a, b) => a + b.stock, 0);
+
+            // Table Dashboard
+            const dashTable = document.getElementById('table-dash-body');
+            dashTable.innerHTML = NEXTCOM_DB.ordenes.slice(0, 10).map(o => `
+                <tr>
+                    <td><b>${o.id}</b></td>
+                    <td>${o.cliente}</td>
+                    <td>${o.marca} ${o.modelo}</td>
+                    <td style="color:var(--success); font-weight:800">$${o.costo.toFixed(2)}</td>
+                    <td><span class="badge ${o.estado === 'PENDIENTE' ? 'badge-pending' : 'badge-done'}" onclick="toggleEstado('${o.id}')">${o.estado}</span></td>
+                </tr>
+            `).join('');
+
+            // Table Lab Full
+            const labTable = document.getElementById('table-lab-body');
+            labTable.innerHTML = NEXTCOM_DB.ordenes.map(o => `
+                <tr>
+                    <td><b>${o.id}</b></td>
+                    <td>${o.fecha}</td>
+                    <td>${o.cliente}</td>
+                    <td>${o.modelo}</td>
+                    <td><span class="badge ${o.estado === 'PENDIENTE' ? 'badge-pending' : 'badge-done'}" onclick="toggleEstado('${o.id}')">${o.estado}</span></td>
+                    <td>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-icon" onclick="printTicket('${o.id}')"><i data-lucide="printer" style="width:18px"></i></button>
+                            <button class="btn-icon" onclick="prepareEdit('${o.id}')" style="color:var(--accent)"><i data-lucide="edit-3" style="width:18px"></i></button>
+                            <button class="btn-icon" onclick="deleteOrden('${o.id}')" style="color:var(--danger)"><i data-lucide="trash-2" style="width:18px"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Inventory List
+            const invContainer = document.getElementById('inventory-list-container');
+            invContainer.innerHTML = NEXTCOM_DB.inventario.map(i => `
+                <div class="item-card">
+                    <div>
+                        <span style="font-size:10px; color:var(--accent); font-weight:800; text-transform:uppercase;">${i.tipo}</span>
+                        <h4 style="margin:5px 0;">${i.nombre}</h4>
+                        <p style="color:var(--success); font-weight:800;">$${i.precio.toFixed(2)}</p>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        <div class="stock-control">
+                            <button class="btn-qty" onclick="modifyStock(${i.id}, -1)">-</button>
+                            <span style="min-width:30px; text-align:center; font-weight:800;">${i.stock}</span>
+                            <button class="btn-qty" onclick="modifyStock(${i.id}, 1)">+</button>
+                        </div>
+                        <button class="btn-icon" onclick="deleteInvItem(${i.id})" style="color:var(--danger)"><i data-lucide="x-circle"></i></button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Finanzas Table
+            const finTable = document.getElementById('table-finanzas-body');
+            finTable.innerHTML = NEXTCOM_DB.finanzas.map(f => `
+                <tr>
+                    <td>${f.fecha}</td>
+                    <td>${f.concepto}</td>
+                    <td><span style="color:var(--success); font-weight:800;">${f.tipo}</span></td>
+                    <td style="font-weight:800;">$${f.monto.toFixed(2)}</td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        /* --- UTILS --- */
+        function clearLabForm() {
+            document.getElementById('edit-mode-id').value = '';
+            document.getElementById('lab-cliente').value = '';
+            document.getElementById('lab-tel').value = '';
+            document.getElementById('lab-falla').value = '';
+            document.getElementById('lab-marca').value = '';
+            document.getElementById('lab-modelo').value = '';
+            document.getElementById('lab-pin').value = '';
+            document.getElementById('lab-costo').value = 0;
+            document.getElementById('btn-save-orden').innerHTML = 'GUARDAR ORDEN DE SERVICIO';
+        }
+
+        function notify(msg, type = "success") {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const icon = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-octagon' : 'alert-triangle');
+            toast.innerHTML = `<i data-lucide="${icon}"></i> <span>${msg}</span>`;
+            document.getElementById('toast-container').appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
+        }
+
+        function filterTable(tbodyId) {
+            const filter = document.getElementById('global-search').value.toLowerCase();
+            const rows = document.getElementById(tbodyId).getElementsByTagName('tr');
+            for (let row of rows) {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+            }
+        }
+
+        // Carga inicial
+        window.onload = refreshAllUI;
     </script>
 </body>
 </html>

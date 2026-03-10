@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM // Workshop & Inventory OS</title>
+    <title>NEXTCOM // Enterprise OS v9</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -11,228 +11,313 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
         :root {
             --bg-body: #050505; --bg-card: #0c0c0c; --accent: #2563eb;
-            --accent-glow: rgba(37, 99, 235, 0.2); --border: rgba(255, 255, 255, 0.06);
+            --accent-glow: rgba(37, 99, 235, 0.2); --border: rgba(255, 255, 255, 0.08);
             --text-main: #ffffff; --text-dim: #71717a; --success: #10b981;
             --danger: #ef4444; --warning: #f59e0b;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
+        /* Sidebar */
         aside { width: 260px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; }
-        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; color: var(--text-dim); border: none; background: none; width: 100%; cursor: pointer; font-weight: 600; margin-bottom: 5px; }
-        .nav-link.active { color: #fff; background: var(--accent); }
-        
-        main { flex: 1; overflow-y: auto; padding: 2rem; }
-        .view { display: none; animation: fadeIn 0.3s ease; }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; color: var(--text-dim); border: none; background: none; width: 100%; cursor: pointer; font-weight: 600; margin-bottom: 5px; transition: 0.2s; }
+        .nav-link.active { color: #fff; background: var(--accent); box-shadow: 0 10px 20px var(--accent-glow); }
+        .nav-link:hover:not(.active) { background: rgba(255,255,255,0.05); color: #fff; }
+
+        /* Main Content */
+        main { flex: 1; overflow-y: auto; padding: 2.5rem; }
+        .view { display: none; animation: fadeIn 0.3s ease forwards; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .glass-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; margin-bottom: 1.5rem; }
-        input, select { background: #121212; border: 1px solid var(--border); border-radius: 10px; padding: 12px; color: #fff; width: 100%; }
+        /* UI Elements */
+        .glass-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; margin-bottom: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2.5rem; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 20px; }
         
-        .btn-action { background: var(--accent); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        input, textarea, select { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; font-family: inherit; }
+        input:focus { border-color: var(--accent); outline: none; }
+
+        .btn-action { background: var(--accent); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; transition: 0.2s; }
+        .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        /* Tables */
+        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 13px; }
+
+        /* Inventario Específico */
+        .item-card { background: #0f0f0f; border: 1px solid var(--border); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .stock-ctrl { display: flex; align-items: center; gap: 15px; background: #1a1a1a; padding: 5px 15px; border-radius: 10px; }
         
-        /* Estilos de Inventario */
-        .inv-grid { display: grid; grid-template-columns: 1fr 350px; gap: 20px; height: calc(100vh - 180px); }
-        .scroll-area { overflow-y: auto; padding-right: 10px; }
-        .scroll-area::-webkit-scrollbar { width: 4px; }
-        .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .status-badge { padding: 6px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
 
-        .item-card { background: #0f0f0f; border: 1px solid var(--border); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-        .item-card:hover { border-color: var(--accent); }
-        .stock-control { display: flex; align-items: center; gap: 15px; background: #1a1a1a; padding: 5px 15px; border-radius: 10px; }
-        .btn-qty { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 18px; font-weight: 800; }
-        .btn-qty:hover { color: #fff; }
-
-        .badge { font-size: 9px; padding: 3px 8px; border-radius: 5px; font-weight: 800; text-transform: uppercase; }
-        .badge-repuesto { background: rgba(37, 99, 235, 0.1); color: var(--accent); }
-        .badge-producto { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
-        .toast { background: #fff; color: #000; padding: 12px 20px; border-radius: 10px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast { background: #fff; color: #000; padding: 12px 24px; border-radius: 12px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
     <aside>
-        <div style="margin-bottom: 2rem; padding: 10px;">
-            <h2 style="font-weight: 800; font-style: italic;">NEXTCOM</h2>
-            <p style="font-size: 9px; color: var(--accent); font-weight: 800; letter-spacing: 1px;">INVENTORY SYSTEM</p>
+        <div style="margin-bottom: 3rem; padding: 1rem;">
+            <h2 style="font-weight: 800; font-style: italic; letter-spacing: -1px;">NEXTCOM</h2>
+            <p style="font-size: 8px; color: var(--accent); letter-spacing: 2px; font-weight: 800;">SYSTEMS OS</p>
         </div>
         <nav>
-            <button class="nav-link" onclick="showView('dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
+            <button class="nav-link active" onclick="showView('dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
             <button class="nav-link" onclick="showView('taller')"><i data-lucide="wrench"></i> Laboratorio</button>
-            <button class="nav-link active" onclick="showView('inventario')"><i data-lucide="box"></i> Inventario</button>
+            <button class="nav-link" onclick="showView('inventario')"><i data-lucide="box"></i> Inventario</button>
             <button class="nav-link" onclick="showView('finanzas')"><i data-lucide="banknote"></i> Finanzas</button>
         </nav>
     </aside>
 
     <main>
-        <section id="view-inventario" class="view active">
-            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem;">CONTROL DE <span style="color:var(--accent)">STOCK</span></h1>
-            
-            <div class="inv-grid">
-                <div class="scroll-area" id="inv-container">
+        <section id="view-dash" class="view active">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem;">VISTA <span style="color:var(--accent)">GENERAL</span></h1>
+            <div class="stats-grid">
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">INGRESOS</p><h2 id="d-ingresos">$0.00</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">EN TALLER</p><h2 id="d-taller">0</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">STOCK TOTAL</p><h2 id="d-stock">0</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">CAJA DISP.</p><h2 id="d-caja">$0.00</h2></div>
+            </div>
+            <div class="table-container">
+                <div style="padding: 1.5rem; font-weight: 800; font-size: 12px;">ÚLTIMAS REPARACIONES</div>
+                <table id="table-dash">
+                    <thead><tr><th>ID</th><th>Equipo</th><th>Cliente</th><th>Estado</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-taller" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800;">LABORATORIO</h1>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-action" onclick="switchTab('t-form')">+ NUEVA ORDEN</button>
+                    <button class="btn-action" style="background:#222" onclick="switchTab('t-list')">HISTORIAL</button>
+                </div>
+            </div>
+
+            <div id="t-form" class="glass-panel">
+                <input type="hidden" id="tk-id">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <input type="text" id="tk-cliente" placeholder="Nombre del cliente" style="margin-bottom: 15px;">
+                        <input type="text" id="tk-tel" placeholder="Teléfono" style="margin-bottom: 15px;">
+                        <textarea id="tk-falla" rows="5" placeholder="Descripción de la falla..."></textarea>
                     </div>
-
-                <div class="glass-panel" style="height: fit-content; position: sticky; top: 0;">
-                    <h3 style="margin-bottom: 20px; font-size: 14px; letter-spacing: 1px;">NUEVO ITEM</h3>
-                    <input type="hidden" id="inv-edit-id">
-                    
-                    <label style="font-size: 10px; color: var(--text-dim);">CATEGORÍA</label>
-                    <select id="inv-tipo" style="margin: 10px 0 20px 0;">
-                        <option value="Repuesto">Repuesto (Pantallas, Pines, etc)</option>
-                        <option value="Producto">Producto (Cables, Fundas, etc)</option>
-                    </select>
-
-                    <label style="font-size: 10px; color: var(--text-dim);">NOMBRE DEL ARTÍCULO</label>
-                    <input type="text" id="inv-nombre" placeholder="Ej: Pantalla iPhone 13 OLED" style="margin: 10px 0 20px 0;">
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                        <div>
-                            <label style="font-size: 10px; color: var(--text-dim);">STOCK INICIAL</label>
-                            <input type="number" id="inv-stock" value="1" style="margin-top: 10px;">
+                    <div>
+                        <div style="display:flex; gap:10px; margin-bottom:15px;">
+                            <input type="text" id="tk-marca" placeholder="Marca">
+                            <input type="text" id="tk-modelo" placeholder="Modelo">
                         </div>
-                        <div>
-                            <label style="font-size: 10px; color: var(--text-dim);">PRECIO ($)</label>
-                            <input type="number" id="inv-precio" value="0" style="margin-top: 10px;">
-                        </div>
+                        <input type="text" id="tk-pin" placeholder="PIN / Contraseña" style="margin-bottom: 15px;">
+                        <label style="font-size: 10px; font-weight: 800;">COSTO DE REPARACIÓN ($)</label>
+                        <input type="number" id="tk-costo" value="0" style="font-size: 2rem; color: var(--success); font-weight: 800; background: none; border: none;">
                     </div>
+                </div>
+                <button class="btn-action" style="width: 100%; margin-top: 20px;" id="tk-btn" onclick="saveOrden()">GUARDAR ORDEN</button>
+            </div>
 
-                    <button class="btn-action" style="width: 100%;" onclick="guardarInventario()">
-                        <i data-lucide="save"></i> GUARDAR EN SISTEMA
-                    </button>
+            <div id="t-list" style="display: none;" class="table-container">
+                <table id="table-lab">
+                    <thead><tr><th>ID</th><th>Equipo</th><th>Cliente</th><th>Estado</th><th>Acciones</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-inventario" class="view">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem;">INVENTARIO</h1>
+            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+                <div id="inv-list" style="overflow-y: auto; max-height: 60vh;"></div>
+                <div class="glass-panel">
+                    <h3 style="margin-bottom: 15px; font-size: 12px;">NUEVO ARTÍCULO</h3>
+                    <input type="hidden" id="inv-id">
+                    <select id="inv-tipo" style="margin-bottom: 15px;"><option>Repuesto</option><option>Producto</option></select>
+                    <input type="text" id="inv-nombre" placeholder="Nombre" style="margin-bottom: 15px;">
+                    <input type="number" id="inv-precio" placeholder="Precio ($)" style="margin-bottom: 15px;">
+                    <input type="number" id="inv-stock" placeholder="Stock Inicial" style="margin-bottom: 15px;">
+                    <button class="btn-action" style="width: 100%;" onclick="saveInv()">GUARDAR ITEM</button>
                 </div>
             </div>
         </section>
 
-        <section id="view-dash" class="view"><h1>DASHBOARD</h1></section>
-        <section id="view-taller" class="view"><h1>LABORATORIO</h1></section>
-        <section id="view-finanzas" class="view"><h1>FINANZAS</h1></section>
+        <section id="view-finanzas" class="view">
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem;">FINANZAS</h1>
+            <div class="table-container">
+                <table id="table-fin">
+                    <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
     <div id="toast-container"></div>
 
     <script>
-        // Inicializar DB
-        let DATA = JSON.parse(localStorage.getItem('nextcom_db_v8')) || {
-            ordenes: [], 
-            finanzas: { ingresos: 0, movimientos: [] }, 
-            inventario: [] 
+        let DATA = JSON.parse(localStorage.getItem('nextcom_v9_db')) || {
+            ordenes: [], inventario: [], finanzas: []
         };
 
-        window.onload = () => { 
-            renderInventario(); 
-            lucide.createIcons(); 
-        };
+        window.onload = () => { updateUI(); lucide.createIcons(); };
 
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.getElementById('view-' + id).classList.add('active');
             event.currentTarget.classList.add('active');
-            if(id === 'inventario') renderInventario();
+            updateUI();
         }
 
-        // --- LÓGICA DE INVENTARIO ---
+        function switchTab(id) {
+            document.getElementById('t-form').style.display = id === 't-form' ? 'block' : 'none';
+            document.getElementById('t-list').style.display = id === 't-list' ? 'block' : 'none';
+        }
 
-        function guardarInventario() {
-            const id = document.getElementById('inv-edit-id').value;
-            const nuevoItem = {
-                id: id || 'ITM-' + Date.now(),
-                tipo: document.getElementById('inv-tipo').value,
-                nombre: document.getElementById('inv-nombre').value,
-                stock: parseInt(document.getElementById('inv-stock').value) || 0,
-                precio: parseFloat(document.getElementById('inv-precio').value) || 0
+        // --- LÓGICA LABORATORIO ---
+        function saveOrden() {
+            const id = document.getElementById('tk-id').value;
+            const orden = {
+                id: id || 'NX' + (DATA.ordenes.length + 101),
+                cliente: document.getElementById('tk-cliente').value,
+                tel: document.getElementById('tk-tel').value,
+                falla: document.getElementById('tk-falla').value,
+                marca: document.getElementById('tk-marca').value,
+                modelo: document.getElementById('tk-modelo').value,
+                pin: document.getElementById('tk-pin').value,
+                costo: parseFloat(document.getElementById('tk-costo').value) || 0,
+                estado: 'PENDIENTE',
+                fecha: new Date().toLocaleDateString()
             };
 
-            if(!nuevoItem.nombre) return notify("Escribe un nombre", "error");
+            if(!orden.cliente || !orden.modelo) return notify("Faltan datos", "error");
 
             if(id) {
-                const idx = DATA.inventario.findIndex(i => i.id === id);
-                DATA.inventario[idx] = nuevoItem;
-                notify("Item actualizado");
+                const idx = DATA.ordenes.findIndex(o => o.id === id);
+                DATA.ordenes[idx] = orden;
             } else {
-                DATA.inventario.unshift(nuevoItem);
-                notify("Item guardado");
+                DATA.ordenes.unshift(orden);
+                DATA.finanzas.unshift({ fecha: orden.fecha, concepto: `Ingreso Orden ${orden.id}`, monto: orden.costo });
             }
 
             save();
-            clearInvForm();
-            renderInventario();
+            clearForm();
+            switchTab('t-list');
+            notify("¡Orden Guardada!");
         }
 
-        function changeQty(id, delta) {
-            const item = DATA.inventario.find(i => i.id === id);
-            if(item) {
-                item.stock = Math.max(0, item.stock + delta);
+        function editOrden(id) {
+            const o = DATA.ordenes.find(x => x.id === id);
+            document.getElementById('tk-id').value = o.id;
+            document.getElementById('tk-cliente').value = o.cliente;
+            document.getElementById('tk-falla').value = o.falla;
+            document.getElementById('tk-marca').value = o.marca;
+            document.getElementById('tk-modelo').value = o.modelo;
+            document.getElementById('tk-costo').value = o.costo;
+            document.getElementById('tk-btn').innerText = "ACTUALIZAR ORDEN";
+            switchTab('t-form');
+        }
+
+        function delOrden(id) {
+            if(confirm("¿Eliminar orden?")) {
+                DATA.ordenes = DATA.ordenes.filter(x => x.id !== id);
                 save();
-                renderInventario();
+                notify("Orden eliminada", "warning");
             }
         }
 
-        function editItem(id) {
-            const item = DATA.inventario.find(i => i.id === id);
-            document.getElementById('inv-edit-id').value = item.id;
-            document.getElementById('inv-tipo').value = item.tipo;
-            document.getElementById('inv-nombre').value = item.nombre;
-            document.getElementById('inv-stock').value = item.stock;
-            document.getElementById('inv-precio').value = item.precio;
-            document.querySelector('.btn-action').innerHTML = '<i data-lucide="refresh-cw"></i> ACTUALIZAR ITEM';
-            lucide.createIcons();
+        // --- LÓGICA INVENTARIO ---
+        function saveInv() {
+            const item = {
+                id: Date.now(),
+                tipo: document.getElementById('inv-tipo').value,
+                nombre: document.getElementById('inv-nombre').value,
+                precio: parseFloat(document.getElementById('inv-precio').value) || 0,
+                stock: parseInt(document.getElementById('inv-stock').value) || 0
+            };
+            DATA.inventario.unshift(item);
+            save();
+            notify("Item agregado");
         }
 
-        function deleteItem(id) {
-            if(confirm("¿Eliminar este producto?")) {
-                DATA.inventario = DATA.inventario.filter(i => i.id !== id);
-                save();
-                renderInventario();
-                notify("Eliminado", "warning");
-            }
+        function stockPlus(id, qty) {
+            const i = DATA.inventario.find(x => x.id === id);
+            i.stock = Math.max(0, i.stock + qty);
+            save();
         }
 
-        function renderInventario() {
-            const container = document.getElementById('inv-container');
-            container.innerHTML = DATA.inventario.map(item => `
+        // --- CORE ---
+        function save() {
+            localStorage.setItem('nextcom_v9_db', JSON.stringify(DATA));
+            updateUI();
+        }
+
+        function updateUI() {
+            // Dashboard Stats
+            const ingresos = DATA.ordenes.reduce((a, b) => a + b.costo, 0);
+            document.getElementById('d-ingresos').innerText = `$${ingresos.toFixed(2)}`;
+            document.getElementById('d-taller').innerText = DATA.ordenes.filter(o => o.estado === 'PENDIENTE').length;
+            document.getElementById('d-stock').innerText = DATA.inventario.reduce((a, b) => a + b.stock, 0);
+            document.getElementById('d-caja').innerText = `$${ingresos.toFixed(2)}`;
+
+            // Tablas
+            renderTable('table-dash', DATA.ordenes.slice(0, 5), false);
+            renderTable('table-lab', DATA.ordenes, true);
+            
+            // Inventario
+            const invList = document.getElementById('inv-list');
+            invList.innerHTML = DATA.inventario.map(i => `
                 <div class="item-card">
-                    <div>
-                        <span class="badge ${item.tipo === 'Repuesto' ? 'badge-repuesto' : 'badge-producto'}">${item.tipo}</span>
-                        <h4 style="margin-top: 5px;">${item.nombre}</h4>
-                        <p style="font-size: 11px; color: var(--success); font-weight: 800; margin-top: 3px;">$${item.precio.toFixed(2)}</p>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <div class="stock-control">
-                            <button class="btn-qty" onclick="changeQty('${item.id}', -1)">-</button>
-                            <span style="min-width: 30px; text-align: center; font-weight: 800; font-size: 14px;">${item.stock}</span>
-                            <button class="btn-qty" onclick="changeQty('${item.id}', 1)">+</button>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="editItem('${item.id}')" style="background:none; border:none; color:var(--text-dim); cursor:pointer;"><i data-lucide="edit-2" style="width:16px;"></i></button>
-                            <button onclick="deleteItem('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash" style="width:16px;"></i></button>
-                        </div>
+                    <div><b>${i.nombre}</b><br><small style="color:var(--accent)">${i.tipo}</small></div>
+                    <div class="stock-ctrl">
+                        <button style="color:#fff;background:none;border:none;cursor:pointer" onclick="stockPlus(${i.id}, -1)">-</button>
+                        <span style="font-weight:800">${i.stock}</span>
+                        <button style="color:#fff;background:none;border:none;cursor:pointer" onclick="stockPlus(${i.id}, 1)">+</button>
                     </div>
                 </div>
             `).join('');
+
+            // Finanzas
+            document.getElementById('table-fin').querySelector('tbody').innerHTML = DATA.finanzas.map(f => `
+                <tr><td>${f.fecha}</td><td>${f.concepto}</td><td style="color:var(--success)">$${f.monto}</td></tr>
+            `).join('');
+
             lucide.createIcons();
         }
 
-        function clearInvForm() {
-            document.getElementById('inv-edit-id').value = '';
-            document.getElementById('inv-nombre').value = '';
-            document.getElementById('inv-stock').value = '1';
-            document.getElementById('inv-precio').value = '0';
-            document.querySelector('.btn-action').innerHTML = '<i data-lucide="save"></i> GUARDAR EN SISTEMA';
-            lucide.createIcons();
+        function renderTable(tableId, list, actions) {
+            const tbody = document.getElementById(tableId).querySelector('tbody');
+            tbody.innerHTML = list.map(o => `
+                <tr>
+                    <td><b>${o.id}</b></td>
+                    <td>${o.marca} ${o.modelo}</td>
+                    <td>${o.cliente}</td>
+                    <td><span class="status-badge status-pending">${o.estado}</span></td>
+                    ${actions ? `<td>
+                        <button onclick="editOrden('${o.id}')" style="background:none;border:none;color:var(--accent);cursor:pointer"><i data-lucide="edit-3" style="width:16px"></i></button>
+                        <button onclick="delOrden('${o.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;margin-left:10px"><i data-lucide="trash" style="width:16px"></i></button>
+                    </td>` : ''}
+                </tr>
+            `).join('');
         }
 
-        function save() { localStorage.setItem('nextcom_db_v8', JSON.stringify(DATA)); }
-        
+        function clearForm() {
+            ['tk-id','tk-cliente','tk-tel','tk-falla','tk-marca','tk-modelo','tk-pin'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('tk-costo').value = 0;
+            document.getElementById('tk-btn').innerText = "GUARDAR ORDEN";
+        }
+
         function notify(m, t="success") {
             const toast = document.createElement('div'); toast.className = 'toast';
             toast.innerHTML = `<i data-lucide="check-circle"></i> ${m}`;
             document.getElementById('toast-container').appendChild(toast);
             lucide.createIcons();
-            setTimeout(() => toast.remove(), 2500);
+            setTimeout(() => toast.remove(), 2000);
         }
     </script>
 </body>

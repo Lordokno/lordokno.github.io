@@ -314,28 +314,100 @@
         }
 
         // --- LÓGICA TALLER ---
-        function guardarOrden() {
-            const cliente = document.getElementById('tk-cliente').value;
-            const equipo = document.getElementById('tk-equipo').value;
-            const costo = parseFloat(document.getElementById('tk-costo').value);
+        // --- 1. REEMPLAZA TU FUNCIÓN guardarOrden() POR ESTA ---
+function guardarOrden() {
+    // Recolección de datos del nuevo formulario
+    const cliente = document.getElementById('tk-cliente').value;
+    const tel = document.getElementById('tk-tel').value;
+    const email = document.getElementById('tk-email').value;
+    const tecnico = document.getElementById('tk-tecnico').value;
+    const falla = document.getElementById('tk-falla').value;
+    
+    const tipo = document.getElementById('tk-tipo').value;
+    const marca = document.getElementById('tk-marca').value;
+    const equipo = document.getElementById('tk-equipo').value;
+    const imei = document.getElementById('tk-imei').value;
+    const color = document.getElementById('tk-color').value;
+    const pin = document.getElementById('tk-pin').value;
+    const costo = parseFloat(document.getElementById('tk-costo').value) || 0;
 
-            if(!cliente || !equipo || sigPad.isEmpty()) return notify("Error: Datos incompletos o falta firma", "error");
+    // Validación mínima
+    if(!cliente || !equipo || !tel) {
+        return notify("Error: Cliente, Teléfono y Equipo son obligatorios", "error");
+    }
 
-            const orden = {
-                id: 'NX' + (DATA.ordenes.length + 101),
-                fecha: new Date().toLocaleDateString(),
-                cliente, equipo, costo, estado: 'PENDIENTE'
-            };
+    const orden = {
+        id: 'NX' + (DATA.ordenes.length + 101),
+        fecha: new Date().toLocaleDateString(),
+        cliente,
+        tel,
+        email,
+        tecnico,
+        falla,
+        tipo,
+        marca,
+        equipo,
+        imei,
+        color,
+        pin,
+        costo,
+        estado: 'PENDIENTE'
+    };
 
-            DATA.ordenes.unshift(orden);
-            DATA.finanzas.ingresos += costo;
-            DATA.finanzas.movimientos.unshift({ fecha: orden.fecha, concepto: `Pago Reparación ${orden.id}`, tipo: 'IN', monto: costo });
-            
-            save();
-            notify("Orden registrada con éxito");
-            clearFormTaller();
-            showView('dash');
-        }
+    // Guardar en base de datos
+    DATA.ordenes.unshift(orden);
+    DATA.finanzas.ingresos += costo;
+    DATA.finanzas.movimientos.unshift({ 
+        fecha: orden.fecha, 
+        concepto: `Orden ${orden.id}: ${equipo}`, 
+        tipo: 'IN', 
+        monto: costo 
+    });
+    
+    save();
+    notify("Orden " + orden.id + " registrada correctamente");
+    clearFormTaller();
+    showView('dash');
+}
+
+// --- 2. REEMPLAZA TU FUNCIÓN clearFormTaller() POR ESTA ---
+function clearFormTaller() {
+    const ids = [
+        'tk-cliente', 'tk-tel', 'tk-email', 'tk-falla', 
+        'tk-marca', 'tk-equipo', 'tk-imei', 'tk-color', 'tk-pin'
+    ];
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
+    
+    document.getElementById('tk-costo').value = 0;
+    document.getElementById('tk-tecnico').selectedIndex = 0;
+    document.getElementById('tk-tipo').selectedIndex = 0;
+}
+
+// --- 3. ACTUALIZACIÓN OPCIONAL: Renderizado de tabla (Dashboard) ---
+// Para que se vea la marca y el modelo en la tabla principal
+function renderRecent() {
+    const tbody = document.getElementById('table-recent').querySelector('tbody');
+    tbody.innerHTML = DATA.ordenes.slice(0, 5).map((o, index) => `
+        <tr>
+            <td><span style="color:var(--accent); font-weight:800;">${o.id}</span></td>
+            <td>${o.marca} ${o.equipo}</td>
+            <td>${o.cliente}</td>
+            <td>
+                <select 
+                    onchange="cambiarEstado(${index}, this.value)" 
+                    class="status-badge ${o.estado === 'PENDIENTE' ? 'status-pending' : 'status-done'}"
+                    style="border: none; cursor: pointer; font-family: inherit; outline: none; background: transparent;"
+                >
+                    <option value="PENDIENTE" ${o.estado === 'PENDIENTE' ? 'selected' : ''} style="background:#000">PENDIENTE</option>
+                    <option value="LISTO" ${o.estado === 'LISTO' ? 'selected' : ''} style="background:#000">LISTO</option>
+                </select>
+            </td>
+        </tr>
+    `).join('');
+}
 
         function clearFormTaller() {
             ['tk-cliente', 'tk-tel', 'tk-equipo', 'tk-falla'].forEach(id => document.getElementById(id).value = '');
@@ -506,4 +578,5 @@
     </script>
 </body>
 </html>
+
 

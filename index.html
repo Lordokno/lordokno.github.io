@@ -3,561 +3,542 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM TITAN OS // Enterprise Management</title>
+    <title>NEXTCOM OMNI-PRO // Enterprise Workshop Ecosystem</title>
     
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Courier+Prime:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Courier+Prime:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
         :root {
-            --bg-deep: #020202;
-            --bg-side: #080808;
-            --bg-card: #0f0f0f;
+            --bg-deep: #050505;
+            --bg-side: #0a0a0a;
+            --bg-card: #111111;
             --accent: #2563eb;
-            --accent-soft: rgba(37, 99, 235, 0.1);
-            --border: rgba(255, 255, 255, 0.06);
-            --text-white: #ffffff;
-            --text-dim: #94a3b8;
+            --accent-glow: rgba(37, 99, 235, 0.3);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-dim: #64748b;
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --radius-lg: 24px;
-            --radius-md: 14px;
+            --radius-xl: 30px;
+            --radius-lg: 20px;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        /* --- Reset & Base --- */
+        /* --- Estilos Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             background: var(--bg-deep); 
-            color: var(--text-white); 
+            color: var(--text-main); 
             display: flex; 
             height: 100vh; 
             overflow: hidden; 
         }
 
-        /* --- Sidebar Titan --- */
+        /* --- Sidebar Estilo Industrial --- */
         aside {
-            width: 280px;
+            width: 300px;
             background: var(--bg-side);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            padding: 2rem 1.5rem;
-            transition: 0.3s;
+            padding: 2.5rem 1.8rem;
+            z-index: 100;
         }
 
-        .brand-box { margin-bottom: 2.5rem; padding-left: 0.5rem; }
-        .brand-logo { font-size: 26px; font-weight: 800; letter-spacing: -1.5px; font-style: italic; }
-        .brand-sub { font-size: 10px; color: var(--accent); font-weight: 800; letter-spacing: 3px; margin-top: -5px; }
+        .brand-header { margin-bottom: 3rem; }
+        .brand-name { font-size: 28px; font-weight: 900; letter-spacing: -1.5px; color: #fff; }
+        .brand-tag { font-size: 10px; color: var(--accent); font-weight: 800; letter-spacing: 4px; text-transform: uppercase; margin-top: -5px; }
 
-        .nav-group { margin-bottom: 1.5rem; }
-        .nav-label { font-size: 10px; font-weight: 800; color: var(--text-dim); margin-bottom: 0.8rem; padding-left: 1rem; letter-spacing: 1px; }
+        .nav-section { margin-bottom: 2rem; }
+        .nav-label { font-size: 11px; font-weight: 800; color: var(--text-dim); margin-bottom: 1rem; padding-left: 0.8rem; letter-spacing: 1px; }
 
-        .nav-item {
+        .nav-btn {
             display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-            border-radius: var(--radius-md); color: var(--text-dim); text-decoration: none;
-            cursor: pointer; transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            font-weight: 600; font-size: 14px; border: 1px solid transparent; margin-bottom: 4px;
+            border-radius: var(--radius-lg); color: var(--text-dim); cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-weight: 600; font-size: 14px;
+            border: 1px solid transparent; margin-bottom: 6px;
         }
-        .nav-item:hover { background: var(--accent-soft); color: var(--text-white); }
-        .nav-item.active { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25); }
+        .nav-btn:hover { background: rgba(255,255,255,0.03); color: #fff; border-color: var(--border); }
+        .nav-btn.active { background: var(--accent); color: #fff; box-shadow: 0 15px 30px var(--accent-glow); }
 
-        /* --- Main Layout --- */
-        main { flex: 1; overflow-y: auto; padding: 2.5rem; position: relative; }
-        .view { display: none; opacity: 0; transform: translateY(10px); transition: 0.4s; }
-        .view.active { display: block; opacity: 1; transform: translateY(0); }
+        /* --- Contenedor Principal --- */
+        main { flex: 1; overflow-y: auto; padding: 3rem; position: relative; scroll-behavior: smooth; }
+        .view-panel { display: none; animation: slideUp 0.5s ease forwards; }
+        .view-panel.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Dashboard Specifics --- */
-        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 2rem; }
-        .stat-card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            padding: 1.8rem; border-radius: var(--radius-lg); position: relative;
-            overflow: hidden; transition: 0.3s;
+        /* --- Componentes de UI --- */
+        .card-glass { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 2.5rem; margin-bottom: 2rem; }
+        
+        .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 3rem; }
+        .stat-box { 
+            background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; border-radius: var(--radius-lg);
+            position: relative; transition: 0.3s;
         }
-        .stat-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-        .stat-card .icon-box { 
-            position: absolute; right: 20px; top: 20px; opacity: 0.15; color: var(--accent);
-        }
-        .stat-val { font-size: 28px; font-weight: 800; margin-top: 8px; }
-        .stat-trend { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 5px; }
+        .stat-box:hover { border-color: var(--accent); transform: scale(1.02); }
+        .stat-icon { position: absolute; right: 20px; top: 20px; color: var(--accent); opacity: 0.2; }
+        .stat-num { font-size: 32px; font-weight: 900; margin-top: 10px; letter-spacing: -1px; }
 
-        /* --- Titan Form & UI --- */
-        .grid-forms { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
-        .glass-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; }
-        .form-section-title { font-size: 12px; font-weight: 800; color: var(--accent); margin-bottom: 1.5rem; border-left: 3px solid var(--accent); padding-left: 10px; }
-
-        .input-wrapper { margin-bottom: 1.2rem; }
-        .input-wrapper label { font-size: 11px; font-weight: 700; color: var(--text-dim); margin-bottom: 6px; display: block; }
+        /* --- Formularios --- */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; }
         
         input, select, textarea {
-            width: 100%; padding: 14px 18px; background: #050505; border: 1px solid var(--border);
-            border-radius: 12px; color: white; font-family: inherit; font-size: 14px; transition: 0.2s;
+            width: 100%; padding: 16px; background: #000; border: 1px solid var(--border);
+            border-radius: 15px; color: #fff; font-family: inherit; font-size: 15px; transition: 0.3s;
         }
-        input:focus { border-color: var(--accent); background: #080808; box-shadow: 0 0 0 4px var(--accent-soft); }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
 
-        .btn {
-            padding: 14px 24px; border-radius: 12px; font-weight: 800; font-size: 13px;
-            cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center;
-            border: none; transition: 0.2s;
+        .btn-action {
+            padding: 18px 30px; border-radius: 18px; border: none; font-weight: 800; font-size: 15px;
+            cursor: pointer; display: flex; align-items: center; gap: 12px; justify-content: center;
+            transition: 0.3s; width: 100%;
         }
-        .btn-accent { background: var(--accent); color: white; }
-        .btn-accent:hover { filter: brightness(1.1); transform: scale(0.98); }
-        .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
-        .btn-ghost:hover { background: var(--border); color: white; }
+        .btn-save { background: var(--accent); color: #fff; }
+        .btn-save:hover { filter: brightness(1.2); transform: translateY(-2px); }
 
-        /* --- Tables & Lists --- */
-        .titan-table-container { 
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); 
-            overflow: hidden; margin-top: 20px; 
-        }
+        /* --- Tablas Omni --- */
+        .omni-table-wrapper { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-card); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { background: rgba(255,255,255,0.01); padding: 1.2rem; font-size: 11px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 14px; color: #cbd5e1; }
-        tr:hover td { background: rgba(255,255,255,0.01); }
+        th { background: rgba(255,255,255,0.02); padding: 1.5rem; font-size: 11px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+        td { padding: 1.5rem; border-top: 1px solid var(--border); font-size: 14px; color: #e2e8f0; }
+        tr:hover td { background: rgba(37, 99, 235, 0.05); }
 
-        .badge { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; }
-        .b-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
-        .b-done { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
-        .b-void { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        /* --- Gráficos Mini --- */
+        .bar-container { display: flex; align-items: flex-end; gap: 8px; height: 100px; padding-top: 20px; }
+        .bar-item { width: 30px; background: var(--accent); border-radius: 5px 5px 0 0; transition: 0.5s; position: relative; }
+        .bar-item:hover::after { content: attr(data-val); position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 800; }
 
-        /* --- Inventory Components --- */
-        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
-        .inv-card { 
-            background: var(--bg-card); border: 1px solid var(--border); padding: 20px; border-radius: 20px;
-            display: flex; flex-direction: column; gap: 15px;
+        /* --- Inventario --- */
+        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .product-card { 
+            background: #161616; border: 1px solid var(--border); padding: 25px; border-radius: 25px;
+            display: flex; flex-direction: column; gap: 15px; transition: 0.3s;
         }
-        .stock-tag { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 5px; width: fit-content; }
+        .product-card:hover { border-color: var(--success); }
+        .qty-badge { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; }
 
-        /* --- Thermal Ticket System --- */
-        #print-zone { display: none; }
-        .ticket-wrapper {
-            width: 300px; background: white; color: black; padding: 20px;
-            font-family: 'Courier Prime', monospace; font-size: 12px; line-height: 1.2;
+        /* --- Tickets de Impresión --- */
+        #print-container { display: none; }
+        .thermal-ticket { 
+            width: 300px; background: #fff; color: #000; padding: 25px; 
+            font-family: 'Courier Prime', monospace; font-size: 12px; border: 1px solid #ddd;
         }
-        .ticket-header { text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 10px; }
-        .dashed-line { border-bottom: 1px dashed black; margin: 10px 0; }
-        .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; }
-        .legal-text { font-size: 8px; margin-top: 15px; text-align: justify; }
+        .ticket-logo { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 5px; }
+        .line { border-bottom: 1px dashed #000; margin: 10px 0; }
 
-        /* --- Toast Notifications --- */
-        #toast-shelf { position: fixed; top: 30px; right: 30px; z-index: 9999; }
-        .toast-msg {
-            background: white; color: black; padding: 15px 25px; border-radius: 12px;
-            font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: slideIn 0.3s forwards;
+        /* --- Notificaciones --- */
+        #notification-center { position: fixed; bottom: 40px; right: 40px; z-index: 1000; }
+        .toast { 
+            background: #fff; color: #000; padding: 20px 30px; border-radius: 20px;
+            font-weight: 800; margin-top: 15px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 15px; animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
         @media print {
             body aside, body main { display: none; }
-            #print-zone { display: block; position: absolute; left: 0; top: 0; width: 100%; }
+            #print-container { display: block; position: absolute; top: 0; left: 0; width: 100%; }
         }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand-box">
-            <div class="brand-logo">NEXTCOM<span style="color:var(--accent)">.</span></div>
-            <div class="brand-sub">TITAN ENTERPRISE OS</div>
+        <div class="brand-header">
+            <div class="brand-name">NEXTCOM<span style="color:var(--accent)">.</span></div>
+            <div class="brand-tag">Omni-Pro OS</div>
         </div>
 
-        <div class="nav-group">
-            <div class="nav-label">OPERACIONES</div>
-            <div class="nav-item active" onclick="switchView('dash', this)"><i data-lucide="layout-grid"></i> Dashboard</div>
-            <div class="nav-item" onclick="switchView('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
-            <div class="nav-item" onclick="switchView('inv', this)"><i data-lucide="box"></i> Inventario</div>
+        <div class="nav-section">
+            <div class="nav-label">SISTEMA CORE</div>
+            <div class="nav-btn active" onclick="nav('dash', this)"><i data-lucide="layout-dashboard"></i> Dashboard</div>
+            <div class="nav-btn" onclick="nav('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
+            <div class="nav-btn" onclick="nav('inv', this)"><i data-lucide="box"></i> Inventario</div>
         </div>
 
-        <div class="nav-group">
-            <div class="nav-label">CONTROL FINANCIERO</div>
-            <div class="nav-item" onclick="switchView('fin', this)"><i data-lucide="banknote"></i> Caja & Finanzas</div>
-            <div class="nav-item" onclick="switchView('analytics', this)"><i data-lucide="bar-chart-3"></i> Analíticas Pro</div>
+        <div class="nav-section">
+            <div class="nav-label">FINANZAS & CRM</div>
+            <div class="nav-btn" onclick="nav('fin', this)"><i data-lucide="wallet"></i> Caja Registradora</div>
+            <div class="nav-btn" onclick="nav('crm', this)"><i data-lucide="users"></i> Clientes Pro</div>
         </div>
 
-        <div class="nav-group">
-            <div class="nav-label">ADMINISTRACIÓN</div>
-            <div class="nav-item" onclick="switchView('logs', this)"><i data-lucide="shield-check"></i> Auditoría</div>
-            <div class="nav-item" onclick="switchView('config', this)"><i data-lucide="settings"></i> Configuración</div>
+        <div class="nav-section">
+            <div class="nav-label">HERRAMIENTAS</div>
+            <div class="nav-btn" onclick="nav('logs', this)"><i data-lucide="terminal"></i> Logs / Auditoría</div>
+            <div class="nav-btn" onclick="nav('settings', this)"><i data-lucide="settings"></i> Configuración</div>
         </div>
 
-        <div style="margin-top: auto; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 12px;">
-            <div style="font-size: 10px; color: var(--text-dim);">SOPORTE TITAN</div>
-            <div style="font-size: 12px; font-weight: 800;">LICENCIA: ENTERPRISE</div>
+        <div style="margin-top: auto; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid var(--border);">
+            <div style="font-size: 10px; color: var(--text-dim); font-weight: 800;">ESTADO DEL SERVIDOR</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success);"></div>
+                <span style="font-size: 12px; font-weight: 700;">Local Engine Online</span>
+            </div>
         </div>
     </aside>
 
     <main>
         
-        <section id="view-dash" class="view active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-                <div>
-                    <h1 style="font-size: 32px; font-weight: 800; letter-spacing: -1px;">Resumen <span style="color:var(--accent)">Ejecutivo</span></h1>
-                    <p style="color: var(--text-dim); font-size: 14px;">Hoy es <span id="dash-date"></span></p>
-                </div>
-                <button class="btn btn-accent" onclick="switchView('lab', document.querySelector('.nav-item:nth-child(2)'))">
-                    <i data-lucide="plus-circle"></i> NUEVA ORDEN
-                </button>
-            </div>
+        <section id="view-dash" class="view-panel active">
+            <header style="margin-bottom: 3rem;">
+                <h1 style="font-size: 42px; font-weight: 900; letter-spacing: -2px;">Panel <span style="color:var(--accent)">Omni-Pro</span></h1>
+                <p style="color: var(--text-dim);">Análisis integral de rendimiento y métricas operativas.</p>
+            </header>
 
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="icon-box"><i data-lucide="trending-up" size="48"></i></div>
-                    <div class="stat-label">INGRESOS NETOS</div>
-                    <div class="stat-val" id="st-cash">$0.00</div>
-                    <div class="stat-trend" style="color:var(--success)"><i data-lucide="arrow-up-right" size="14"></i> +12% vs ayer</div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <i data-lucide="dollar-sign" class="stat-icon"></i>
+                    <div class="nav-label">Utilidad Bruta</div>
+                    <div class="stat-num" id="st-bruto">$0.00</div>
                 </div>
-                <div class="stat-card">
-                    <div class="icon-box"><i data-lucide="clock" size="48"></i></div>
-                    <div class="stat-label">EQUIPOS EN ESPERA</div>
-                    <div class="stat-val" id="st-pending">0</div>
-                    <div class="stat-trend" style="color:var(--warning)"><i data-lucide="activity" size="14"></i> 4 críticos</div>
+                <div class="stat-box">
+                    <i data-lucide="activity" class="stat-icon"></i>
+                    <div class="nav-label">Reparaciones Hoy</div>
+                    <div class="stat-num" id="st-rep-hoy">0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="icon-box"><i data-lucide="package" size="48"></i></div>
-                    <div class="stat-label">VALOR INVENTARIO</div>
-                    <div class="stat-val" id="st-inv-val">$0.00</div>
-                    <div class="stat-trend" style="color:var(--accent)"><i data-lucide="package-check" size="14"></i> 85% stock ok</div>
+                <div class="stat-box">
+                    <i data-lucide="package-check" class="stat-icon"></i>
+                    <div class="nav-label">Items de Stock</div>
+                    <div class="stat-num" id="st-items">0</div>
+                </div>
+                <div class="stat-box" style="background: var(--accent-soft); border-color: var(--accent);">
+                    <i data-lucide="trending-up" class="stat-icon" style="opacity: 0.5;"></i>
+                    <div class="nav-label" style="color: var(--accent);">Caja Disponible</div>
+                    <div class="stat-num" id="st-caja">$0.00</div>
                 </div>
             </div>
 
-            <div class="titan-table-container">
-                <div style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="font-size: 16px; font-weight: 800;">EQUIPOS RECIENTES</h3>
-                    <div style="position: relative; width: 300px;">
-                        <i data-lucide="search" style="position: absolute; left: 12px; top: 10px; width: 16px; color: var(--text-dim);"></i>
-                        <input type="text" placeholder="Buscar por cliente o ID..." style="padding-left: 40px; border-radius: 30px;" onkeyup="titanSearch(this, 'dash-list')">
-                    </div>
+            <div class="card-glass">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 style="font-weight: 900;">FLUJO DE TRABAJO SEMANAL</h2>
+                    <div class="bar-container" id="dash-chart">
+                        </div>
                 </div>
-                <table>
-                    <thead>
-                        <tr><th>ID</th><th>Cliente</th><th>Dispositivo</th><th>Presupuesto</th><th>Estado</th></tr>
-                    </thead>
-                    <tbody id="dash-list"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="view-lab" class="view">
-            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 2rem;">Centro de <span style="color:var(--accent)">Ingeniería</span></h1>
-            
-            <div class="grid-forms">
-                <div class="glass-box">
-                    <div class="form-section-title">DATOS DE LA ORDEN DE SERVICIO</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="input-wrapper">
-                            <label>CLIENTE</label>
-                            <input type="text" id="lab-cliente" placeholder="Nombre completo">
-                        </div>
-                        <div class="input-wrapper">
-                            <label>TELÉFONO / WHATSAPP</label>
-                            <input type="text" id="lab-tel" placeholder="Sin guiones">
-                        </div>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                        <div class="input-wrapper">
-                            <label>MARCA</label>
-                            <input type="text" id="lab-marca" placeholder="Ej: iPhone">
-                        </div>
-                        <div class="input-wrapper">
-                            <label>MODELO</label>
-                            <input type="text" id="lab-modelo" placeholder="Ej: 14 Pro Max">
-                        </div>
-                        <div class="input-wrapper">
-                            <label>ACCESO (PIN)</label>
-                            <input type="text" id="lab-pin" placeholder="Clave/Patrón">
-                        </div>
-                    </div>
-                    <div class="input-wrapper">
-                        <label>DIAGNÓSTICO INICIAL / FALLA RELEVANTE</label>
-                        <textarea id="lab-falla" rows="4" placeholder="Describa el problema reportado..."></textarea>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: flex-end;">
-                        <div class="input-wrapper">
-                            <label>PRESUPUESTO ESTIMADO ($)</label>
-                            <input type="number" id="lab-costo" value="0" style="font-size: 24px; font-weight: 800; color: var(--success); border-color: var(--success);">
-                        </div>
-                        <div style="padding-bottom: 1.2rem;">
-                            <button class="btn btn-accent" style="width: 100%; height: 55px;" onclick="saveTitanOrder()">
-                                <i data-lucide="save"></i> EMITIR ORDEN & TICKET
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-box" style="background: rgba(255,255,255,0.01);">
-                    <div class="form-section-title">ACCIONES RÁPIDAS</div>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <button class="btn btn-ghost" onclick="showOrderList()"><i data-lucide="table"></i> Ver Listado de Lab</button>
-                        <button class="btn btn-ghost"><i data-lucide="file-text"></i> Exportar a Excel</button>
-                        <button class="btn btn-ghost" onclick="resetLabForm()"><i data-lucide="eraser"></i> Limpiar Campos</button>
-                    </div>
-                    
-                    <div style="margin-top: 30px; padding: 20px; border-radius: 15px; background: var(--accent-soft);">
-                        <p style="font-size: 11px; font-weight: 800; color: var(--accent); margin-bottom: 10px;">MÉTRICA DE CARGA</p>
-                        <div style="height: 8px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
-                            <div id="lab-progress" style="height: 100%; width: 45%; background: var(--accent);"></div>
-                        </div>
-                        <p style="font-size: 10px; margin-top: 8px; color: var(--text-dim);">Laboratorio al 45% de capacidad</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="order-list-area" style="margin-top: 30px; display: none;">
-                <div class="titan-table-container">
-                    <table id="table-lab-full">
+                <div class="omni-table-wrapper">
+                    <table id="dash-recent-table">
                         <thead>
-                            <tr><th>ID</th><th>Fecha</th><th>Cliente</th><th>Estado</th><th>Costo</th><th>Acciones</th></tr>
+                            <tr><th>ID ORDEN</th><th>CLIENTE</th><th>EQUIPO</th><th>ESTADO</th><th>ACCIONES</th></tr>
                         </thead>
-                        <tbody id="lab-full-list"></tbody>
+                        <tbody id="dash-recent-body"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <section id="view-inv" class="view">
-            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 2rem;">Stock & <span style="color:var(--accent)">Recursos</span></h1>
+        <section id="view-lab" class="view-panel">
+            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Nueva <span style="color:var(--accent)">Orden de Trabajo</span></h1>
             
-            <div class="glass-box" style="margin-bottom: 25px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px; align-items: flex-end;">
-                    <div class="input-wrapper">
-                        <label>PRODUCTO</label>
-                        <input type="text" id="inv-name" placeholder="Ej: Pantalla OLED S22">
+            <div class="card-glass">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label>Cliente (Nombre Completo)</label>
+                        <input type="text" id="lab-name" placeholder="Ej: Mario Estrada">
                     </div>
-                    <div class="input-wrapper">
-                        <label>STOCK INICIAL</label>
-                        <input type="number" id="inv-qty" value="1">
+                    <div class="input-group">
+                        <label>Contacto WhatsApp</label>
+                        <input type="text" id="lab-whatsapp" placeholder="Ej: 503 7700-0000">
                     </div>
-                    <div class="input-wrapper">
-                        <label>PRECIO UNITARIO</label>
-                        <input type="number" id="inv-price" value="0.00">
-                    </div>
-                    <button class="btn btn-accent" style="height: 50px; margin-bottom: 1.2rem;" onclick="addInvItem()">
-                        <i data-lucide="plus"></i> AGREGAR AL STOCK
-                    </button>
                 </div>
+                <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <div class="input-group">
+                        <label>Marca / Fabricante</label>
+                        <input type="text" id="lab-brand" placeholder="Samsung">
+                    </div>
+                    <div class="input-group">
+                        <label>Modelo del Dispositivo</label>
+                        <input type="text" id="lab-model" placeholder="S24 Ultra">
+                    </div>
+                    <div class="input-group">
+                        <label>PIN / Contraseña</label>
+                        <input type="text" id="lab-pin" placeholder="1234 o Patrón">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Diagnóstico y Síntomas</label>
+                    <textarea id="lab-diag" rows="4" placeholder="El equipo no da imagen tras caída..."></textarea>
+                </div>
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="input-group">
+                        <label>Presupuesto Pactado ($)</label>
+                        <input type="number" id="lab-price" value="0.00" style="font-size: 28px; font-weight: 900; color: var(--success);">
+                    </div>
+                    <div class="input-group">
+                        <button class="btn-action btn-save" onclick="createOrder()"><i data-lucide="file-plus"></i> GENERAR ORDEN TITAN</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="omni-table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>ORDEN</th><th>INGRESO</th><th>CLIENTE</th><th>ESTADO</th><th>MANEJO</th></tr>
+                    </thead>
+                    <tbody id="lab-full-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="view-inv" class="view-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 32px; font-weight: 900;">Maestro de <span style="color:var(--success)">Inventario</span></h1>
+                <button class="btn-action btn-save" style="width: auto;" onclick="toggleAddProduct()">+ PRODUCTO</button>
+            </div>
+
+            <div id="add-product-panel" class="card-glass" style="display: none;">
+                <div class="form-row">
+                    <input type="text" id="p-name" placeholder="Nombre del Repuesto/Accesorio">
+                    <input type="text" id="p-sku" placeholder="SKU / Código">
+                </div>
+                <div class="form-row">
+                    <input type="number" id="p-stock" placeholder="Cantidad Inicial">
+                    <input type="number" id="p-cost" placeholder="Costo Compra ($)">
+                    <input type="number" id="p-price" placeholder="Precio Venta ($)">
+                </div>
+                <button class="btn-action btn-save" onclick="saveProduct()">GUARDAR EN BODEGA</button>
             </div>
 
             <div class="inv-grid" id="inv-shelf"></div>
         </section>
 
-        <section id="view-fin" class="view">
-            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 2rem;">Libro de <span style="color:var(--success)">Caja</span></h1>
-            
-            <div class="stats-row">
-                <div class="stat-card">
-                    <p class="stat-label">ENTRADAS (INGRESOS)</p>
-                    <div class="stat-val" style="color:var(--success)" id="fin-in">$0.00</div>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">SALIDAS (GASTOS)</p>
-                    <div class="stat-val" style="color:var(--danger)" id="fin-out">$0.00</div>
-                </div>
-                <div class="stat-card">
-                    <p class="stat-label">BALANCE NETO</p>
-                    <div class="stat-val" id="fin-net">$0.00</div>
+        <section id="view-fin" class="view-panel">
+            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Caja <span style="color:var(--warning)">Registradora</span></h1>
+            <div class="card-glass">
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px;">
+                    <div>
+                        <div class="nav-label">NUEVO MOVIMIENTO</div>
+                        <select id="fin-type" style="margin-bottom: 15px;">
+                            <option value="IN">ENTRADA (Venta/Pago)</option>
+                            <option value="OUT">SALIDA (Gasto/Compra)</option>
+                        </select>
+                        <input type="text" id="fin-desc" placeholder="Descripción..." style="margin-bottom: 15px;">
+                        <input type="number" id="fin-amt" placeholder="Monto $0.00" style="margin-bottom: 15px;">
+                        <button class="btn-action btn-save" onclick="addFin()">REGISTRAR</button>
+                    </div>
+                    <div class="omni-table-wrapper">
+                        <table>
+                            <thead>
+                                <tr><th>FECHA</th><th>CONCEPTO</th><th>MONTO</th></tr>
+                            </thead>
+                            <tbody id="fin-body"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="titan-table-container">
+        <section id="view-crm" class="view-panel">
+            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Base de <span style="color:var(--accent)">Clientes</span></h1>
+            <div class="omni-table-wrapper">
                 <table>
                     <thead>
-                        <tr><th>Fecha</th><th>Referencia</th><th>Categoría</th><th>Monto</th></tr>
+                        <tr><th>CLIENTE</th><th>WHATSAPP</th><th>TOTAL REPARACIONES</th><th>TOTAL INVERTIDO</th></tr>
                     </thead>
-                    <tbody id="fin-list"></tbody>
+                    <tbody id="crm-body"></tbody>
                 </table>
             </div>
         </section>
 
-        <section id="view-logs" class="view">
-            <h1 style="font-size: 32px; font-weight: 800; margin-bottom: 2rem;">Logs de <span style="color:var(--text-dim)">Auditoría</span></h1>
-            <div class="titan-table-container">
-                <table style="font-family: 'Courier Prime', monospace; font-size: 12px;">
-                    <thead>
-                        <tr><th>Time</th><th>Acción</th><th>Impacto</th><th>Usuario</th></tr>
-                    </thead>
-                    <tbody id="audit-list"></tbody>
-                </table>
-            </div>
+        <section id="view-logs" class="view-panel">
+            <h1 style="font-size: 32px; font-weight: 900; margin-bottom: 2rem;">Auditoría de <span style="color:var(--text-dim)">Eventos</span></h1>
+            <div class="card-glass" style="font-family: var(--font-mono); font-size: 13px; color: #10b981; max-height: 500px; overflow-y: auto;" id="logs-area"></div>
         </section>
 
     </main>
 
-    <div id="print-zone">
-        <div class="ticket-wrapper">
-            <div class="ticket-header">
-                <h2 style="font-size: 20px;">NEXTCOM</h2>
-                <p>TECNOLOGÍA PROFESIONAL</p>
-                <p id="pt-id" style="font-weight: 700; font-size: 14px; margin-top: 5px;"></p>
-            </div>
-            <div class="dashed-line"></div>
-            <p>FECHA: <span id="pt-date"></span></p>
-            <p>CLIENTE: <span id="pt-name"></span></p>
-            <p>WHATSAPP: <span id="pt-tel"></span></p>
-            <div class="dashed-line"></div>
-            <p><strong>EQUIPO:</strong> <span id="pt-equipo"></span></p>
-            <p><strong>ACCESO:</strong> <span id="pt-pin"></span></p>
-            <p style="margin-top: 5px;"><strong>FALLA REPORTADA:</strong></p>
-            <p id="pt-falla" style="font-size: 11px;"></p>
-            <div class="dashed-line"></div>
-            <div class="total-row">
-                <span>ESTIMADO:</span>
-                <span id="pt-total"></span>
-            </div>
-            <div class="legal-text">
-                * No se aceptan reclamos por equipos mojados o manipulados por terceros.<br>
-                * Garantía limitada de 30 días en hardware sustituido.<br>
-                * Equipos olvidados por más de 60 días pasan a subasta pública.<br>
-                * No somos responsables por pérdida de información digital.
-            </div>
-            <div class="dashed-line"></div>
-            <p style="text-align: center; font-weight: 700;">¡CONFIANZA Y PRECISIÓN!</p>
-        </div>
+    <div id="print-container">
+        <div id="thermal-output" class="thermal-ticket"></div>
     </div>
 
-    <div id="toast-shelf"></div>
+    <div id="notification-center"></div>
 
     <script>
-        /* --- CORE STORAGE --- */
-        let NEXTCOM = JSON.parse(localStorage.getItem('NEXTCOM_TITAN_V1')) || {
+        /* --- ESTADO DEL SISTEMA --- */
+        let OMNI_DB = JSON.parse(localStorage.getItem('NEXTCOM_OMNI_V2')) || {
             ordenes: [],
-            inventario: [],
+            productos: [],
             finanzas: [],
-            logs: []
+            logs: [],
+            clientes: {}
         };
 
-        /* --- BOOTSTRAP --- */
+        /* --- INICIALIZACIÓN --- */
         window.onload = () => {
             lucide.createIcons();
-            document.getElementById('dash-date').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            syncUI();
-            audit('INIT_SYSTEM', 'Arranque de sistema exitoso', 'SYSTEM');
+            refreshAll();
+            log('SYS_READY', 'Omni-Pro Engine inicializado correctamente');
         };
 
-        function syncUI() {
+        function save() {
+            localStorage.setItem('NEXTCOM_OMNI_V2', JSON.stringify(OMNI_DB));
+            refreshAll();
+        }
+
+        /* --- NAVEGACIÓN --- */
+        function nav(viewId, btn) {
+            document.querySelectorAll('.view-panel').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            btn.classList.add('active');
+            lucide.createIcons();
+        }
+
+        /* --- LÓGICA DE ÓRDENES (LAB) --- */
+        function createOrder() {
+            const ord = {
+                id: 'OMNI-' + (OMNI_DB.ordenes.length + 1001),
+                cliente: document.getElementById('lab-name').value,
+                tel: document.getElementById('lab-whatsapp').value,
+                marca: document.getElementById('lab-brand').value,
+                modelo: document.getElementById('lab-model').value,
+                pin: document.getElementById('lab-pin').value,
+                falla: document.getElementById('lab-diag').value,
+                precio: parseFloat(document.getElementById('lab-price').value) || 0,
+                estado: 'PENDIENTE',
+                fecha: new Date().toLocaleString(),
+                timestamp: Date.now()
+            };
+
+            if(!ord.cliente || !ord.modelo) return notify('¡Error! Campos de cliente y modelo son vitales.', 'danger');
+
+            OMNI_DB.ordenes.unshift(ord);
+            
+            // Registrar Finanza automática
+            OMNI_DB.finanzas.unshift({ fecha: ord.fecha, desc: `Servicio Lab: ${ord.id}`, amt: ord.precio, type: 'IN' });
+            
+            // CRM Update
+            updateCRM(ord.cliente, ord.tel, ord.precio);
+
+            log('NEW_ORD', `Orden ${ord.id} creada para ${ord.cliente}`);
+            printTicket(ord);
+            
+            // Limpiar
+            ['lab-name', 'lab-whatsapp', 'lab-brand', 'lab-model', 'lab-pin', 'lab-diag'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('lab-price').value = 0;
+            
+            save();
+            notify('Orden generada con éxito');
+        }
+
+        function updateCRM(name, tel, amt) {
+            if(!OMNI_DB.clientes[name]) {
+                OMNI_DB.clientes[name] = { tel: tel, reps: 0, total: 0 };
+            }
+            OMNI_DB.clientes[name].reps += 1;
+            OMNI_DB.clientes[name].total += amt;
+        }
+
+        function changeStatus(id) {
+            const o = OMNI_DB.ordenes.find(x => x.id === id);
+            const estados = ['PENDIENTE', 'LISTO', 'ENTREGADO', 'CANCELADO'];
+            let next = estados.indexOf(o.estado) + 1;
+            if(next >= estados.length) next = 0;
+            o.estado = estados[next];
+            log('STATUS_CHG', `Orden ${id} pasó a ${o.estado}`);
+            save();
+        }
+
+        /* --- INVENTARIO --- */
+        function toggleAddProduct() {
+            const p = document.getElementById('add-product-panel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveProduct() {
+            const p = {
+                id: Date.now(),
+                nombre: document.getElementById('p-name').value,
+                sku: document.getElementById('p-sku').value,
+                stock: parseInt(document.getElementById('p-stock').value) || 0,
+                costo: parseFloat(document.getElementById('p-cost').value) || 0,
+                precio: parseFloat(document.getElementById('p-price').value) || 0
+            };
+            if(!p.nombre) return;
+            OMNI_DB.productos.unshift(p);
+            log('INV_ADD', `Stock: ${p.nombre} añadido`);
+            save();
+            toggleAddProduct();
+        }
+
+        function modStock(id, delta) {
+            const p = OMNI_DB.productos.find(x => x.id === id);
+            p.stock = Math.max(0, p.stock + delta);
+            save();
+        }
+
+        /* --- FINANZAS --- */
+        function addFin() {
+            const f = {
+                fecha: new Date().toLocaleString(),
+                type: document.getElementById('fin-type').value,
+                desc: document.getElementById('fin-desc').value,
+                amt: parseFloat(document.getElementById('fin-amt').value) || 0
+            };
+            if(!f.desc || f.amt === 0) return;
+            OMNI_DB.finanzas.unshift(f);
+            log('FIN_MOV', `${f.type}: ${f.desc} por $${f.amt}`);
+            save();
+            document.getElementById('fin-desc').value = '';
+            document.getElementById('fin-amt').value = '';
+        }
+
+        /* --- RENDERS --- */
+        function refreshAll() {
             renderDash();
             renderLab();
             renderInv();
             renderFin();
-            renderAudit();
+            renderCRM();
+            renderLogs();
             updateStats();
-            localStorage.setItem('NEXTCOM_TITAN_V1', JSON.stringify(NEXTCOM));
             lucide.createIcons();
         }
 
-        /* --- NAVIGATION --- */
-        function switchView(viewId, el) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        function updateStats() {
+            const ingresoTotal = OMNI_DB.finanzas.filter(f => f.type === 'IN').reduce((a, b) => a + b.amt, 0);
+            const egresoTotal = OMNI_DB.finanzas.filter(f => f.type === 'OUT').reduce((a, b) => a + b.amt, 0);
             
-            document.getElementById('view-' + viewId).classList.add('active');
-            el.classList.add('active');
-            lucide.createIcons();
+            document.getElementById('st-bruto').innerText = `$${ingresoTotal.toFixed(2)}`;
+            document.getElementById('st-caja').innerText = `$${(ingresoTotal - egresoTotal).toFixed(2)}`;
+            document.getElementById('st-rep-hoy').innerText = OMNI_DB.ordenes.filter(o => o.estado === 'PENDIENTE').length;
+            document.getElementById('st-items').innerText = OMNI_DB.productos.reduce((a,b) => a + b.stock, 0);
         }
 
-        /* --- LABORATORY ENGINE --- */
-        function saveTitanOrder() {
-            const data = {
-                id: 'NX' + Math.floor(Math.random() * 89999 + 10000),
-                fecha: new Date().toLocaleDateString(),
-                cliente: document.getElementById('lab-cliente').value,
-                tel: document.getElementById('lab-tel').value,
-                marca: document.getElementById('lab-marca').value,
-                modelo: document.getElementById('lab-modelo').value,
-                pin: document.getElementById('lab-pin').value,
-                falla: document.getElementById('lab-falla').value,
-                costo: parseFloat(document.getElementById('lab-costo').value) || 0,
-                estado: 'PENDIENTE',
-                timestamp: new Date().getTime()
-            };
-
-            if(!data.cliente || !data.modelo) return notify('¡Error! Cliente y Modelo requeridos.', 'danger');
-
-            NEXTCOM.ordenes.unshift(data);
-            NEXTCOM.finanzas.unshift({
-                fecha: data.fecha,
-                ref: `Orden ${data.id}`,
-                cat: 'SERVICIO',
-                monto: data.costo,
-                tipo: 'IN'
-            });
-
-            audit('NEW_ORDER', `Orden creada para ${data.cliente}`, 'TECNICO_01');
-            printTitanTicket(data);
-            resetLabForm();
-            syncUI();
-            notify('Orden generada con éxito');
-        }
-
-        function toggleStatus(id) {
-            const ord = NEXTCOM.ordenes.find(o => o.id === id);
-            ord.estado = ord.estado === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
-            audit('STATUS_CHANGE', `Orden ${id} marcada como ${ord.estado}`, 'TECNICO_01');
-            syncUI();
-        }
-
-        function deleteOrder(id) {
-            if(confirm("¿Eliminar permanentemente de la base de datos?")) {
-                NEXTCOM.ordenes = NEXTCOM.ordenes.filter(o => o.id !== id);
-                audit('DELETE_ORDER', `Orden ${id} eliminada`, 'ADMIN');
-                syncUI();
-            }
-        }
-
-        /* --- INVENTORY ENGINE --- */
-        function addInvItem() {
-            const item = {
-                id: Date.now(),
-                nombre: document.getElementById('inv-name').value,
-                stock: parseInt(document.getElementById('inv-qty').value) || 0,
-                precio: parseFloat(document.getElementById('inv-price').value) || 0
-            };
-            if(!item.nombre) return;
-            NEXTCOM.inventario.unshift(item);
-            audit('INV_ADD', `Stock añadido: ${item.nombre}`, 'BODEGA');
-            syncUI();
-            document.getElementById('inv-name').value = '';
-        }
-
-        function modStock(id, delta) {
-            const item = NEXTCOM.inventario.find(i => i.id === id);
-            item.stock = Math.max(0, item.stock + delta);
-            syncUI();
-        }
-
-        /* --- RENDERING --- */
         function renderDash() {
-            const list = document.getElementById('dash-list');
-            list.innerHTML = NEXTCOM.ordenes.slice(0, 10).map(o => `
+            // Tabla Recientes
+            document.getElementById('dash-recent-body').innerHTML = OMNI_DB.ordenes.slice(0, 5).map(o => `
                 <tr>
-                    <td><span style="font-weight:800; color:var(--accent)">#${o.id}</span></td>
+                    <td><b>${o.id}</b></td>
                     <td>${o.cliente}</td>
-                    <td>${o.marca} ${o.modelo}</td>
-                    <td style="color:var(--success); font-weight:800">$${o.costo.toFixed(2)}</td>
-                    <td><span class="badge ${o.estado==='PENDIENTE'?'b-pending':'b-done'}" onclick="toggleStatus('${o.id}')">${o.estado}</span></td>
+                    <td>${o.modelo}</td>
+                    <td><span style="font-weight:900; color:var(--accent)">${o.estado}</span></td>
+                    <td><button onclick="printTicketById('${o.id}')" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="printer" size="18"></i></button></td>
                 </tr>
+            `).join('');
+
+            // Gráfico Dummy Semanal
+            const chart = document.getElementById('dash-chart');
+            chart.innerHTML = [40, 70, 45, 90, 65, 80, 55].map(v => `
+                <div class="bar-item" style="height:${v}%" data-val="${v}"></div>
             `).join('');
         }
 
         function renderLab() {
-            const list = document.getElementById('lab-full-list');
-            list.innerHTML = NEXTCOM.ordenes.map(o => `
+            document.getElementById('lab-full-list').innerHTML = OMNI_DB.ordenes.map(o => `
                 <tr>
                     <td><b>${o.id}</b></td>
-                    <td>${o.fecha}</td>
+                    <td>${o.fecha.split(',')[0]}</td>
                     <td>${o.cliente}</td>
-                    <td><span class="badge ${o.estado==='PENDIENTE'?'b-pending':'b-done'}" onclick="toggleStatus('${o.id}')">${o.estado}</span></td>
-                    <td style="font-weight:800">$${o.costo.toFixed(2)}</td>
+                    <td><button class="btn-action" style="padding:5px 10px; font-size:10px;" onclick="changeStatus('${o.id}')">${o.estado}</button></td>
                     <td>
                         <div style="display:flex; gap:10px;">
-                            <button onclick="printTitanTicketById('${o.id}')" style="background:none; border:none; color:white; cursor:pointer;"><i data-lucide="printer" size="16"></i></button>
-                            <button onclick="deleteOrder('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash-2" size="16"></i></button>
+                            <i data-lucide="printer" onclick="printTicketById('${o.id}')" style="cursor:pointer;"></i>
+                            <i data-lucide="trash-2" onclick="deleteOrder('${o.id}')" style="cursor:pointer; color:var(--danger);"></i>
                         </div>
                     </td>
                 </tr>
@@ -565,115 +546,115 @@
         }
 
         function renderInv() {
-            const shelf = document.getElementById('inv-shelf');
-            shelf.innerHTML = NEXTCOM.inventario.map(i => `
-                <div class="inv-card">
-                    <div style="display:flex; justify-content:space-between; align-items:start;">
+            document.getElementById('inv-shelf').innerHTML = OMNI_DB.productos.map(p => `
+                <div class="product-card">
+                    <div style="display:flex; justify-content:space-between;">
                         <div>
-                            <div class="stock-tag" style="background:${i.stock < 3 ? 'var(--danger)':'var(--accent-soft)'}">${i.stock < 3 ? 'LOW STOCK':'EN STOCK'}</div>
-                            <h4 style="margin-top:10px;">${i.nombre}</h4>
+                            <span style="font-size:10px; color:var(--text-dim);">SKU: ${p.sku}</span>
+                            <h3 style="margin-top:5px;">${p.nombre}</h3>
                         </div>
-                        <h3 style="color:var(--success)">$${i.precio.toFixed(2)}</h3>
+                        <div class="qty-badge" style="background:${p.stock < 5 ? 'var(--danger)':'var(--success)'}">${p.stock} UDS</div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:12px;">
-                        <button class="btn btn-ghost" style="padding:5px 15px;" onclick="modStock(${i.id}, -1)">-</button>
-                        <span style="font-weight:800; font-size:18px;">${i.stock}</span>
-                        <button class="btn btn-ghost" style="padding:5px 15px;" onclick="modStock(${i.id}, 1)">+</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:900; color:var(--success); font-size:20px;">$${p.precio}</span>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="modStock(${p.id}, -1)" class="btn-action" style="width:30px; height:30px; padding:0;">-</button>
+                            <button onclick="modStock(${p.id}, 1)" class="btn-action" style="width:30px; height:30px; padding:0;">+</button>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
         function renderFin() {
-            const list = document.getElementById('fin-list');
-            list.innerHTML = NEXTCOM.finanzas.map(f => `
+            document.getElementById('fin-body').innerHTML = OMNI_DB.finanzas.slice(0, 15).map(f => `
                 <tr>
-                    <td>${f.fecha}</td>
-                    <td>${f.ref}</td>
-                    <td>${f.cat}</td>
-                    <td style="color:${f.tipo==='IN'?'var(--success)':'var(--danger)'}; font-weight:800;">
-                        ${f.tipo==='IN'?'+':'-'}$${f.monto.toFixed(2)}
-                    </td>
+                    <td style="font-size:11px;">${f.fecha}</td>
+                    <td>${f.desc}</td>
+                    <td style="color:${f.type==='IN'?'var(--success)':'var(--danger)'}; font-weight:800;">$${f.amt.toFixed(2)}</td>
                 </tr>
             `).join('');
         }
 
-        function renderAudit() {
-            const list = document.getElementById('audit-list');
-            list.innerHTML = NEXTCOM.logs.slice(0, 50).map(l => `
+        function renderCRM() {
+            document.getElementById('crm-body').innerHTML = Object.entries(OMNI_DB.clientes).map(([name, data]) => `
                 <tr>
-                    <td style="color:var(--text-dim)">${l.time}</td>
-                    <td><span style="color:var(--accent)">[${l.action}]</span></td>
-                    <td>${l.msg}</td>
-                    <td>${l.user}</td>
+                    <td><b>${name}</b></td>
+                    <td>${data.tel}</td>
+                    <td>${data.reps} servicios</td>
+                    <td style="color:var(--success); font-weight:800;">$${data.total.toFixed(2)}</td>
                 </tr>
             `).join('');
         }
 
-        /* --- ANALYTICS --- */
-        function updateStats() {
-            const cash = NEXTCOM.finanzas.reduce((a, b) => b.tipo === 'IN' ? a + b.monto : a - b.monto, 0);
-            const invVal = NEXTCOM.inventario.reduce((a, b) => a + (b.stock * b.precio), 0);
-            
-            document.getElementById('st-cash').innerText = `$${cash.toFixed(2)}`;
-            document.getElementById('st-inv-val').innerText = `$${invVal.toFixed(2)}`;
-            document.getElementById('st-pending').innerText = NEXTCOM.ordenes.filter(o => o.estado === 'PENDIENTE').length;
-            
-            document.getElementById('fin-in').innerText = `$${NEXTCOM.finanzas.filter(f => f.tipo==='IN').reduce((a,b)=>a+b.monto,0).toFixed(2)}`;
-            document.getElementById('fin-out').innerText = `$${NEXTCOM.finanzas.filter(f => f.tipo==='OUT').reduce((a,b)=>a+b.monto,0).toFixed(2)}`;
-            document.getElementById('fin-net').innerText = `$${cash.toFixed(2)}`;
+        function renderLogs() {
+            document.getElementById('logs-area').innerHTML = OMNI_DB.logs.map(l => `
+                <div><span style="color:#64748b">[${l.time}]</span> <span style="color:var(--accent)">${l.tag}</span>: ${l.msg}</div>
+            `).join('');
         }
 
-        /* --- UTILS & TICKET --- */
-        function audit(action, msg, user) {
-            NEXTCOM.logs.unshift({
-                time: new Date().toLocaleTimeString(),
-                action, msg, user
-            });
-        }
-
-        function printTitanTicket(o) {
-            document.getElementById('pt-id').innerText = `ORDEN: ${o.id}`;
-            document.getElementById('pt-date').innerText = o.fecha;
-            document.getElementById('pt-name').innerText = o.cliente;
-            document.getElementById('pt-tel').innerText = o.tel;
-            document.getElementById('pt-equipo').innerText = `${o.marca} ${o.modelo}`;
-            document.getElementById('pt-pin').innerText = o.pin || 'SIN PIN';
-            document.getElementById('pt-falla').innerText = o.falla;
-            document.getElementById('pt-total').innerText = `$${o.costo.toFixed(2)}`;
+        /* --- SISTEMA DE TICKETS --- */
+        function printTicket(o) {
+            const out = document.getElementById('thermal-output');
+            out.innerHTML = `
+                <div class="ticket-logo">NEXTCOM</div>
+                <div style="text-align:center; font-size:10px;">PRO REPAIR CENTER</div>
+                <div class="line"></div>
+                <div><b>ORDEN:</b> ${o.id}</div>
+                <div><b>FECHA:</b> ${o.fecha}</div>
+                <div><b>CLIENTE:</b> ${o.cliente}</div>
+                <div><b>TEL:</b> ${o.tel}</div>
+                <div class="line"></div>
+                <div><b>EQUIPO:</b> ${o.marca} ${o.modelo}</div>
+                <div><b>PIN:</b> ${o.pin || 'N/A'}</div>
+                <div style="margin-top:5px;"><b>FALLA:</b></div>
+                <div style="font-size:11px;">${o.falla}</div>
+                <div class="line"></div>
+                <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900;">
+                    <span>TOTAL:</span>
+                    <span>$${o.precio.toFixed(2)}</span>
+                </div>
+                <div class="line"></div>
+                <div style="font-size:8px; text-align:justify;">
+                    * Equipos mojados no tienen garantía.<br>
+                    * Garantía de 30 días en piezas instaladas.<br>
+                    * Equipos no reclamados en 60 días pasan a abandono.
+                </div>
+                <div class="line"></div>
+                <div style="text-align:center;">¡GRACIAS POR SU CONFIANZA!</div>
+            `;
             window.print();
         }
 
-        function printTitanTicketById(id) {
-            const o = NEXTCOM.ordenes.find(x => x.id === id);
-            printTitanTicket(o);
+        function printTicketById(id) {
+            const o = OMNI_DB.ordenes.find(x => x.id === id);
+            printTicket(o);
         }
 
-        function resetLabForm() {
-            ['lab-cliente', 'lab-tel', 'lab-marca', 'lab-modelo', 'lab-pin', 'lab-falla'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('lab-costo').value = 0;
+        /* --- UTILIDADES --- */
+        function log(tag, msg) {
+            OMNI_DB.logs.unshift({ time: new Date().toLocaleTimeString(), tag, msg });
+            if(OMNI_DB.logs.length > 100) OMNI_DB.logs.pop();
         }
 
-        function notify(msg, type = 'success') {
-            const t = document.createElement('div');
-            t.className = 'toast-msg';
-            t.innerHTML = `<i data-lucide="bell"></i> ${msg}`;
-            document.getElementById('toast-shelf').appendChild(t);
-            lucide.createIcons();
-            setTimeout(() => t.remove(), 3000);
-        }
-
-        function titanSearch(input, tableId) {
-            const filter = input.value.toLowerCase();
-            const rows = document.getElementById(tableId).rows;
-            for(let row of rows) {
-                row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+        function deleteOrder(id) {
+            if(confirm('¿Eliminar orden permanentemente?')) {
+                OMNI_DB.ordenes = OMNI_DB.ordenes.filter(o => o.id !== id);
+                log('DEL_ORD', `Orden ${id} eliminada por el usuario`);
+                save();
             }
         }
 
-        function showOrderList() {
-            const el = document.getElementById('order-list-area');
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        function notify(msg, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i data-lucide="${type==='success'?'check-circle':'alert-circle'}"></i> <span>${msg}</span>`;
+            document.getElementById('notification-center').appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
         }
 
     </script>

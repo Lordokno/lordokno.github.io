@@ -18,54 +18,48 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
         aside { width: 280px; background: #000; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1.5rem; z-index: 50; }
-        .brand { display: flex; align-items: center; gap: 12px; padding: 1rem; margin-bottom: 2rem; }
-        .brand-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), #1d4ed8); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px var(--accent-glow); }
         .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 1rem; border-radius: 12px; color: var(--text-dim); border: none; background: none; width: 100%; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: #fff; }
-        .nav-link.active { color: #fff; background: var(--accent); }
+        .nav-link.active { color: #fff; background: var(--accent); box-shadow: 0 10px 15px -3px var(--accent-glow); }
         
-        /* Main Area */
         main { flex: 1; overflow-y: auto; padding: 2.5rem; position: relative; }
         .view { display: none; animation: fadeIn 0.3s ease; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* UI Elements */
         .stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2.5rem; }
         .stat-card { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 24px; }
         .glass-panel { background: var(--bg-card); border: 1px solid var(--border); padding: 2rem; border-radius: 24px; margin-bottom: 2rem; }
-        input, select, textarea { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; font-family: inherit; }
-        input:focus { border-color: var(--accent); outline: none; }
-        .btn-action { background: var(--accent); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; transition: 0.2s; }
-        .btn-action:hover { opacity: 0.9; transform: translateY(-2px); }
         
-        /* Tables */
+        input, textarea, select { background: #121212; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; font-family: inherit; transition: 0.2s; }
+        input:focus, textarea:focus { border-color: var(--accent); outline: none; background: #161616; }
+
+        .btn-action { background: var(--accent); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; justify-content: center; text-transform: uppercase; }
+        
         .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(255,255,255,0.02); padding: 1rem; text-align: left; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 1rem; border-top: 1px solid var(--border); font-size: 13px; }
-        .status-badge { padding: 5px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; border: none; cursor: pointer; }
+        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 13px; }
+
+        .status-badge { padding: 6px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
         .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
         .status-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
 
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
-        .toast { background: #fff; color: #000; padding: 12px 24px; border-radius: 12px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .toast { background: #fff; color: #000; padding: 12px 24px; border-radius: 12px; font-weight: 700; margin-top: 10px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="brand">
-            <div class="brand-icon"><i data-lucide="shield-check" color="white"></i></div>
-            <div class="brand-text"><h2 style="font-weight:800;font-style:italic;">NEXTCOM</h2><span style="font-size:9px;color:var(--accent);letter-spacing:2px;">SYSTEMS OS</span></div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 3rem; padding: 1rem;">
+            <div style="width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i data-lucide="shield-check" color="white"></i></div>
+            <div><h2 style="font-style: italic; font-weight: 800; font-size: 1.2rem;">NEXTCOM</h2><p style="font-size: 8px; color: var(--accent); letter-spacing: 2px; font-weight: 800;">SYSTEMS OS</p></div>
         </div>
-        <nav>
-            <p style="font-size:10px; color:var(--text-dim); margin-bottom:10px; padding-left:10px; font-weight: 800;">PRINCIPAL</p>
+        <nav style="flex: 1;">
             <button class="nav-link active" onclick="showView('dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
             <button class="nav-link" onclick="showView('taller')"><i data-lucide="wrench"></i> Laboratorio</button>
-            <p style="font-size:10px; color:var(--text-dim); margin:20px 0 10px 0; padding-left:10px; font-weight: 800;">GESTIÓN</p>
             <button class="nav-link" onclick="showView('inventario')"><i data-lucide="box"></i> Inventario</button>
             <button class="nav-link" onclick="showView('finanzas')"><i data-lucide="banknote"></i> Finanzas</button>
         </nav>
@@ -73,113 +67,81 @@
 
     <main>
         <section id="view-dash" class="view active">
-            <h1 style="font-size:2.5rem; font-weight:800; margin-bottom:2rem;">ESTADO <span style="color:var(--accent)">OPERATIVO</span></h1>
+            <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 2rem; letter-spacing: -2px;">ESTADO <span style="color:var(--accent)">OPERATIVO</span></h1>
             <div class="stats-container">
-                <div class="stat-card"><p>INGRESOS TOTALES</p><h3 id="dash-ingresos">$0.00</h3></div>
-                <div class="stat-card"><p>ÓRDENES ACTIVAS</p><h3 id="dash-reparas">0</h3></div>
-                <div class="stat-card"><p>ITEMS EN STOCK</p><h3 id="dash-stock">0</h3></div>
-                <div class="stat-card"><p>BALANCE CAJA</p><h3 id="dash-caja">$0.00</h3></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">INGRESOS</p><h2 id="dash-ingresos">$0.00</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">PENDIENTES</p><h2 id="dash-reparas">0</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">STOCK</p><h2 id="dash-stock">0</h2></div>
+                <div class="stat-card"><p style="font-size: 10px; color: var(--text-dim); font-weight: 800;">CAJA</p><h2 id="dash-caja">$0.00</h2></div>
             </div>
             <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
                 <div class="table-container">
-                    <div style="padding: 1.5rem; font-weight: 800; font-size: 12px; color: var(--accent);">ÚLTIMOS MOVIMIENTOS</div>
-                    <table id="table-recent">
-                        <thead><tr><th>ID</th><th>Dispositivo</th><th>Cliente</th><th>Estado</th></tr></thead>
+                    <div style="padding: 1.5rem; font-weight: 800; font-size: 12px;">ÚLTIMOS INGRESOS</div>
+                    <table id="table-dash">
+                        <thead><tr><th>ID</th><th>Equipo</th><th>Cliente</th><th>Estado</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
-                <div class="glass-panel">
-                    <p style="font-size: 10px; font-weight: 800; margin-bottom: 15px;">RENDIMIENTO</p>
-                    <canvas id="chart-finanzas"></canvas>
-                </div>
+                <div class="glass-panel"><canvas id="chart-main"></canvas></div>
             </div>
         </section>
 
         <section id="view-taller" class="view">
-            <h1 style="font-size:2rem; font-weight:800; margin-bottom:2rem;">NUEVA <span>ORDEN</span></h1>
-            <div class="glass-panel">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-                    <div>
-                        <p style="font-size:10px; font-weight:800; color:var(--text-dim); margin-bottom:15px;">INFORMACIÓN DEL CLIENTE</p>
-                        <input type="text" id="tk-cliente" placeholder="Nombre completo" style="margin-bottom:15px;">
-                        <input type="text" id="tk-tel" placeholder="Teléfono / WhatsApp" style="margin-bottom:15px;">
-                        <p style="font-size:10px; font-weight:800; color:var(--text-dim); margin-bottom:10px;">TÉCNICO</p>
-                        <select id="tk-tecnico" style="margin-bottom:15px;">
-                            <option>Sin asignar</option>
-                            <option>Técnico A</option>
-                            <option>Técnico B</option>
-                        </select>
-                        <textarea id="tk-falla" rows="5" placeholder="Descripción detallada de la falla"></textarea>
-                    </div>
-                    <div>
-                        <p style="font-size:10px; font-weight:800; color:var(--text-dim); margin-bottom:15px;">DATOS DEL EQUIPO</p>
-                        <div style="display:flex; gap:10px; margin-bottom:15px;">
-                            <input type="text" id="tk-marca" placeholder="Marca (Ej: Samsung)">
-                            <input type="text" id="tk-equipo" placeholder="Modelo (Ej: S23 Ultra)">
-                        </div>
-                        <div style="display:flex; gap:10px; margin-bottom:15px;">
-                            <input type="text" id="tk-imei" placeholder="IMEI / Serial">
-                            <input type="text" id="tk-color" placeholder="Color">
-                        </div>
-                        <div style="background:rgba(245,158,11,0.05); padding:15px; border-radius:12px; border: 1px solid #332b00;">
-                            <p style="font-size:9px; font-weight: 800; color:#f59e0b; margin-bottom:10px;">SEGURIDAD / PIN</p>
-                            <input type="text" id="tk-pin" placeholder="PIN o Contraseña de acceso" style="border-color:#444;">
-                        </div>
-                        <p style="margin-top:20px; font-size:10px; font-weight: 800;">PRESUPUESTO INICIAL ($)</p>
-                        <input type="number" id="tk-costo" value="0" style="font-size:1.8rem; color:var(--success); font-weight:800; border: none; background: transparent;">
-                    </div>
-                </div>
-                <button class="btn-action" style="width:100%; margin-top:30px; height: 55px;" onclick="guardarOrden()">
-                    <i data-lucide="plus-circle"></i> REGISTRAR TICKET DE SERVICIO
-                </button>
-            </div>
-        </section>
-
-        <section id="view-inventario" class="view">
-            <h1>STOCK <span>REPUESTOS</span></h1>
-            <div class="glass-panel">
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="inv-item" placeholder="Nombre del repuesto">
-                    <input type="number" id="inv-cant" placeholder="Cant." style="width:100px;">
-                    <button class="btn-action" onclick="addInventario()">AGREGAR</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 2.5rem; font-weight: 800; letter-spacing: -1px;">LABORATORIO <span>OS</span></h1>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-action" onclick="switchTaller('nuevo')" style="padding: 10px 20px; font-size: 10px;">+ NUEVA ORDEN</button>
+                    <button class="btn-action" onclick="switchTaller('lista')" style="padding: 10px 20px; font-size: 10px; background: #222;">HISTORIAL COMPLETO</button>
                 </div>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead><tr><th>Item</th><th>Existencia</th><th>Estado</th></tr></thead>
-                    <tbody id="table-inv"></tbody>
-                </table>
-            </div>
-        </section>
 
-        <section id="view-finanzas" class="view">
-            <h1>HISTORIAL <span>FINANCIERO</span></h1>
-            <div class="table-container">
-                <table id="table-movs">
-                    <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+            <div id="taller-form" class="glass-panel">
+                <input type="hidden" id="tk-edit-id">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <label style="font-size: 10px; font-weight: 800; color: var(--text-dim);">DATOS DEL CLIENTE</label>
+                        <input type="text" id="tk-cliente" placeholder="Nombre completo" style="margin: 10px 0;">
+                        <input type="text" id="tk-tel" placeholder="WhatsApp / Celular" style="margin-bottom: 20px;">
+                        <label style="font-size: 10px; font-weight: 800; color: var(--text-dim);">DESCRIPCIÓN DE LA FALLA</label>
+                        <textarea id="tk-falla" rows="6" placeholder="¿Qué le sucede al equipo?" style="margin-top: 10px;"></textarea>
+                    </div>
+                    <div>
+                        <label style="font-size: 10px; font-weight: 800; color: var(--text-dim);">DATOS DEL EQUIPO</label>
+                        <div style="display: flex; gap: 10px; margin: 10px 0;">
+                            <input type="text" id="tk-marca" placeholder="Marca">
+                            <input type="text" id="tk-equipo" placeholder="Modelo">
+                        </div>
+                        <div style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                            <p style="font-size: 9px; color: var(--warning); font-weight: 800; margin-bottom: 10px;">SEGURIDAD (PIN/PATRÓN)</p>
+                            <input type="text" id="tk-pin" placeholder="Contraseña de acceso">
+                        </div>
+                        <label style="font-size: 10px; font-weight: 800; color: var(--text-dim);">PRESUPUESTO ESTIMADO ($)</label>
+                        <input type="number" id="tk-costo" value="0" style="font-size: 2rem; font-weight: 800; color: var(--success); background: none; border: none; padding-left: 0;">
+                    </div>
+                </div>
+                <button id="btn-save" class="btn-action" style="width:100%; margin-top: 30px;" onclick="guardarOrden()">REGISTRAR E INGRESAR</button>
+            </div>
+
+            <div id="taller-list" style="display: none;" class="table-container">
+                <table id="table-full-lab">
+                    <thead><tr><th>ID</th><th>Equipo</th><th>Cliente</th><th>Costo</th><th>Estado</th><th>Acciones</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
+
+        <section id="view-inventario" class="view"><h1>STOCK</h1><div class="glass-panel" id="inv-list">Próximamente...</div></section>
+        <section id="view-finanzas" class="view"><h1>HISTORIAL DE CAJA</h1><div class="table-container"><table id="table-movs"><thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead><tbody></tbody></table></div></section>
     </main>
 
     <div id="toast-container"></div>
 
     <script>
-        // Carga de datos
-        let DATA = JSON.parse(localStorage.getItem('nextcom_v6')) || {
-            ordenes: [],
-            inventario: [],
-            finanzas: { ingresos: 0, gastos: 0, movimientos: [] }
+        let DATA = JSON.parse(localStorage.getItem('nextcom_db_v7')) || {
+            ordenes: [], finanzas: { ingresos: 0, gastos: 0, movimientos: [] }, inventario: []
         };
 
-        let myChart;
-
-        window.onload = () => {
-            initChart();
-            updateUI();
-            lucide.createIcons();
-        };
+        window.onload = () => { updateUI(); lucide.createIcons(); initChart(); };
 
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -189,139 +151,118 @@
             updateUI();
         }
 
-        // Lógica de Laboratorio
+        function switchTaller(vista) {
+            document.getElementById('taller-form').style.display = vista === 'nuevo' ? 'block' : 'none';
+            document.getElementById('taller-list').style.display = vista === 'lista' ? 'block' : 'none';
+            if(vista === 'lista') renderFullLab();
+        }
+
         function guardarOrden() {
-            const cliente = document.getElementById('tk-cliente').value;
-            const equipo = document.getElementById('tk-equipo').value;
-            const costo = parseFloat(document.getElementById('tk-costo').value) || 0;
-
-            if(!cliente || !equipo) return notify("Nombre y Modelo son requeridos", "error");
-
-            const orden = {
-                id: 'NX' + (DATA.ordenes.length + 101),
+            const editId = document.getElementById('tk-edit-id').value;
+            const nuevaOrden = {
+                id: editId || 'NX' + (DATA.ordenes.length + 101),
                 fecha: new Date().toLocaleDateString(),
-                cliente,
-                equipo,
+                cliente: document.getElementById('tk-cliente').value,
+                tel: document.getElementById('tk-tel').value,
+                falla: document.getElementById('tk-falla').value,
                 marca: document.getElementById('tk-marca').value,
-                imei: document.getElementById('tk-imei').value,
+                equipo: document.getElementById('tk-equipo').value,
                 pin: document.getElementById('tk-pin').value,
-                costo,
+                costo: parseFloat(document.getElementById('tk-costo').value) || 0,
                 estado: 'PENDIENTE'
             };
 
-            DATA.ordenes.unshift(orden);
-            DATA.finanzas.ingresos += costo;
-            DATA.finanzas.movimientos.unshift({ 
-                fecha: orden.fecha, 
-                concepto: `Orden ${orden.id}: ${equipo}`, 
-                tipo: 'IN', 
-                monto: costo 
-            });
+            if(!nuevaOrden.cliente || !nuevaOrden.equipo) return notify("Faltan datos", "error");
+
+            if(editId) {
+                const idx = DATA.ordenes.findIndex(o => o.id === editId);
+                DATA.ordenes[idx] = nuevaOrden;
+                notify("Orden Actualizada");
+            } else {
+                DATA.ordenes.unshift(nuevaOrden);
+                DATA.finanzas.ingresos += nuevaOrden.costo;
+                DATA.finanzas.movimientos.unshift({ fecha: nuevaOrden.fecha, concepto: `Ingreso Orden ${nuevaOrden.id}`, tipo: 'IN', monto: nuevaOrden.costo });
+                notify("Orden Registrada");
+            }
 
             save();
-            notify("Ticket " + orden.id + " creado");
             clearForm();
-            showView('dash');
+            switchTaller('lista');
         }
 
-        function cambiarEstado(index, nuevoEstado) {
-            DATA.ordenes[index].estado = nuevoEstado;
-            save();
-            notify("Estado actualizado");
+        function editarOrden(id) {
+            const o = DATA.ordenes.find(ord => ord.id === id);
+            document.getElementById('tk-edit-id').value = o.id;
+            document.getElementById('tk-cliente').value = o.cliente;
+            document.getElementById('tk-tel').value = o.tel;
+            document.getElementById('tk-falla').value = o.falla;
+            document.getElementById('tk-marca').value = o.marca;
+            document.getElementById('tk-equipo').value = o.equipo;
+            document.getElementById('tk-pin').value = o.pin;
+            document.getElementById('tk-costo').value = o.costo;
+            document.getElementById('btn-save').innerText = "ACTUALIZAR CAMBIOS";
+            switchTaller('nuevo');
         }
 
-        // Lógica Inventario
-        function addInventario() {
-            const nombre = document.getElementById('inv-item').value;
-            const cant = document.getElementById('inv-cant').value;
-            if(!nombre || !cant) return;
-            DATA.inventario.push({ nombre, cant });
-            save();
-            document.getElementById('inv-item').value = '';
-            document.getElementById('inv-cant').value = '';
-            notify("Item agregado");
-        }
-
-        // Core
-        function save() {
-            localStorage.setItem('nextcom_v6', JSON.stringify(DATA));
-            updateUI();
+        function eliminarOrden(id) {
+            if(confirm("¿Eliminar permanentemente?")) {
+                DATA.ordenes = DATA.ordenes.filter(o => o.id !== id);
+                save();
+                renderFullLab();
+                notify("Eliminado", "warning");
+            }
         }
 
         function updateUI() {
-            // Stats
             document.getElementById('dash-ingresos').innerText = `$${DATA.finanzas.ingresos.toFixed(2)}`;
             document.getElementById('dash-reparas').innerText = DATA.ordenes.filter(o => o.estado === 'PENDIENTE').length;
-            document.getElementById('dash-stock').innerText = DATA.inventario.length;
             document.getElementById('dash-caja').innerText = `$${(DATA.finanzas.ingresos - DATA.finanzas.gastos).toFixed(2)}`;
+            
+            const tbodyDash = document.getElementById('table-dash').querySelector('tbody');
+            tbodyDash.innerHTML = DATA.ordenes.slice(0, 5).map(o => `
+                <tr><td><b>${o.id}</b></td><td>${o.marca} ${o.equipo}</td><td>${o.cliente}</td><td><span class="status-badge status-pending">${o.estado}</span></td></tr>
+            `).join('');
 
-            // Tabla Dashboard
-            const tbodyRecent = document.getElementById('table-recent').querySelector('tbody');
-            tbodyRecent.innerHTML = DATA.ordenes.slice(0, 5).map((o, i) => `
+            const tbodyMovs = document.getElementById('table-movs').querySelector('tbody');
+            tbodyMovs.innerHTML = DATA.finanzas.movimientos.map(m => `
+                <tr><td>${m.fecha}</td><td>${m.concepto}</td><td style="color:var(--success)">${m.tipo}</td><td>$${m.monto}</td></tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderFullLab() {
+            const tbody = document.getElementById('table-full-lab').querySelector('tbody');
+            tbody.innerHTML = DATA.ordenes.map(o => `
                 <tr>
                     <td><b style="color:var(--accent)">${o.id}</b></td>
                     <td>${o.marca} ${o.equipo}</td>
                     <td>${o.cliente}</td>
-                    <td>
-                        <select onchange="cambiarEstado(${i}, this.value)" class="status-badge ${o.estado === 'PENDIENTE' ? 'status-pending' : 'status-done'}">
-                            <option value="PENDIENTE" ${o.estado === 'PENDIENTE' ? 'selected' : ''}>PENDIENTE</option>
-                            <option value="LISTO" ${o.estado === 'LISTO' ? 'selected' : ''}>LISTO</option>
-                        </select>
+                    <td>$${o.costo}</td>
+                    <td><span class="status-badge ${o.estado==='PENDIENTE'?'status-pending':'status-done'}">${o.estado}</span></td>
+                    <td style="display:flex; gap:10px;">
+                        <button onclick="editarOrden('${o.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer;"><i data-lucide="edit-3"></i></button>
+                        <button onclick="eliminarOrden('${o.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;"><i data-lucide="trash-2"></i></button>
                     </td>
                 </tr>
             `).join('');
-
-            // Tabla Finanzas
-            const tbodyFin = document.getElementById('table-movs').querySelector('tbody');
-            tbodyFin.innerHTML = DATA.finanzas.movimientos.map(m => `
-                <tr>
-                    <td>${m.fecha}</td>
-                    <td>${m.concepto}</td>
-                    <td style="color:${m.tipo==='IN'?'var(--success)':'var(--danger)'}; font-weight:800;">${m.tipo}</td>
-                    <td>$${m.monto.toFixed(2)}</td>
-                </tr>
-            `).join('');
-
-            // Tabla Inventario
-            const tbodyInv = document.getElementById('table-inv');
-            tbodyInv.innerHTML = DATA.inventario.map(i => `
-                <tr><td>${i.nombre}</td><td>${i.cant} Unid.</td><td><span class="status-badge status-done">EN STOCK</span></td></tr>
-            `).join('');
-
-            updateChart();
             lucide.createIcons();
         }
 
+        function save() { localStorage.setItem('nextcom_db_v7', JSON.stringify(DATA)); updateUI(); }
         function clearForm() {
-            ['tk-cliente', 'tk-tel', 'tk-falla', 'tk-marca', 'tk-equipo', 'tk-imei', 'tk-pin'].forEach(id => {
-                document.getElementById(id).value = '';
-            });
+            ['tk-edit-id','tk-cliente','tk-tel','tk-falla','tk-marca','tk-equipo','tk-pin'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('tk-costo').value = 0;
+            document.getElementById('btn-save').innerText = "REGISTRAR E INGRESAR";
         }
-
-        function notify(msg) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.innerHTML = `<i data-lucide="check-circle"></i> ${msg}`;
-            document.getElementById('toast-container').appendChild(toast);
-            lucide.createIcons();
+        function notify(m, t="success") {
+            const toast = document.createElement('div'); toast.className = 'toast';
+            toast.innerHTML = `<i data-lucide="${t==='success'?'check-circle':'alert-circle'}"></i> ${m}`;
+            document.getElementById('toast-container').appendChild(toast); lucide.createIcons();
             setTimeout(() => toast.remove(), 2500);
         }
-
         function initChart() {
-            const ctx = document.getElementById('chart-finanzas');
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels: ['L','M','X','J','V','S','D'], datasets: [{ label:'Ingresos', data: [0,0,0,0,0,0,0], borderColor:'#2563eb', tension:0.4 }] },
-                options: { plugins:{legend:{display:false}}, scales:{y:{display:false}, x:{grid:{display:false}}} }
-            });
-        }
-
-        function updateChart() {
-            if(myChart) {
-                myChart.data.datasets[0].data = [10, 25, 15, 30, 45, DATA.finanzas.ingresos, 0];
-                myChart.update();
-            }
+            const ctx = document.getElementById('chart-main').getContext('2d');
+            new Chart(ctx, { type:'line', data:{ labels:['L','M','X','J','V','S','D'], datasets:[{label:'Ingresos', data:[5,10,8,15,20,25,30], borderColor:'#2563eb', tension:0.4}]}, options:{plugins:{legend:{display:false}}, scales:{y:{display:false},x:{grid:{display:false}}}}});
         }
     </script>
 </body>

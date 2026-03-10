@@ -412,18 +412,36 @@
             lucide.createIcons();
         }
 
+       // --- FUNCIÓN ACTUALIZADA: RENDERIZADO CON CAMBIO DE ESTADO ---
         function renderRecent() {
             const tbody = document.getElementById('table-recent').querySelector('tbody');
-            tbody.innerHTML = DATA.ordenes.slice(0, 5).map(o => `
+            tbody.innerHTML = DATA.ordenes.slice(0, 5).map((o, index) => `
                 <tr>
                     <td><span style="color:var(--accent); font-weight:800;">${o.id}</span></td>
                     <td>${o.equipo}</td>
                     <td>${o.cliente}</td>
-                    <td><span class="status-badge status-pending">${o.estado}</span></td>
+                    <td>
+                        <select 
+                            onchange="cambiarEstado(${index}, this.value)" 
+                            class="status-badge ${o.estado === 'PENDIENTE' ? 'status-pending' : 'status-done'}"
+                            style="border: none; cursor: pointer; font-family: inherit; outline: none;"
+                        >
+                            <option value="PENDIENTE" ${o.estado === 'PENDIENTE' ? 'selected' : ''}>PENDIENTE</option>
+                            <option value="LISTO" ${o.estado === 'LISTO' ? 'selected' : ''}>LISTO</option>
+                        </select>
+                    </td>
                 </tr>
             `).join('');
         }
 
+        // --- NUEVA FUNCIÓN: LÓGICA DE CAMBIO DE ESTADO ---
+        function cambiarEstado(index, nuevoEstado) {
+            // Actualizamos en el array global (considerando que slice(0,5) mantiene el orden)
+            DATA.ordenes[index].estado = nuevoEstado;
+            
+            save(); // Guarda en LocalStorage y refresca la UI
+            notify(`Estado de ${DATA.ordenes[index].id} actualizado a ${nuevoEstado}`);
+        }
         function renderMovimientos() {
             const tbody = document.getElementById('table-movs').querySelector('tbody');
             tbody.innerHTML = DATA.finanzas.movimientos.map(m => `
@@ -488,3 +506,4 @@
     </script>
 </body>
 </html>
+

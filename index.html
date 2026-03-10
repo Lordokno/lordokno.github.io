@@ -3,309 +3,488 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM // Dashboard Pro (ReparaCel Style)</title>
+    <title>NEXTCOM // Workshop Enterprise OS</title>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
 
         :root {
-            --bg-deep: #0f172a; /* Slate 900 */
-            --bg-card: #1e293b; /* Slate 800 */
-            --accent: #3b82f6;  /* Blue 500 */
-            --accent-hover: #2563eb;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-            --border: rgba(255, 255, 255, 0.08);
+            --bg-body: #050505;
+            --bg-card: #0c0c0c;
+            --accent: #2563eb;
+            --accent-glow: rgba(37, 99, 235, 0.2);
+            --border: rgba(255, 255, 255, 0.06);
+            --text-main: #ffffff;
+            --text-dim: #71717a;
             --success: #10b981;
+            --danger: #ef4444;
             --warning: #f59e0b;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
-        body { background-color: var(--bg-deep); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        /* SIDEBAR ESTILO REPARACEL */
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- NAVEGACIÓN LATERAL --- */
         aside {
-            width: 260px; background: #020617; border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; padding: 1.5rem;
+            width: 280px;
+            background: #000;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            z-index: 50;
         }
-        .logo-area { display: flex; align-items: center; gap: 10px; margin-bottom: 2.5rem; }
-        .logo-circle { width: 35px; height: 35px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
-        .logo-text { font-weight: 800; font-size: 1.2rem; letter-spacing: -0.5px; }
 
-        .nav-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 1rem; border-radius: 10px;
-            color: var(--text-dim); cursor: pointer; transition: 0.3s; margin-bottom: 5px; border: none; background: none; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
         }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
 
-        /* MAIN CONTENT */
-        main { flex: 1; overflow-y: auto; padding: 2rem; position: relative; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .search-container { position: relative; width: 400px; }
-        .search-container input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); padding: 10px 15px 10px 40px; border-radius: 12px; color: white; }
-        .search-container i { position: absolute; left: 12px; top: 12px; color: var(--text-dim); }
+        .brand-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent), #1d4ed8);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
 
-        /* DASHBOARD GRID */
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2rem; }
-        .stat-box { background: var(--bg-card); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); }
-        .stat-box p { font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
-        .stat-box h2 { font-size: 1.8rem; margin-top: 5px; }
+        .brand-text h2 { font-size: 1.2rem; font-weight: 800; font-style: italic; letter-spacing: -0.5px; }
+        .brand-text span { font-size: 9px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
 
-        /* VIEWS */
-        .view { display: none; animation: slideUp 0.4s ease; }
+        .nav-menu { flex: 1; }
+        .nav-section-title { font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin: 1.5rem 0 0.5rem 1rem; }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 1rem; border-radius: 12px;
+            color: var(--text-dim); text-decoration: none;
+            font-size: 13px; font-weight: 600;
+            transition: 0.2s; cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+        }
+
+        .nav-link:hover { color: var(--text-main); background: rgba(255,255,255,0.03); }
+        .nav-link.active { color: #fff; background: var(--accent); box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4); }
+
+        /* --- ÁREA PRINCIPAL --- */
+        main { flex: 1; overflow-y: auto; padding: 2.5rem; position: relative; }
+        .bg-glow { position: absolute; top: 0; right: 0; width: 400px; height: 400px; background: var(--accent); filter: blur(150px); opacity: 0.05; pointer-events: none; }
+
+        .view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* TICKETS TABLE */
-        .card-table { background: var(--bg-card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- CABECERAS --- */
+        .header-content { margin-bottom: 2.5rem; }
+        .header-content h1 { font-size: 3.5rem; font-weight: 800; font-style: italic; letter-spacing: -2px; text-transform: uppercase; }
+        .header-content h1 span { color: var(--accent); }
+
+        /* --- GRID DASHBOARD --- */
+        .stats-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2.5rem; }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 1.5rem; border-radius: 24px; position: relative; overflow: hidden;
+        }
+        .stat-card h3 { font-size: 2rem; font-weight: 800; margin-top: 0.5rem; }
+        .stat-card p { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; }
+        .stat-card .icon-bg { position: absolute; right: -10px; bottom: -10px; opacity: 0.05; width: 80px; height: 80px; }
+
+        /* --- FORMULARIOS --- */
+        .glass-panel {
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 2rem; border-radius: 32px; margin-bottom: 2rem;
+        }
+
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .input-box { display: flex; flex-direction: column; gap: 8px; }
+        .input-box label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-left: 5px; }
+        
+        input, select, textarea {
+            background: #121212; border: 1px solid var(--border);
+            border-radius: 14px; padding: 14px; color: #fff;
+            font-family: inherit; transition: 0.2s;
+        }
+        input:focus { border-color: var(--accent); outline: none; background: #18181b; }
+
+        .btn-action {
+            background: var(--accent); color: #fff; border: none;
+            padding: 14px 28px; border-radius: 14px; font-weight: 800;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+            display: flex; align-items: center; gap: 10px; justify-content: center;
+        }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3); }
+
+        /* --- TABLAS --- */
+        .table-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { padding: 15px 20px; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; background: rgba(0,0,0,0.2); }
-        td { padding: 15px 20px; border-top: 1px solid var(--border); font-size: 14px; }
-        .badge { padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        .badge-proceso { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
-        .badge-listo { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+        th { background: rgba(255,255,255,0.02); padding: 1.2rem; text-align: left; font-size: 10px; font-weight: 800; color: var(--text-dim); text-transform: uppercase; }
+        td { padding: 1.2rem; border-top: 1px solid var(--border); font-size: 13px; }
 
-        /* FORMULARIOS */
-        .form-panel { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .form-card { background: var(--bg-card); padding: 2rem; border-radius: 20px; border: 1px solid var(--border); }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; font-weight: 600; }
-        input, select, textarea { width: 100%; background: #0f172a; border: 1px solid var(--border); padding: 12px; border-radius: 10px; color: white; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .status-badge { padding: 6px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
 
-        .btn-pro { background: var(--accent); color: white; border: none; padding: 14px 25px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s; }
-        .btn-pro:hover { background: var(--accent-hover); transform: translateY(-2px); }
+        /* --- NOTIFICACIONES --- */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
+        .toast { background: #fff; color: #000; padding: 1rem 2rem; border-radius: 12px; margin-top: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-weight: 700; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s ease; }
 
-        /* SIGNATURE PAD */
-        #signature-canvas { background: #020617; border-radius: 12px; border: 1px dashed var(--border); width: 100%; height: 150px; }
+        /* --- SIGNATURE --- */
+        .sig-wrapper { background: #000; border: 1px dashed var(--border); border-radius: 14px; height: 120px; cursor: crosshair; }
+        canvas { width: 100%; height: 100%; }
 
-        /* MODAL */
-        #ticket-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .ticket-box { background: white; color: black; padding: 2rem; border-radius: 12px; width: 350px; text-align: center; }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="logo-area">
-            <div class="logo-circle"><i data-lucide="smartphone" color="white" width="20"></i></div>
-            <div class="logo-text">REPARACEL <span style="color: var(--accent)">PRO</span></div>
+        <div class="brand">
+            <div class="brand-icon"><i data-lucide="shield-check" color="white"></i></div>
+            <div class="brand-text"><h2>NEXTCOM</h2><span>Systems OS</span></div>
         </div>
 
-        <button class="nav-item active" onclick="switchView('dash')"><i data-lucide="layout-grid" width="18"></i> Dashboard</button>
-        <button class="nav-item" onclick="switchView('servicios')"><i data-lucide="plus-circle" width="18"></i> Nuevo Ticket</button>
-        <button class="nav-item" onclick="switchView('inventario')"><i data-lucide="package" width="18"></i> Inventario</button>
-        <button class="nav-item" onclick="switchView('finanzas')"><i data-lucide="bar-chart" width="18"></i> Finanzas</button>
-        
-        <div style="margin-top: auto; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 10px; font-size: 11px;">
-            <p style="color:var(--text-dim)">Suscripción: <b style="color:var(--success)">PLAN ENTERPRISE</b></p>
+        <nav class="nav-menu">
+            <p class="nav-section-title">Principal</p>
+            <button class="nav-link active" onclick="showView('dash')"><i data-lucide="layout-dashboard"></i> Dashboard</button>
+            <button class="nav-link" onclick="showView('taller')"><i data-lucide="wrench"></i> Laboratorio</button>
+            
+            <p class="nav-section-title">Gestión</p>
+            <button class="nav-link" onclick="showView('inventario')"><i data-lucide="box"></i> Inventario</button>
+            <button class="nav-link" onclick="showView('finanzas')"><i data-lucide="banknote"></i> Finanzas</button>
+            <button class="nav-link" onclick="showView('clientes')"><i data-lucide="users"></i> Clientes</button>
+        </nav>
+
+        <div class="user-profile" style="margin-top: auto; padding: 1rem; border-top: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent);"></div>
+                <div>
+                    <p style="font-size: 12px; font-weight: 800;">Admin NEXTCOM</p>
+                    <p style="font-size: 10px; color: var(--text-dim);">Conectado</p>
+                </div>
+            </div>
         </div>
     </aside>
 
     <main>
-        <div class="top-bar">
-            <div class="search-container">
-                <i data-lucide="search" width="18"></i>
-                <input type="text" id="global-search" placeholder="Buscar por cliente o ID de ticket..." onkeyup="filterTickets()">
-            </div>
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <i data-lucide="bell" color="#94a3b8" width="20"></i>
-                <div style="width: 35px; height: 35px; border-radius: 50%; background: #3b82f6;"></div>
-            </div>
-        </div>
+        <div class="bg-glow"></div>
 
         <section id="view-dash" class="view active">
-            <div class="stats-grid">
-                <div class="stat-box"><p>Tickets Activos</p><h2 id="st-activos">0</h2></div>
-                <div class="stat-box"><p>Ingresos Hoy</p><h2 id="st-hoy">$0.00</h2></div>
-                <div class="stat-box"><p>Utilidad Neta</p><h2 id="st-utilidad" style="color: var(--success)">$0.00</h2></div>
-                <div class="stat-box"><p>Alertas Stock</p><h2 id="st-stock" style="color: var(--warning)">0</h2></div>
+            <div class="header-content">
+                <h1>ESTADO <span>OPERATIVO</span></h1>
             </div>
 
-            <h3 style="margin-bottom: 1.5rem; font-weight: 600;">Órdenes Recientes</h3>
-            <div class="card-table">
-                <table id="main-table">
-                    <thead>
-                        <tr><th>Ticket</th><th>Equipo</th><th>Cliente</th><th>Costo</th><th>Estado</th><th>Acciones</th></tr>
-                    </thead>
-                    <tbody>
-                        </tbody>
-                </table>
+            <div class="stats-container">
+                <div class="stat-card"><p>Ingresos Totales</p><h3 id="dash-ingresos">$0.00</h3><i data-lucide="trending-up" class="icon-bg"></i></div>
+                <div class="stat-card"><p>Reparaciones</p><h3 id="dash-reparas">0</h3><i data-lucide="smartphone" class="icon-bg"></i></div>
+                <div class="stat-card"><p>Piezas Stock</p><h3 id="dash-stock">0</h3><i data-lucide="package" class="icon-bg"></i></div>
+                <div class="stat-card"><p>Caja Chica</p><h3 id="dash-caja">$0.00</h3><i data-lucide="wallet" class="icon-bg"></i></div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+                <div class="table-container">
+                    <div style="padding: 1.5rem; display: flex; justify-content: space-between;">
+                        <h4 style="font-weight: 800; text-transform: uppercase; font-size: 12px;">Últimos Ingresos</h4>
+                        <button onclick="exportCSV()" style="background: none; border: none; color: var(--accent); font-weight: 800; cursor: pointer; font-size: 10px;">EXPORTAR CSV</button>
+                    </div>
+                    <table id="table-recent">
+                        <thead><tr><th>ID</th><th>Dispositivo</th><th>Cliente</th><th>Estado</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="glass-panel" style="padding: 1.5rem;">
+                    <h4 style="font-weight: 800; text-transform: uppercase; font-size: 12px; margin-bottom: 1rem;">Rendimiento Semanal</h4>
+                    <canvas id="chart-finanzas" height="200"></canvas>
+                </div>
             </div>
         </section>
 
-        <section id="view-servicios" class="view">
-            <h2 style="margin-bottom: 2rem;">Recepción de Equipo</h2>
-            <div class="form-panel">
-                <div class="form-card">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group"><label>CLIENTE</label><input type="text" id="tk-cliente" placeholder="Nombre completo"></div>
-                        <div class="form-group"><label>WHATSAPP</label><input type="text" id="tk-whatsapp" placeholder="Ej: +52 ..."></div>
+        <section id="view-taller" class="view">
+            <div class="header-content"><h1>NUEVA <span>ORDEN</span></h1></div>
+            <div class="glass-panel">
+                <div class="form-grid">
+                    <div class="input-box"><label>Cliente</label><input type="text" id="tk-cliente" placeholder="Nombre completo"></div>
+                    <div class="input-box"><label>Teléfono</label><input type="text" id="tk-tel" placeholder="WhatsApp"></div>
+                    <div class="input-box"><label>Dispositivo</label><input type="text" id="tk-equipo" placeholder="Marca y Modelo"></div>
+                    <div class="input-box" style="grid-column: span 2;"><label>Falla / Trabajo a realizar</label><input type="text" id="tk-falla" placeholder="Describa la falla"></div>
+                    <div class="input-box"><label>Presupuesto ($)</label><input type="number" id="tk-costo" value="0"></div>
+                    <div class="input-box" style="grid-column: span 3;">
+                        <label>Firma de conformidad</label>
+                        <div class="sig-wrapper"><canvas id="sig-pad"></canvas></div>
+                        <button onclick="clearSig()" style="text-align: right; background: none; border: none; color: var(--text-dim); font-size: 10px; padding: 5px; cursor: pointer;">LIMPIAR FIRMA</button>
                     </div>
-                    <div class="form-group"><label>DISPOSITIVO</label><input type="text" id="tk-modelo" placeholder="Ej: iPhone 13 Pro"></div>
-                    <div class="form-group"><label>FALLA REPORTADA</label><textarea id="tk-falla" rows="3"></textarea></div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
-                        <div class="form-group"><label>VENTA ($)</label><input type="number" id="tk-precio" value="0"></div>
-                        <div class="form-group"><label>COSTO PIEZA ($)</label><input type="number" id="tk-pieza" value="0"></div>
-                        <div class="form-group"><label>ABONO ($)</label><input type="number" id="tk-abono" value="0"></div>
-                    </div>
-                    <button class="btn-pro" onclick="crearTicket()"><i data-lucide="save" width="18"></i> REGISTRAR EQUIPO</button>
                 </div>
-                <div class="form-card">
-                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px; display: block;">FIRMA DEL CLIENTE</label>
-                    <canvas id="signature-canvas"></canvas>
-                    <p style="font-size: 10px; color: var(--text-dim); margin-top: 10px;">Al firmar, el cliente acepta los términos de garantía y condiciones del servicio.</p>
-                </div>
+                <button class="btn-action" style="width: 100%; margin-top: 2rem;" onclick="guardarOrden()">
+                    <i data-lucide="check-square"></i> Registrar y Generar Ticket
+                </button>
             </div>
         </section>
 
         <section id="view-inventario" class="view">
-            <h2 style="margin-bottom: 2rem;">Control de Refacciones</h2>
-            <div class="card-table">
+            <div class="header-content"><h1>STOCK <span>REPUESTOS</span></h1></div>
+            <div class="glass-panel">
+                <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr auto;">
+                    <div class="input-box"><label>Nombre del Item</label><input type="text" id="inv-item"></div>
+                    <div class="input-box"><label>Cantidad</label><input type="number" id="inv-cant"></div>
+                    <div class="input-box"><label>Precio Unit.</label><input type="number" id="inv-pre"></div>
+                    <button class="btn-action" onclick="addInventario()" style="margin-top: 22px;"><i data-lucide="plus"></i></button>
+                </div>
+            </div>
+            <div class="table-container">
                 <table>
-                    <thead><tr><th>Pieza</th><th>Stock</th><th>P. Compra</th><th>P. Venta</th><th>Estado</th></tr></thead>
-                    <tbody id="inv-table">
-                        <tr><td>Pantalla iPhone 11</td><td>5</td><td>$45.00</td><td>$120.00</td><td><span class="badge" style="background: rgba(16,185,129,0.1); color: #34d399">OK</span></td></tr>
-                    </tbody>
+                    <thead><tr><th>Item</th><th>Existencia</th><th>Inversión</th><th>Estado</th></tr></thead>
+                    <tbody id="table-inv"></tbody>
                 </table>
             </div>
         </section>
+
+        <section id="view-finanzas" class="view">
+            <div class="header-content"><h1>GESTIÓN <span>MONETARIA</span></h1></div>
+            <div class="form-grid">
+                <div class="glass-panel" style="grid-column: span 1;">
+                    <h4 style="margin-bottom: 1.5rem; font-weight: 800;">REGISTRAR GASTO</h4>
+                    <div class="input-box" style="margin-bottom: 1rem;"><label>Concepto</label><input type="text" id="gas-tit"></div>
+                    <div class="input-box" style="margin-bottom: 1.5rem;"><label>Monto ($)</label><input type="number" id="gas-mon"></div>
+                    <button class="btn-action" style="width: 100%; background: var(--danger);" onclick="addGasto()">REDUCIR CAJA</button>
+                </div>
+                <div class="table-container" style="grid-column: span 2;">
+                    <div style="padding: 1.5rem;"><h4 style="font-weight: 800;">HISTORIAL DE MOVIMIENTOS</h4></div>
+                    <table id="table-movs">
+                        <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Monto</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
     </main>
 
-    <div id="ticket-modal">
-        <div class="ticket-box" id="ticket-print">
-            <h3 style="margin-bottom: 5px;">NEXTCOM</h3>
-            <p style="font-size: 10px; margin-bottom: 15px;">ORDEN DE SERVICIO</p>
-            <div id="ticket-info" style="text-align: left; font-size: 12px; border-top: 1px dashed #ccc; padding-top: 10px;"></div>
-            <button class="btn-pro" style="margin-top: 20px;" onclick="closeModal()">CERRAR</button>
-        </div>
-    </div>
+    <div id="toast-container"></div>
 
     <script>
-        let database = JSON.parse(localStorage.getItem('reparacel_db')) || [];
+        // --- BASE DE DATOS LOCAL ---
+        let DATA = JSON.parse(localStorage.getItem('nextcom_v4')) || {
+            ordenes: [],
+            inventario: [],
+            finanzas: { ingresos: 0, gastos: 0, movimientos: [] }
+        };
+
         let sigPad;
+        let myChart;
 
         window.onload = () => {
-            const canvas = document.getElementById('signature-canvas');
+            const canvas = document.getElementById('sig-pad');
             sigPad = new SignaturePad(canvas);
-            renderAll();
+            
+            initChart();
+            updateUI();
             lucide.createIcons();
-        }
-
-        function switchView(viewId) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(viewId === 'servicios') resizeCanvas();
-        }
+            
+            // Auto-ajuste de canvas
+            window.onresize = resizeCanvas;
+            resizeCanvas();
+        };
 
         function resizeCanvas() {
-            const canvas = document.getElementById('signature-canvas');
+            const canvas = document.getElementById('sig-pad');
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             canvas.getContext("2d").scale(ratio, ratio);
         }
 
-        function crearTicket() {
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById('view-' + id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if(id === 'dash') updateUI();
+        }
+
+        // --- LÓGICA TALLER ---
+        function guardarOrden() {
             const cliente = document.getElementById('tk-cliente').value;
-            const modelo = document.getElementById('tk-modelo').value;
-            const precio = parseFloat(document.getElementById('tk-precio').value);
-            const pieza = parseFloat(document.getElementById('tk-pieza').value);
-            const tel = document.getElementById('tk-whatsapp').value;
+            const equipo = document.getElementById('tk-equipo').value;
+            const costo = parseFloat(document.getElementById('tk-costo').value);
 
-            if(!cliente || !modelo) return alert("Completa los datos mínimos");
+            if(!cliente || !equipo || sigPad.isEmpty()) return notify("Error: Datos incompletos o falta firma", "error");
 
-            const ticket = {
-                id: 'TK-' + Math.floor(1000 + Math.random() * 9000),
+            const orden = {
+                id: 'NX' + (DATA.ordenes.length + 101),
                 fecha: new Date().toLocaleDateString(),
-                cliente, modelo, precio, pieza, tel,
-                utilidad: precio - pieza,
-                estado: 'PROCESO'
+                cliente, equipo, costo, estado: 'PENDIENTE'
             };
 
-            database.unshift(ticket);
-            localStorage.setItem('reparacel_db', JSON.stringify(database));
-            renderAll();
-            showTicket(ticket);
-            clearForm();
-            switchView('dash');
+            DATA.ordenes.unshift(orden);
+            DATA.finanzas.ingresos += costo;
+            DATA.finanzas.movimientos.unshift({ fecha: orden.fecha, concepto: `Pago Reparación ${orden.id}`, tipo: 'IN', monto: costo });
+            
+            save();
+            notify("Orden registrada con éxito");
+            clearFormTaller();
+            showView('dash');
         }
 
-        function renderAll() {
-            const tbody = document.getElementById('main-table').querySelector('tbody');
-            tbody.innerHTML = '';
-
-            let totalIngresos = 0;
-            let totalUtilidad = 0;
-
-            database.forEach((t, index) => {
-                totalIngresos += t.precio;
-                totalUtilidad += t.utilidad;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${t.id}</b></td>
-                        <td>${t.modelo}</td>
-                        <td>${t.cliente}</td>
-                        <td>$${t.precio.toFixed(2)}</td>
-                        <td><span class="badge badge-${t.estado.toLowerCase()}">${t.estado}</span></td>
-                        <td>
-                            <button onclick="whatsapp(${index})" style="background:none; border:none; color:#10b981; cursor:pointer;"><i data-lucide="message-circle" width="18"></i></button>
-                            <button onclick="marcarListo(${index})" style="background:none; border:none; color:#3b82f6; cursor:pointer; margin-left:10px;"><i data-lucide="check-check" width="18"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('st-activos').innerText = database.filter(x => x.estado === 'PROCESO').length;
-            document.getElementById('st-hoy').innerText = '$' + totalIngresos.toFixed(2);
-            document.getElementById('st-utilidad').innerText = '$' + totalUtilidad.toFixed(2);
-            lucide.createIcons();
-        }
-
-        function whatsapp(index) {
-            const t = database[index];
-            const msg = `Hola ${t.cliente}, tu equipo ${t.modelo} ya está listo en NEXTCOM. El total es $${t.precio}.`;
-            window.open(`https://wa.me/${t.tel}?text=${encodeURIComponent(msg)}`);
-        }
-
-        function marcarListo(index) {
-            database[index].estado = 'LISTO';
-            localStorage.setItem('reparacel_db', JSON.stringify(database));
-            renderAll();
-        }
-
-        function showTicket(t) {
-            document.getElementById('ticket-info').innerHTML = `
-                <b>TICKET:</b> ${t.id}<br>
-                <b>CLIENTE:</b> ${t.cliente}<br>
-                <b>EQUIPO:</b> ${t.modelo}<br>
-                <b>TOTAL:</b> $${t.precio.toFixed(2)}<hr style="margin:10px 0; border:none; border-top:1px dashed #eee">
-                <small>Fecha: ${t.fecha}</small>
-            `;
-            document.getElementById('ticket-modal').style.display = 'flex';
-        }
-
-        function closeModal() { document.getElementById('ticket-modal').style.display = 'none'; }
-
-        function clearForm() {
-            document.getElementById('tk-cliente').value = '';
-            document.getElementById('tk-modelo').value = '';
-            document.getElementById('tk-precio').value = '0';
+        function clearFormTaller() {
+            ['tk-cliente', 'tk-tel', 'tk-equipo', 'tk-falla'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('tk-costo').value = 0;
             sigPad.clear();
         }
 
-        function filterTickets() {
-            const val = document.getElementById('global-search').value.toLowerCase();
-            const rows = document.querySelectorAll('#main-table tbody tr');
-            rows.forEach(r => {
-                r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none';
+        // --- LÓGICA INVENTARIO ---
+        function addInventario() {
+            const nombre = document.getElementById('inv-item').value;
+            const cant = parseInt(document.getElementById('inv-cant').value);
+            const pre = parseFloat(document.getElementById('inv-pre').value);
+
+            if(!nombre || isNaN(cant)) return;
+
+            DATA.inventario.push({ nombre, cant, pre });
+            save();
+            renderInventario();
+            notify("Item añadido al stock");
+        }
+
+        function renderInventario() {
+            const tbody = document.getElementById('table-inv');
+            tbody.innerHTML = DATA.inventario.map(i => `
+                <tr>
+                    <td><b>${i.nombre}</b></td>
+                    <td>${i.cant} Unid.</td>
+                    <td>$${(i.cant * i.pre).toFixed(2)}</td>
+                    <td><span class="status-badge status-done">STOCK</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- FINANZAS ---
+        function addGasto() {
+            const tit = document.getElementById('gas-tit').value;
+            const mon = parseFloat(document.getElementById('gas-mon').value);
+
+            if(!tit || isNaN(mon)) return;
+
+            DATA.finanzas.gastos += mon;
+            DATA.finanzas.movimientos.unshift({ 
+                fecha: new Date().toLocaleDateString(), 
+                concepto: tit, 
+                tipo: 'OUT', 
+                monto: mon 
+            });
+
+            save();
+            updateUI();
+            notify("Gasto registrado", "warning");
+            document.getElementById('gas-tit').value = '';
+            document.getElementById('gas-mon').value = '';
+        }
+
+        // --- CORE ---
+        function save() {
+            localStorage.setItem('nextcom_v4', JSON.stringify(DATA));
+            updateUI();
+        }
+
+        function updateUI() {
+            // Stats
+            document.getElementById('dash-ingresos').innerText = `$${DATA.finanzas.ingresos.toFixed(2)}`;
+            document.getElementById('dash-reparas').innerText = DATA.ordenes.length;
+            document.getElementById('dash-stock').innerText = DATA.inventario.reduce((a,b) => a + b.cant, 0);
+            document.getElementById('dash-caja').innerText = `$${(DATA.finanzas.ingresos - DATA.finanzas.gastos).toFixed(2)}`;
+
+            // Tablas
+            renderRecent();
+            renderInventario();
+            renderMovimientos();
+            updateChart();
+            lucide.createIcons();
+        }
+
+        function renderRecent() {
+            const tbody = document.getElementById('table-recent').querySelector('tbody');
+            tbody.innerHTML = DATA.ordenes.slice(0, 5).map(o => `
+                <tr>
+                    <td><span style="color:var(--accent); font-weight:800;">${o.id}</span></td>
+                    <td>${o.equipo}</td>
+                    <td>${o.cliente}</td>
+                    <td><span class="status-badge status-pending">${o.estado}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderMovimientos() {
+            const tbody = document.getElementById('table-movs').querySelector('tbody');
+            tbody.innerHTML = DATA.finanzas.movimientos.map(m => `
+                <tr>
+                    <td>${m.fecha}</td>
+                    <td>${m.concepto}</td>
+                    <td style="color:${m.tipo === 'IN' ? 'var(--success)' : 'var(--danger)'}; font-weight:800;">${m.tipo}</td>
+                    <td>$${m.monto.toFixed(2)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function notify(msg, type = "success") {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-triangle'}"></i> ${msg}`;
+            document.getElementById('toast-container').appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('chart-finanzas').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'],
+                    datasets: [{
+                        label: 'Ingresos',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#2563eb',
+                        tension: 0.4,
+                        fill: true,
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)'
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#71717a' } } }
+                }
             });
         }
+
+        function updateChart() {
+            // Lógica para llenar gráfico según movimientos...
+            myChart.data.datasets[0].data = [12, 19, 3, 5, 2, 3, DATA.finanzas.ingresos];
+            myChart.update();
+        }
+
+        function exportCSV() {
+            let csv = "ID,Cliente,Equipo,Costo\n";
+            DATA.ordenes.forEach(o => csv += `${o.id},${o.cliente},${o.equipo},${o.costo}\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'reporte_nextcom.csv');
+            a.click();
+        }
+
+        function clearSig() { sigPad.clear(); }
     </script>
 </body>
 </html>

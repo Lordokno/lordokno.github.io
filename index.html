@@ -225,7 +225,6 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             <div class="nav-item active" onclick="go('dash', this)"><i data-lucide="layout-grid"></i> Dashboard</div>
             <div class="nav-item" onclick="go('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
             <div class="nav-item" onclick="go('inv', this)"><i data-lucide="package"></i> Inventario</div>
-            <div class="nav-item" onclick="go('clients', this)"><i data-lucide="users"></i> Clientes</div>
         </div>
 
         <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
@@ -336,30 +335,12 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
     </table>
 </div>
         </section>
-<section id="v-clients" class="view">
-    <div class="view-title">
-        <h1>Base de Datos de Clientes</h1>
-        <p>Historial de contactos y registros frecuentes.</p>
-    </div>
-    <div class="table-box">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre del Cliente</th>
-                    <th>WhatsApp / Teléfono</th>
-                    <th>Última Actividad</th>
-                    <th>Gestión</th>
-                </tr>
-            </thead>
-            <tbody id="clients-list"></tbody>
-        </table>
-    </div>
-</section>
+
     </main>
 
     <script>
         const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
+            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [] },
             editState: { lab: null, inv: null },
 
             init() {
@@ -368,20 +349,6 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                     const now = new Date();
                     document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 }, 1000);
-
-                // Agregar dentro de Engine.init()
-document.getElementById('l-name').addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    if(term.length < 3) return; // Empezar a buscar después de 3 letras
-    
-    const found = Engine.db.clients.find(c => c.name.toLowerCase().includes(term));
-    if(found && !Engine.editState.lab) {
-        document.getElementById('l-phone').value = found.phone;
-        // Efecto visual de autorelleno
-        document.getElementById('l-phone').style.background = "rgba(16, 185, 129, 0.1)";
-        setTimeout(() => document.getElementById('l-phone').style.background = "rgba(0, 0, 0, 0.2)", 1000);
-    }
-});
             },
 
             save() {
@@ -393,7 +360,6 @@ document.getElementById('l-name').addEventListener('input', (e) => {
                 this.renderDash();
                 this.renderLab();
                 this.renderInv();
-                this.renderClients();
                 lucide.createIcons();
             },
 
@@ -413,15 +379,6 @@ document.getElementById('l-name').addEventListener('input', (e) => {
                     const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
                     this.db.orders[idx] = { ...this.db.orders[idx], ...data };
                 } else {
-                    // Lógica de guardado/actualización de cliente
-const clientIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
-const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
-
-if(clientIdx > -1) {
-    this.db.clients[clientIdx] = clientData; // Actualiza si ya existe
-} else {
-    this.db.clients.unshift(clientData); // Crea si es nuevo
-}
                     this.db.orders.unshift({ id: 'TK-' + (Math.floor(Math.random() * 9000) + 1000), ...data, status: 'PENDIENTE' });
                 }
                 this.save();
@@ -609,16 +566,6 @@ if(clientIdx > -1) {
         }
 
         window.onload = () => Engine.init();
-
-// Lógica de guardado/actualización de cliente
-const clientIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
-const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
-
-if(clientIdx > -1) {
-    this.db.clients[clientIdx] = clientData; // Actualiza si ya existe
-} else {
-    this.db.clients.unshift(clientData); // Crea si es nuevo
-}
     </script>
 </body>
 </html>

@@ -28,7 +28,10 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-
+        
+.badge-warranty { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.badge-expired { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.time-left { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
 /* Estilo refinado para los iconos de las tarjetas */
 .stat-icon {
     width: 20px;
@@ -284,6 +287,7 @@
             <div class="nav-item" onclick="go('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
             <div class="nav-item" onclick="go('inv', this)"><i data-lucide="package"></i> Inventario</div>
             <div class="nav-item" onclick="go('clients', this)"><i data-lucide="users"></i> Clientes</div>
+            <div class="nav-item" onclick="go('guarantee', this)"><i data-lucide="shield-check"></i> Garantías</div>
         </div>
 
         <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
@@ -446,13 +450,122 @@
         </table>
     </div>
 </section>
+
+<section id="v-guarantee" class="view">
+    <div class="view-title">
+        <h1>Gestión de Garantías</h1>
+        <p>Seguimiento de coberturas activas y avisos de vencimiento.</p>
+    </div>
+
+    <div class="smart-panel">
+        <div class="input-row">
+            <div class="field"><label>Cliente</label><input type="text" id="g-name" placeholder="Nombre"></div>
+            <div class="field"><label>WhatsApp</label><input type="text" id="g-phone" placeholder="7788-9900"></div>
+            <div class="field"><label>Días de Garantía</label><input type="number" id="g-days" value="30"></div>
+            <button class="btn-main" onclick="Engine.addWarranty()">
+                <i data-lucide="shield-plus"></i> ACTIVAR GARANTÍA
+            </button>
+        </div>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente / Teléfono</th>
+                    <th>Inicio</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                    <th>Notificar</th>
+                </tr>
+            </thead>
+            <tbody id="guarantee-list"></tbody>
+        </table>
+    </div>
+</section>
+        
     </main>
 
     <script>
         const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
+            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] },
             editState: { lab: null, inv: null },
+// Asegúrate de que db tenga la propiedad warranties al inicio
+// db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] }
 
+addWarranty() {
+    const name = document.getElementById('g-name').value;
+    const phone = document.getElementById('g-phone').value;
+    const days = parseInt(document.getElementById('g-days').value);
+
+    if (!name || !phone || !days) return alert("Completa todos los campos");
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(startDate.getDate() + days);
+
+    const newWarranty = {
+        id: Date.now(),
+        client: name,
+        phone: phone,
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+        days: days
+    };
+
+    if(!this.db.warranties) this.db.warranties = [];
+    this.db.warranties.unshift(newWarranty);
+    this.save();
+    
+    // Limpiar campos
+    document.getElementById('g-name').value = '';
+    document.getElementById('g-phone').value = '';
+},
+
+renderWarranties() {
+    if(!this.db.warranties) this.db.warranties = [];
+    const now = new Date();
+    
+    document.getElementById('guarantee-list').innerHTML = this.db.warranties.map(w => {
+        const end = new Date(w.end);
+        const diffTime = end - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const isExpired = diffDays <= 0;
+
+        const statusBadge = isExpired 
+            ? `<span class="badge badge-expired">VENCIDA</span>` 
+            : `<span class="badge badge-warranty">ACTIVA</span> <br> <span class="time-left">Quedan ${diffDays} días</span>`;
+
+        // Mensaje de WhatsApp
+        const msg = window.encodeURIComponent(`Hola ${w.client}, te saludamos de AETERNA. Te informamos que el periodo de garantía de tu reparación ha finalizado hoy. ¡Gracias por tu confianza!`);
+        const waLink = `https://wa.me/${w.phone}?text=${msg}`;
+
+        return `
+            <tr>
+                <td><strong>${w.client}</strong><br><small style="color:var(--success)">${w.phone}</small></td>
+                <td style="font-size:12px;">${new Date(w.start).toLocaleDateString()}</td>
+                <td style="font-size:12px; font-weight:700;">${end.toLocaleDateString()}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <a href="${waLink}" target="_blank" class="action-icon" style="color:var(--success)">
+                        <i data-lucide="message-circle" size="18"></i>
+                    </a>
+                    <div class="action-icon" onclick="Engine.deleteWarranty(${w.id})">
+                        <i data-lucide="trash-2" size="18"></i>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    lucide.createIcons();
+},
+
+deleteWarranty(id) {
+    if(confirm("¿Eliminar registro de garantía?")) {
+        this.db.warranties = this.db.warranties.filter(w => w.id !== id);
+        this.save();
+    }
+}
 // Añade esto dentro de Engine: { ... }
 addClientManual() {
     const name = document.getElementById('c-name').value;
@@ -513,6 +626,7 @@ addClientManual() {
                 this.renderLab();
                 this.renderInv();
                 this.renderClients();
+                this.renderWarranties()
                 lucide.createIcons();
             },
 

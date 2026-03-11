@@ -18,6 +18,8 @@
             --edit: #f59e0b;
             --success: #10b981;
             --danger: #ef4444;
+            --warranty: #06b6d4;
+            --warranty-glow: rgba(6, 182, 212, 0.3);
             --text-main: #f8fafc;
             --text-dim: #64748b;
             --border: rgba(255, 255, 255, 0.06);
@@ -29,59 +31,27 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
 
-/* Estilo refinado para los iconos de las tarjetas */
-.stat-icon {
-    width: 20px;
-    height: 20px;
-    stroke-width: 2.5px;
-    /* Efecto de resplandor suave */
-    filter: drop-shadow(0 0 5px currentColor);
-    opacity: 0.9;
-}
+        .stat-icon {
+            width: 20px; height: 20px; stroke-width: 2.5px;
+            filter: drop-shadow(0 0 5px currentColor); opacity: 0.9;
+        }
 
-/* Ajuste a la etiqueta para alinear el icono a la derecha */
-.stat-card .label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
-}
+        .stat-card .label {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 5px;
+        }
 
-/* Mejora visual de la tarjeta al pasar el mouse */
-.stat-card:hover {
-    background: rgba(255, 255, 255, 0.03);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-3px);
-}
-        /* --- COMPACTACIÓN GLOBAL DE TABLAS (Dash, Lab, Clientes) --- */
-#dash-table td, 
-#lab-table td, 
-#clients-list td {
-    padding: 8px 24px !important; /* Reducción de espaciado vertical */
-    font-size: 13px; /* Tamaño de fuente optimizado */
-}
+        .stat-card:hover {
+            background: rgba(255,255,255,0.03);
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-3px);
+        }
 
-/* Ajuste de iconos de acción para que coincidan con el nuevo alto de fila */
-#lab-table .action-icon,
-#clients-list .action-icon {
-    width: 28px;
-    height: 28px;
-}
+        #dash-table td, #lab-table td, #clients-list td { padding: 8px 24px !important; font-size: 13px; }
+        #lab-table .action-icon, #clients-list .action-icon { width: 28px; height: 28px; }
+        #lab-table .action-icon i, #clients-list .action-icon i { width: 14px; height: 14px; }
+        .badge { padding: 4px 8px; font-size: 10px; }
 
-#lab-table .action-icon i,
-#clients-list .action-icon i {
-    width: 14px;
-    height: 14px;
-}
-
-/* Ajuste específico para las insignias (badges) en modo compacto */
-.badge {
-    padding: 4px 8px;
-    font-size: 10px;
-}
         body { 
             background: var(--bg);
             background-image: 
@@ -94,7 +64,6 @@
             overflow: hidden;
         }
 
-        /* --- NAVEGACIÓN LATERAL --- */
         aside {
             width: 260px;
             background: rgba(10, 10, 12, 0.6);
@@ -106,45 +75,28 @@
         }
 
         .brand {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 50px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #fff;
+            font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+            margin-bottom: 50px; display: flex; align-items: center; gap: 12px; color: #fff;
         }
 
         .brand-icon {
-            width: 38px;
-            height: 38px;
+            width: 38px; height: 38px;
             background: linear-gradient(135deg, var(--accent), #7c3aed);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
             box-shadow: 0 8px 16px var(--accent-glow);
         }
 
         .nav-menu { flex: 1; }
         .nav-item {
-            padding: 14px 18px;
-            border-radius: 14px;
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            margin-bottom: 6px;
+            padding: 14px 18px; border-radius: 14px; color: var(--text-dim);
+            cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 12px;
+            font-weight: 600; margin-bottom: 6px;
         }
 
         .nav-item:hover { color: #fff; background: rgba(255,255,255,0.03); }
         .nav-item.active { background: #fff; color: #000; }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
         main { flex: 1; overflow-y: auto; padding: 60px 80px; scroll-behavior: smooth; }
         .view { display: none; }
         .view.active { display: block; animation: slideFade 0.6s ease; }
@@ -154,32 +106,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- ENCABEZADOS --- */
         .view-title { margin-bottom: 40px; }
         .view-title h1 { font-size: 38px; font-weight: 800; letter-spacing: -1.5px; }
         .view-title p { color: var(--text-dim); margin-top: 5px; font-weight: 500; }
 
-        /* --- DASHBOARD CARDS --- */
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr) !important; gap: 24px; margin-bottom: 50px;  }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 50px; }
         .stat-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            padding: 32px;
-            border-radius: var(--radius-xl);
-            transition: 0.3s;
+            background: var(--panel); border: 1px solid var(--border);
+            padding: 32px; border-radius: var(--radius-xl); transition: 0.3s;
         }
         .stat-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-4px); }
         .stat-card .label { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-card .value { font-size: 42px; font-weight: 800; margin-top: 10px; font-family: var(--font); }
 
-        /* --- FORMULARIOS (SMART INPUT) --- */
         .smart-panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            padding: 40px;
-            border-radius: var(--radius-xl);
-            margin-bottom: 40px;
-            transition: 0.4s;
+            background: var(--panel); border: 1px solid var(--border);
+            padding: 40px; border-radius: var(--radius-xl); margin-bottom: 40px; transition: 0.4s;
         }
         .smart-panel.editing { border-color: var(--edit); background: rgba(245, 158, 11, 0.03); }
 
@@ -187,37 +129,22 @@
         .field { display: flex; flex-direction: column; gap: 8px; }
         .field label { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; padding-left: 4px; }
         
-        input, textarea {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-            padding: 16px 20px;
-            border-radius: 14px;
-            color: #fff;
-            font-family: var(--font);
-            font-size: 15px;
-            font-weight: 500;
-            transition: 0.3s;
+        input, textarea, select {
+            background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border);
+            padding: 16px 20px; border-radius: 14px; color: #fff;
+            font-family: var(--font); font-size: 15px; font-weight: 500; transition: 0.3s;
         }
-        input:focus { border-color: var(--accent); background: rgba(0,0,0,0.4); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+        select option { background: #1a1a2e; color: #fff; }
+        input:focus, select:focus { border-color: var(--accent); background: rgba(0,0,0,0.4); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
 
         .btn-main {
-            background: #fff;
-            color: #000;
-            padding: 18px 32px;
-            border-radius: 14px;
-            font-weight: 800;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            transition: 0.3s;
-            font-size: 14px;
+            background: #fff; color: #000; padding: 18px 32px; border-radius: 14px;
+            font-weight: 800; border: none; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 12px; transition: 0.3s; font-size: 14px;
         }
         .btn-main:hover { transform: scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .btn-main.update { background: var(--edit); color: #000; }
 
-        /* --- TABLAS ELEGANTES --- */
         .table-box { background: var(--panel); border-radius: var(--radius-xl); border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 20px 24px; color: var(--text-dim); font-size: 12px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--border); }
@@ -226,14 +153,15 @@
         tr:hover td { background: rgba(255,255,255,0.01); }
 
         .badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; } 
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: #10b981; }    
-        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; } 
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; }
+        .badge-listo { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-pendiente { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .badge-urgente { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; }
 
         @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
+            0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; }
         }
 
         tr.status-listo td { color: #10b981 !important; }
@@ -247,28 +175,246 @@
         }
         .action-icon:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: var(--border); }
         .action-icon.edit:hover { color: var(--edit); }
-/* --- CIRUGÍA DE COMPACTACIÓN DE INVENTARIO --- */
-#inv-list td { 
-    padding: 8px 24px !important; /* Reducción de 20px a 8px */
-    font-size: 13px; /* Texto ligeramente más pequeño */
-}
 
-#inv-list .action-icon { 
-    width: 28px; 
-    height: 28px; 
-}
+        #inv-list td { padding: 8px 24px !important; font-size: 13px; }
+        #inv-list .action-icon { width: 28px; height: 28px; }
+        #inv-list .action-icon i { width: 14px; height: 14px; }
+        #inv-list td small { font-size: 10px; text-transform: uppercase; color: var(--text-dim); margin-left: 4px; }
 
-#inv-list .action-icon i { 
-    width: 14px; 
-    height: 14px; 
-}
-/* ------------------------------------------- */
-        #inv-list td small {
+        /* =============================================
+           SISTEMA DE GARANTÍAS — ESTILOS EXCLUSIVOS
+        ============================================= */
+
+        /* Barra de progreso de garantía */
+        .warranty-bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .warranty-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* Tarjeta de garantía individual en la vista principal */
+        .warranty-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 28px 32px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .warranty-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+
+        .warranty-card.active-warranty::before {
+            background: linear-gradient(90deg, var(--warranty), #4f46e5);
+            box-shadow: 0 0 12px var(--warranty-glow);
+        }
+
+        .warranty-card.expiring-warranty::before {
+            background: linear-gradient(90deg, var(--edit), #f97316);
+            animation: blink 1.5s infinite;
+        }
+
+        .warranty-card.expired-warranty::before {
+            background: var(--danger);
+        }
+
+        .warranty-card:hover {
+            border-color: rgba(255,255,255,0.12);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .warranty-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .wcard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .wcard-ticket {
+            font-family: var(--mono);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--warranty);
+            letter-spacing: 1px;
+        }
+
+        .wcard-client {
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .wcard-device {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-weight: 500;
+            margin-bottom: 18px;
+        }
+
+        .wcard-days-remaining {
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .wcard-days-label {
             font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             color: var(--text-dim);
-            margin-left: 4px;
+            margin-bottom: 12px;
         }
+
+        /* Badge de estado de garantía */
+        .wbadge {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wbadge-active {
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--warranty);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        .wbadge-expiring {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--edit);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            animation: blink 1.5s infinite;
+        }
+
+        .wbadge-expired {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        /* Stats de garantías */
+        .warranty-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .wstat {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            transition: 0.3s;
+        }
+
+        .wstat:hover { transform: translateY(-3px); }
+
+        .wstat-number {
+            font-size: 44px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .wstat-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-dim);
+        }
+
+        /* Campo de días en el formulario de Lab */
+        .warranty-input-hint {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            padding-left: 4px;
+        }
+
+        /* Sección de filtros de garantías */
+        .warranty-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .wfilter-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .wfilter-btn:hover { color: #fff; border-color: rgba(255,255,255,0.2); }
+        .wfilter-btn.active { background: #fff; color: #000; border-color: #fff; }
+
+        /* Icono de garantía animado en el nav */
+        .warranty-nav-dot {
+            width: 7px; height: 7px;
+            background: var(--warranty);
+            border-radius: 50%;
+            margin-left: auto;
+            box-shadow: 0 0 8px var(--warranty);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+        }
+
+        /* Vista vacía */
+        .empty-state {
+            text-align: center;
+            padding: 80px 40px;
+            color: var(--text-dim);
+        }
+
+        .empty-state i { margin-bottom: 16px; opacity: 0.3; }
+        .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+
+        /* Tooltip días en tabla */
+        .days-cell { display: flex; flex-direction: column; gap: 6px; min-width: 140px; }
+        .days-text { font-weight: 800; }
+
     </style>
 </head>
 <body>
@@ -284,6 +430,10 @@
             <div class="nav-item" onclick="go('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
             <div class="nav-item" onclick="go('inv', this)"><i data-lucide="package"></i> Inventario</div>
             <div class="nav-item" onclick="go('clients', this)"><i data-lucide="users"></i> Clientes</div>
+            <div class="nav-item" id="nav-warranty" onclick="go('warranty', this)">
+                <i data-lucide="shield"></i> Garantías
+                <span class="warranty-nav-dot" id="warranty-dot" style="display:none;"></span>
+            </div>
         </div>
 
         <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
@@ -294,6 +444,7 @@
 
     <main>
         
+        <!-- ============ DASHBOARD ============ -->
         <section id="v-dash" class="view active">
             <div class="view-title">
                 <h1>Resumen Ejecutivo</h1>
@@ -301,38 +452,23 @@
             </div>
 
             <div class="stats-grid">
-    <div class="stat-card">
-        <div class="label">
-            Servicios 
-            <i data-lucide="layers" class="stat-icon" style="color: var(--accent);"></i>
-        </div>
-        <div class="value" id="st-total">0</div>
-    </div>
-
-    <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
-        <div class="label" style="color: #ef4444;">
-            Urgentes 
-            <i data-lucide="zap" class="stat-icon" style="color: #ef4444; animation: blink 1.5s infinite;"></i>
-        </div>
-        <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="label" style="color: var(--edit);">
-            Pendientes 
-            <i data-lucide="clock-4" class="stat-icon" style="color: var(--edit);"></i>
-        </div>
-        <div class="value" id="st-process" style="color: var(--edit);">0</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="label" style="color: var(--success);">
-            Capital 
-            <i data-lucide="wallet" class="stat-icon" style="color: var(--success);"></i>
-        </div>
-        <div class="value" id="st-cash" style="color: var(--success);">$0</div>
-    </div>
-</div>
+                <div class="stat-card">
+                    <div class="label">Servicios <i data-lucide="layers" class="stat-icon" style="color: var(--accent);"></i></div>
+                    <div class="value" id="st-total">0</div>
+                </div>
+                <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+                    <div class="label" style="color: #ef4444;">Urgentes <i data-lucide="zap" class="stat-icon" style="color: #ef4444; animation: blink 1.5s infinite;"></i></div>
+                    <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label" style="color: var(--edit);">Pendientes <i data-lucide="clock-4" class="stat-icon" style="color: var(--edit);"></i></div>
+                    <div class="value" id="st-process" style="color: var(--edit);">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label" style="color: var(--success);">Capital <i data-lucide="wallet" class="stat-icon" style="color: var(--success);"></i></div>
+                    <div class="value" id="st-cash" style="color: var(--success);">$0</div>
+                </div>
+            </div>
 
             <div class="table-box">
                 <table>
@@ -342,6 +478,7 @@
             </div>
         </section>
 
+        <!-- ============ LABORATORIO ============ -->
         <section id="v-lab" class="view">
             <div class="view-title">
                 <h1>Laboratorio Técnico</h1>
@@ -358,7 +495,26 @@
                     <div class="field"><label>PIN Acceso</label><input type="text" id="l-pin" placeholder="1234"></div>
                     <div class="field"><label>Presupuesto</label><input type="number" id="l-price" placeholder="0.00"></div>
                 </div>
-                <div class="field" style="margin-bottom: 30px;"><label>Diagnóstico Inicial</label><textarea id="l-fail" rows="2" placeholder="Falla reportada por el cliente..."></textarea></div>
+                <div class="input-row" style="grid-template-columns: 3fr 1fr;">
+                    <div class="field">
+                        <label>Diagnóstico Inicial</label>
+                        <textarea id="l-fail" rows="2" placeholder="Falla reportada por el cliente..."></textarea>
+                    </div>
+                    <div class="field">
+                        <label>Días de Garantía</label>
+                        <select id="l-warranty">
+                            <option value="0">Sin garantía</option>
+                            <option value="7">7 días</option>
+                            <option value="15">15 días</option>
+                            <option value="30" selected>30 días</option>
+                            <option value="60">60 días</option>
+                            <option value="90">90 días</option>
+                            <option value="180">6 meses</option>
+                            <option value="365">1 año</option>
+                        </select>
+                        <span class="warranty-input-hint">⏱ Se activa al marcar como LISTO</span>
+                    </div>
+                </div>
                 
                 <div style="display:flex; gap:12px;">
                     <button class="btn-main" id="btn-lab-save" onclick="Engine.processOrder()">
@@ -370,12 +526,13 @@
 
             <div class="table-box">
                 <table>
-                    <thead><tr><th>Ticket</th><th>Cliente</th><th>Dispositivo</th><th>Monto</th><th>Estado</th><th>Gestión</th></tr></thead>
+                    <thead><tr><th>Ticket</th><th>Cliente</th><th>Dispositivo</th><th>Monto</th><th>Garantía</th><th>Estado</th><th>Gestión</th></tr></thead>
                     <tbody id="lab-table"></tbody>
                 </table>
             </div>
         </section>
 
+        <!-- ============ INVENTARIO ============ -->
         <section id="v-inv" class="view">
             <div class="view-title">
                 <h1>Control de Stock</h1>
@@ -396,347 +553,567 @@
 
             <div class="table-box">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Repuesto</th>
-                            <th>Stock</th>
-                            <th>Costo Unit.</th>
-                            <th>Valor Total</th>
-                            <th>Gestión</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Repuesto</th><th>Stock</th><th>Costo Unit.</th><th>Valor Total</th><th>Gestión</th></tr></thead>
                     <tbody id="inv-list"></tbody>
                 </table>
             </div>
         </section>
 
+        <!-- ============ CLIENTES ============ -->
         <section id="v-clients" class="view">
-    <div class="view-title">
-        <h1>Directorio de Clientes</h1>
-        <p>Gestión de base de datos y registro de nuevos contactos.</p>
-    </div>
-
-    <div class="smart-panel" id="clients-panel">
-        <div style="display: flex; gap: 20px; align-items: flex-end;">
-            <div class="field" style="flex:2;">
-                <label>Nombre del Cliente</label>
-                <input type="text" id="c-name" placeholder="Ej: Juan Pérez">
+            <div class="view-title">
+                <h1>Directorio de Clientes</h1>
+                <p>Gestión de base de datos y registro de nuevos contactos.</p>
             </div>
-            <div class="field" style="flex:1;">
-                <label>WhatsApp / Teléfono</label>
-                <input type="text" id="c-phone" placeholder="7788-9900">
-            </div>
-            <button class="btn-main" onclick="Engine.addClientManual()">
-                <i data-lucide="user-plus"></i> <span>AÑADIR CLIENTE</span>
-            </button>
-        </div>
-    </div>
 
-    <div class="table-box">
-        <table>
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>WhatsApp</th>
-                    <th>Última Visita</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="clients-list"></tbody>
-        </table>
-    </div>
-</section>
+            <div class="smart-panel" id="clients-panel">
+                <div style="display: flex; gap: 20px; align-items: flex-end;">
+                    <div class="field" style="flex:2;"><label>Nombre del Cliente</label><input type="text" id="c-name" placeholder="Ej: Juan Pérez"></div>
+                    <div class="field" style="flex:1;"><label>WhatsApp / Teléfono</label><input type="text" id="c-phone" placeholder="7788-9900"></div>
+                    <button class="btn-main" onclick="Engine.addClientManual()">
+                        <i data-lucide="user-plus"></i> <span>AÑADIR CLIENTE</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-box">
+                <table>
+                    <thead><tr><th>Cliente</th><th>WhatsApp</th><th>Última Visita</th><th>Acción</th></tr></thead>
+                    <tbody id="clients-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ============ GARANTÍAS ============ -->
+        <section id="v-warranty" class="view">
+            <div class="view-title">
+                <h1>Centro de Garantías</h1>
+                <p>Monitoreo activo del ciclo de vida de garantías emitidas.</p>
+            </div>
+
+            <!-- Stats de garantías -->
+            <div class="warranty-stats" id="warranty-stats"></div>
+
+            <!-- Filtros -->
+            <div class="warranty-filters">
+                <button class="wfilter-btn active" onclick="Engine.filterWarranty('all', this)">Todas</button>
+                <button class="wfilter-btn" onclick="Engine.filterWarranty('active', this)">
+                    <span style="color: var(--warranty);">●</span> Vigentes
+                </button>
+                <button class="wfilter-btn" onclick="Engine.filterWarranty('expiring', this)">
+                    <span style="color: var(--edit);">●</span> Por vencer
+                </button>
+                <button class="wfilter-btn" onclick="Engine.filterWarranty('expired', this)">
+                    <span style="color: var(--danger);">●</span> Vencidas
+                </button>
+            </div>
+
+            <!-- Grid de tarjetas de garantía -->
+            <div class="warranty-grid" id="warranty-grid"></div>
+
+            <!-- Tabla completa -->
+            <div class="table-box" id="warranty-table-box">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticket</th>
+                            <th>Cliente</th>
+                            <th>Dispositivo</th>
+                            <th>Inicio</th>
+                            <th>Vence</th>
+                            <th>Tiempo Restante</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="warranty-table"></tbody>
+                </table>
+            </div>
+        </section>
+
     </main>
 
     <script>
-        const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
-            editState: { lab: null, inv: null },
+    const Engine = {
+        db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
+        editState: { lab: null, inv: null },
+        warrantyFilter: 'all',
 
-// Añade esto dentro de Engine: { ... }
-addClientManual() {
-    const name = document.getElementById('c-name').value;
-    const phone = document.getElementById('c-phone').value;
+        // ——— UTILIDADES DE GARANTÍA ———
 
-    if(!name || !phone) return alert("Completa el nombre y teléfono");
+        getWarrantyInfo(order) {
+            // Si no tiene días de garantía configurados, retorna null
+            if (!order.warrantyDays || order.warrantyDays === 0) return null;
+            // La garantía solo aplica si el ticket está LISTO y tiene fecha de activación
+            if (!order.warrantyStart) return null;
 
-    const newClient = {
-        name: name,
-        phone: phone,
-        lastSeen: new Date().toLocaleDateString()
-    };
+            const now = new Date();
+            const start = new Date(order.warrantyStart);
+            const end = new Date(start);
+            end.setDate(end.getDate() + order.warrantyDays);
 
-    // Evitar duplicados por nombre
-    const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
-    if(exists > -1) {
-        this.db.clients[exists] = newClient;
-    } else {
-        this.db.clients.unshift(newClient);
-    }
+            const totalMs = end - start;
+            const remainingMs = end - now;
+            const elapsedMs = now - start;
 
-    // Limpiar campos y guardar
-    document.getElementById('c-name').value = '';
-    document.getElementById('c-phone').value = '';
-    this.save();
-    alert("Cliente registrado con éxito");
-},
+            const daysTotal = order.warrantyDays;
+            const daysRemaining = Math.max(0, Math.ceil(remainingMs / (1000 * 60 * 60 * 24)));
+            const daysElapsed = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+            const progressPct = Math.min(100, Math.max(0, (elapsedMs / totalMs) * 100));
 
+            let statusKey = 'active'; // active, expiring, expired
+            if (daysRemaining === 0) statusKey = 'expired';
+            else if (daysRemaining <= 5) statusKey = 'expiring';
 
+            return {
+                start: start.toLocaleDateString('es-ES'),
+                end: end.toLocaleDateString('es-ES'),
+                daysTotal,
+                daysRemaining,
+                daysElapsed,
+                progressPct,
+                statusKey
+            };
+        },
 
-            
-            init() {
-                this.refresh();
-                
-                // Lógica de autorelleno de cliente
-                document.getElementById('l-name').addEventListener('input', (e) => {
-                    const term = e.target.value.toLowerCase();
-                    if(term.length < 2) return; 
-                    const found = Engine.db.clients.find(c => c.name.toLowerCase().includes(term));
-                    if(found && !Engine.editState.lab) {
-                        document.getElementById('l-phone').value = found.phone;
-                    }
+        getWarrantyBarColor(statusKey) {
+            if (statusKey === 'expired')  return '#ef4444';
+            if (statusKey === 'expiring') return '#f59e0b';
+            return 'var(--warranty)';
+        },
+
+        getWarrantiesWithInfo() {
+            return this.db.orders
+                .filter(o => o.warrantyDays > 0 && o.warrantyStart)
+                .map(o => ({ ...o, wInfo: this.getWarrantyInfo(o) }))
+                .filter(o => o.wInfo !== null);
+        },
+
+        filterWarranty(type, btn) {
+            this.warrantyFilter = type;
+            document.querySelectorAll('.wfilter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.renderWarranty();
+        },
+
+        // ——— LÓGICA PRINCIPAL ———
+
+        addClientManual() {
+            const name = document.getElementById('c-name').value;
+            const phone = document.getElementById('c-phone').value;
+            if (!name || !phone) return alert("Completa el nombre y teléfono");
+            const newClient = { name, phone, lastSeen: new Date().toLocaleDateString() };
+            const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+            if (exists > -1) this.db.clients[exists] = newClient;
+            else this.db.clients.unshift(newClient);
+            document.getElementById('c-name').value = '';
+            document.getElementById('c-phone').value = '';
+            this.save();
+            alert("Cliente registrado con éxito");
+        },
+
+        init() {
+            if (!this.db.clients) this.db.clients = [];
+            this.refresh();
+
+            document.getElementById('l-name').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                if (term.length < 2) return;
+                const found = Engine.db.clients.find(c => c.name.toLowerCase().includes(term));
+                if (found && !Engine.editState.lab) {
+                    document.getElementById('l-phone').value = found.phone;
+                }
+            });
+
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }, 1000);
+        },
+
+        save() {
+            localStorage.setItem('AETERNA_DB', JSON.stringify(this.db));
+            this.refresh();
+        },
+
+        refresh() {
+            this.renderDash();
+            this.renderLab();
+            this.renderInv();
+            this.renderClients();
+            this.renderWarranty();
+            this.updateWarrantyNavDot();
+            lucide.createIcons();
+        },
+
+        processOrder() {
+            const warrantyDays = parseInt(document.getElementById('l-warranty').value) || 0;
+            const data = {
+                client: document.getElementById('l-name').value,
+                phone: document.getElementById('l-phone').value,
+                model: document.getElementById('l-model').value,
+                pin: document.getElementById('l-pin').value,
+                price: parseFloat(document.getElementById('l-price').value) || 0,
+                fail: document.getElementById('l-fail').value,
+                warrantyDays: warrantyDays
+            };
+
+            if (!data.client || !data.model) return alert("Por favor, llena los campos esenciales.");
+
+            const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
+            const cIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
+            if (cIdx > -1) this.db.clients[cIdx] = clientData;
+            else this.db.clients.unshift(clientData);
+
+            if (this.editState.lab) {
+                const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
+                // Preservar warrantyStart si ya existe y el ticket ya está LISTO
+                const existing = this.db.orders[idx];
+                const newData = { ...existing, ...data };
+                // Si se edita y cambian los días, resetear el inicio si se vuelve a poner LISTO
+                if (data.warrantyDays !== existing.warrantyDays) {
+                    newData.warrantyStart = null;
+                }
+                this.db.orders[idx] = newData;
+            } else {
+                this.db.orders.unshift({
+                    id: 'TK-' + Date.now().toString().slice(-4),
+                    ...data,
+                    status: 'PENDIENTE',
+                    warrantyStart: null
                 });
-
-                setInterval(() => {
-                    const now = new Date();
-                    document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                }, 1000);
-            },
-
-            save() {
-                localStorage.setItem('AETERNA_DB', JSON.stringify(this.db));
-                this.refresh();
-            },
-
-            refresh() {
-                this.renderDash();
-                this.renderLab();
-                this.renderInv();
-                this.renderClients();
-                lucide.createIcons();
-            },
-
-            processOrder() {
-                const data = {
-                    client: document.getElementById('l-name').value,
-                    phone: document.getElementById('l-phone').value,
-                    model: document.getElementById('l-model').value,
-                    pin: document.getElementById('l-pin').value,
-                    price: parseFloat(document.getElementById('l-price').value) || 0,
-                    fail: document.getElementById('l-fail').value
-                };
-
-                if(!data.client || !data.model) return alert("Por favor, llena los campos esenciales.");
-
-                // Guardar o actualizar cliente automáticamente
-                const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
-                const cIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
-                if(cIdx > -1) this.db.clients[cIdx] = clientData;
-                else this.db.clients.unshift(clientData);
-
-                if(this.editState.lab) {
-                    const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
-                    this.db.orders[idx] = { ...this.db.orders[idx], ...data };
-                } else {
-                    this.db.orders.unshift({ id: 'TK-' + (Math.floor(Math.random() * 9000) + 1000), ...data, status: 'PENDIENTE' });
-                }
-                this.save();
-                this.cancelEdit('lab');
-            },
-
-            editOrder(id) {
-                const o = this.db.orders.find(ord => ord.id === id);
-                this.editState.lab = id;
-                document.getElementById('l-name').value = o.client;
-                document.getElementById('l-phone').value = o.phone;
-                document.getElementById('l-model').value = o.model;
-                document.getElementById('l-pin').value = o.pin;
-                document.getElementById('l-price').value = o.price;
-                document.getElementById('l-fail').value = o.fail;
-
-                document.getElementById('lab-panel').classList.add('editing');
-                document.getElementById('txt-lab-btn').innerText = "ACTUALIZAR TICKET";
-                document.getElementById('btn-lab-save').classList.add('update');
-                document.getElementById('btn-lab-cancel').style.display = 'block';
-                document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
-            },
-
-            processInv() {
-                const data = {
-                    name: document.getElementById('i-item').value,
-                    qty: parseInt(document.getElementById('i-qty').value) || 0,
-                    cost: parseFloat(document.getElementById('i-cost').value) || 0
-                };
-                if(!data.name) return;
-
-                if(this.editState.inv) {
-                    const idx = this.db.stock.findIndex(s => s.id === this.editState.inv);
-                    this.db.stock[idx] = { ...this.db.stock[idx], ...data };
-                } else {
-                    this.db.stock.unshift({ id: Date.now(), ...data });
-                }
-                this.save();
-                this.cancelEdit('inv');
-            },
-
-            editInv(id) {
-                const s = this.db.stock.find(i => i.id === id);
-                this.editState.inv = id;
-                document.getElementById('i-item').value = s.name;
-                document.getElementById('i-qty').value = s.qty;
-                document.getElementById('i-cost').value = s.cost;
-
-                document.getElementById('inv-panel').classList.add('editing');
-                document.getElementById('txt-inv-btn').innerText = "GUARDAR CAMBIOS";
-                document.getElementById('btn-inv-save').classList.add('update');
-                document.getElementById('btn-inv-cancel').style.display = 'block';
-            },
-
-            cancelEdit(type) {
-                this.editState[type] = null;
-                const panel = document.getElementById(type + '-panel');
-                panel.classList.remove('editing');
-                
-                if(type === 'lab') {
-                    ['l-name', 'l-phone', 'l-model', 'l-pin', 'l-price', 'l-fail'].forEach(i => document.getElementById(i).value = '');
-                    document.getElementById('txt-lab-btn').innerText = "REGISTRAR ENTRADA";
-                    document.getElementById('btn-lab-save').classList.remove('update');
-                    document.getElementById('btn-lab-cancel').style.display = 'none';
-                } else {
-                    ['i-item', 'i-qty', 'i-cost'].forEach(i => document.getElementById(i).value = '');
-                    document.getElementById('txt-inv-btn').innerText = "AÑADIR";
-                    document.getElementById('btn-inv-save').classList.remove('update');
-                    document.getElementById('btn-inv-cancel').style.display = 'none';
-                }
-            },
-
-            deleteItem(type, id) {
-                if(confirm("¿Estás seguro de eliminar este registro?")) {
-                    if(type === 'lab') this.db.orders = this.db.orders.filter(o => o.id !== id);
-                    else this.db.stock = this.db.stock.filter(s => s.id !== id);
-                    this.save();
-                }
-            },
-
-            toggleStatusLab(id) {
-                const o = this.db.orders.find(ord => ord.id === id);
-                if (o.status === 'PENDIENTE') o.status = 'URGENTE';
-                else if (o.status === 'URGENTE') o.status = 'LISTO';
-                else o.status = 'PENDIENTE';
-                this.save();
-            },
-
-            renderDash() {
-                const o = this.db.orders;
-                document.getElementById('st-total').innerText = o.length;
-                document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
-                document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
-                document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
-
-                const sortedForDash = [...o].sort((a, b) => {
-                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-                    return 0;
-                });
-
-                document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
-                    const statusClass = x.status.toLowerCase();
-                    return `
-                        <tr class="status-${statusClass}">
-                            <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${x.id}</td>
-                            <td style="font-weight:700;">${x.client}</td>
-                            <td>${x.model}</td>
-                            <td><span class="badge badge-${statusClass}">${x.status}</span></td>
-                        </tr>
-                    `;
-                }).join('');
-            },
-
-            renderLab() {
-                const sortedOrders = [...this.db.orders].sort((a, b) => {
-                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-                    return 0;
-                });
-
-                document.getElementById('lab-table').innerHTML = sortedOrders.map(x => {
-                    const statusClass = x.status.toLowerCase();
-                    const badgeClass = `badge-${statusClass}`;
-                    return `
-                        <tr class="status-${statusClass}">
-                            <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
-                            <td style="font-weight:700;">${x.client}</td>
-                            <td>${x.model}</td>
-                            <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
-                            <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge ${badgeClass}">${x.status}</span></td>
-                            <td>
-                                <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
-                                <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            },
-
-            renderInv() {
-    document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
-        const totalValue = (x.qty * x.cost).toFixed(2);
-        const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
-        return `
-            <tr>
-                <td style="font-weight:700; color: #fff;">${x.name}</td>
-                <td style="${stockStyle}">${x.qty} <small>uds</small></td>
-                <td style="color: var(--text-dim); font-family: var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
-                <td style="color: var(--success); font-weight: 800;">$${totalValue}</td>
-                <td>
-                    <div style="display:flex; gap:8px;">
-                        <div class="action-icon edit" onclick="Engine.editInv(${x.id})">
-                            <i data-lucide="edit-3" size="14"></i>
-                        </div>
-                        <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})">
-                            <i data-lucide="trash-2" size="14"></i>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    lucide.createIcons();
-},
-
-            renderClients() {
-                if(!this.db.clients) this.db.clients = [];
-                document.getElementById('clients-list').innerHTML = this.db.clients.map((c, i) => `
-                    <tr>
-                        <td style="font-weight:700;">${c.name}</td>
-                        <td style="color:var(--success); font-family:var(--mono); font-weight:700;">${c.phone}</td>
-                        <td style="color:var(--text-dim);">${c.lastSeen}</td>
-                        <td><div class="action-icon" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="16"></i></div></td>
-                    </tr>
-                `).join('');
-                lucide.createIcons();
-            },
-
-            delClient(i) {
-                if(confirm("¿Eliminar cliente de la base de datos?")) {
-                    this.db.clients.splice(i, 1);
-                    this.save();
-                }
             }
-        };
+            this.save();
+            this.cancelEdit('lab');
+        },
 
-        function go(v, el) {
-            document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            document.getElementById('v-' + v).classList.add('active');
-            el.classList.add('active');
+        toggleStatusLab(id) {
+            const o = this.db.orders.find(ord => ord.id === id);
+            if (o.status === 'PENDIENTE') o.status = 'URGENTE';
+            else if (o.status === 'URGENTE') o.status = 'LISTO';
+            else o.status = 'PENDIENTE';
+
+            // ACTIVAR GARANTÍA: cuando el ticket pasa a LISTO y tiene días configurados
+            if (o.status === 'LISTO' && o.warrantyDays > 0 && !o.warrantyStart) {
+                o.warrantyStart = new Date().toISOString();
+            }
+            // Si vuelve a PENDIENTE, se puede resetear la garantía
+            if (o.status === 'PENDIENTE') {
+                o.warrantyStart = null;
+            }
+
+            this.save();
+        },
+
+        editOrder(id) {
+            const o = this.db.orders.find(ord => ord.id === id);
+            this.editState.lab = id;
+            document.getElementById('l-name').value = o.client;
+            document.getElementById('l-phone').value = o.phone;
+            document.getElementById('l-model').value = o.model;
+            document.getElementById('l-pin').value = o.pin;
+            document.getElementById('l-price').value = o.price;
+            document.getElementById('l-fail').value = o.fail;
+            document.getElementById('l-warranty').value = o.warrantyDays || 0;
+
+            document.getElementById('lab-panel').classList.add('editing');
+            document.getElementById('txt-lab-btn').innerText = "ACTUALIZAR TICKET";
+            document.getElementById('btn-lab-save').classList.add('update');
+            document.getElementById('btn-lab-cancel').style.display = 'block';
+            document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        processInv() {
+            const data = {
+                name: document.getElementById('i-item').value,
+                qty: parseInt(document.getElementById('i-qty').value) || 0,
+                cost: parseFloat(document.getElementById('i-cost').value) || 0
+            };
+            if (!data.name) return;
+            if (this.editState.inv) {
+                const idx = this.db.stock.findIndex(s => s.id === this.editState.inv);
+                this.db.stock[idx] = { ...this.db.stock[idx], ...data };
+            } else {
+                this.db.stock.unshift({ id: Date.now(), ...data });
+            }
+            this.save();
+            this.cancelEdit('inv');
+        },
+
+        editInv(id) {
+            const s = this.db.stock.find(i => i.id === id);
+            this.editState.inv = id;
+            document.getElementById('i-item').value = s.name;
+            document.getElementById('i-qty').value = s.qty;
+            document.getElementById('i-cost').value = s.cost;
+            document.getElementById('inv-panel').classList.add('editing');
+            document.getElementById('txt-inv-btn').innerText = "GUARDAR CAMBIOS";
+            document.getElementById('btn-inv-save').classList.add('update');
+            document.getElementById('btn-inv-cancel').style.display = 'block';
+        },
+
+        cancelEdit(type) {
+            this.editState[type] = null;
+            const panel = document.getElementById(type + '-panel');
+            panel.classList.remove('editing');
+            if (type === 'lab') {
+                ['l-name','l-phone','l-model','l-pin','l-price','l-fail'].forEach(i => document.getElementById(i).value = '');
+                document.getElementById('l-warranty').value = '30';
+                document.getElementById('txt-lab-btn').innerText = "REGISTRAR ENTRADA";
+                document.getElementById('btn-lab-save').classList.remove('update');
+                document.getElementById('btn-lab-cancel').style.display = 'none';
+            } else {
+                ['i-item','i-qty','i-cost'].forEach(i => document.getElementById(i).value = '');
+                document.getElementById('txt-inv-btn').innerText = "AÑADIR";
+                document.getElementById('btn-inv-save').classList.remove('update');
+                document.getElementById('btn-inv-cancel').style.display = 'none';
+            }
+        },
+
+        deleteItem(type, id) {
+            if (confirm("¿Estás seguro de eliminar este registro?")) {
+                if (type === 'lab') this.db.orders = this.db.orders.filter(o => o.id !== id);
+                else this.db.stock = this.db.stock.filter(s => s.id !== id);
+                this.save();
+            }
+        },
+
+        delClient(i) {
+            if (confirm("¿Eliminar cliente de la base de datos?")) {
+                this.db.clients.splice(i, 1);
+                this.save();
+            }
+        },
+
+        updateWarrantyNavDot() {
+            const warranties = this.getWarrantiesWithInfo();
+            const hasUrgent = warranties.some(w => w.wInfo.statusKey === 'expiring' || w.wInfo.statusKey === 'expired');
+            const dot = document.getElementById('warranty-dot');
+            if (dot) dot.style.display = hasUrgent ? 'block' : 'none';
+        },
+
+        // ——— RENDERS ———
+
+        renderDash() {
+            const o = this.db.orders;
+            document.getElementById('st-total').innerText = o.length;
+            document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
+            document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
+            document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
+
+            const sortedForDash = [...o].sort((a, b) => {
+                if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+                if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+                return 0;
+            });
+
+            document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
+                const statusClass = x.status.toLowerCase();
+                return `
+                    <tr class="status-${statusClass}">
+                        <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${x.id}</td>
+                        <td style="font-weight:700;">${x.client}</td>
+                        <td>${x.model}</td>
+                        <td><span class="badge badge-${statusClass}">${x.status}</span></td>
+                    </tr>`;
+            }).join('');
+        },
+
+        renderLab() {
+            const sortedOrders = [...this.db.orders].sort((a, b) => {
+                if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+                if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+                return 0;
+            });
+
+            document.getElementById('lab-table').innerHTML = sortedOrders.map(x => {
+                const statusClass = x.status.toLowerCase();
+                const wInfo = this.getWarrantyInfo(x);
+                let warrantyCell = '';
+
+                if (!x.warrantyDays || x.warrantyDays === 0) {
+                    warrantyCell = `<span style="color:var(--text-dim); font-size:11px;">Sin garantía</span>`;
+                } else if (!x.warrantyStart) {
+                    warrantyCell = `<span style="color:var(--text-dim); font-size:11px;">⏳ ${x.warrantyDays}d al completar</span>`;
+                } else {
+                    const color = this.getWarrantyBarColor(wInfo.statusKey);
+                    const label = wInfo.statusKey === 'expired' ? 'VENCIDA' : `${wInfo.daysRemaining}d restantes`;
+                    warrantyCell = `
+                        <div class="days-cell">
+                            <span class="days-text" style="color:${color}; font-size:12px;">${label}</span>
+                            <div class="warranty-bar-wrap">
+                                <div class="warranty-bar-fill" style="width:${wInfo.progressPct}%; background:${color};"></div>
+                            </div>
+                        </div>`;
+                }
+
+                return `
+                    <tr class="status-${statusClass}">
+                        <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
+                        <td style="font-weight:700;">${x.client}</td>
+                        <td>${x.model}</td>
+                        <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
+                        <td>${warrantyCell}</td>
+                        <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge badge-${statusClass}">${x.status}</span></td>
+                        <td>
+                            <div style="display:flex; gap:4px;">
+                                <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="14"></i></div>
+                                <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="14"></i></div>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+        },
+
+        renderInv() {
+            document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
+                const totalValue = (x.qty * x.cost).toFixed(2);
+                const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
+                return `
+                    <tr>
+                        <td style="font-weight:700; color:#fff;">${x.name}</td>
+                        <td style="${stockStyle}">${x.qty} <small>uds</small></td>
+                        <td style="color:var(--text-dim); font-family:var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
+                        <td style="color:var(--success); font-weight:800;">$${totalValue}</td>
+                        <td>
+                            <div style="display:flex; gap:8px;">
+                                <div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="14"></i></div>
+                                <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})"><i data-lucide="trash-2" size="14"></i></div>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+            lucide.createIcons();
+        },
+
+        renderClients() {
+            if (!this.db.clients) this.db.clients = [];
+            document.getElementById('clients-list').innerHTML = this.db.clients.map((c, i) => `
+                <tr>
+                    <td style="font-weight:700;">${c.name}</td>
+                    <td style="color:var(--success); font-family:var(--mono); font-weight:700;">${c.phone}</td>
+                    <td style="color:var(--text-dim);">${c.lastSeen}</td>
+                    <td><div class="action-icon" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="16"></i></div></td>
+                </tr>`).join('');
+            lucide.createIcons();
+        },
+
+        renderWarranty() {
+            const all = this.getWarrantiesWithInfo();
+            const filter = this.warrantyFilter;
+
+            // Calcular stats siempre sobre todos
+            const active   = all.filter(w => w.wInfo.statusKey === 'active').length;
+            const expiring = all.filter(w => w.wInfo.statusKey === 'expiring').length;
+            const expired  = all.filter(w => w.wInfo.statusKey === 'expired').length;
+
+            document.getElementById('warranty-stats').innerHTML = `
+                <div class="wstat">
+                    <div class="wstat-number" style="color: var(--warranty);">${active}</div>
+                    <div class="wstat-label">Garantías Vigentes</div>
+                </div>
+                <div class="wstat" style="border-color: rgba(245,158,11,0.2);">
+                    <div class="wstat-number" style="color: var(--edit);">${expiring}</div>
+                    <div class="wstat-label">Por Vencer (≤5 días)</div>
+                </div>
+                <div class="wstat" style="border-color: rgba(239,68,68,0.2);">
+                    <div class="wstat-number" style="color: var(--danger);">${expired}</div>
+                    <div class="wstat-label">Garantías Vencidas</div>
+                </div>`;
+
+            // Filtrar para mostrar
+            let filtered = all;
+            if (filter === 'active')   filtered = all.filter(w => w.wInfo.statusKey === 'active');
+            if (filter === 'expiring') filtered = all.filter(w => w.wInfo.statusKey === 'expiring');
+            if (filter === 'expired')  filtered = all.filter(w => w.wInfo.statusKey === 'expired');
+
+            // Renderizar grid de tarjetas (mostrar máx 6)
+            if (filtered.length === 0) {
+                document.getElementById('warranty-grid').innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i data-lucide="shield-off" width="48" height="48"></i>
+                        <h3>No hay garantías en este filtro</h3>
+                        <p>Registra órdenes con días de garantía y márcalas como LISTO.</p>
+                    </div>`;
+            } else {
+                document.getElementById('warranty-grid').innerHTML = filtered.slice(0, 6).map(w => {
+                    const wi = w.wInfo;
+                    const color = this.getWarrantyBarColor(wi.statusKey);
+                    const cardClass = wi.statusKey === 'expired' ? 'expired-warranty' :
+                                      wi.statusKey === 'expiring' ? 'expiring-warranty' : 'active-warranty';
+
+                    const badgeClass = `wbadge-${wi.statusKey}`;
+                    const badgeLabel = wi.statusKey === 'expired'  ? '✕ VENCIDA' :
+                                       wi.statusKey === 'expiring' ? '⚠ POR VENCER' : '✓ VIGENTE';
+
+                    const daysDisplay = wi.statusKey === 'expired'
+                        ? `<span style="color:var(--danger); font-size:28px; font-weight:800;">VENCIDA</span>`
+                        : `<span class="wcard-days-remaining" style="color:${color};">${wi.daysRemaining}</span>`;
+
+                    return `
+                        <div class="warranty-card ${cardClass}">
+                            <div class="wcard-header">
+                                <span class="wcard-ticket">${w.id}</span>
+                                <span class="wbadge ${badgeClass}">${badgeLabel}</span>
+                            </div>
+                            <div class="wcard-client">${w.client}</div>
+                            <div class="wcard-device">${w.model}</div>
+                            ${daysDisplay}
+                            ${wi.statusKey !== 'expired' ? `<div class="wcard-days-label">días restantes de ${wi.daysTotal}</div>` : `<div class="wcard-days-label">Venció el ${wi.end}</div>`}
+                            <div class="warranty-bar-wrap" style="margin-top: 8px;">
+                                <div class="warranty-bar-fill" style="width:${wi.progressPct}%; background:${color};"></div>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                                <span style="font-size:10px; color:var(--text-dim);">Inicio: ${wi.start}</span>
+                                <span style="font-size:10px; color:var(--text-dim);">Fin: ${wi.end}</span>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+
+            // Tabla completa
+            if (filtered.length === 0) {
+                document.getElementById('warranty-table').innerHTML = '';
+            } else {
+                document.getElementById('warranty-table').innerHTML = filtered.map(w => {
+                    const wi = w.wInfo;
+                    const color = this.getWarrantyBarColor(wi.statusKey);
+                    const badgeClass = `wbadge-${wi.statusKey}`;
+                    const badgeLabel = wi.statusKey === 'expired'  ? 'VENCIDA' :
+                                       wi.statusKey === 'expiring' ? 'POR VENCER' : 'VIGENTE';
+
+                    const timeLeft = wi.statusKey === 'expired'
+                        ? `<span style="color:var(--danger); font-weight:800;">VENCIDA</span>`
+                        : `<div class="days-cell">
+                                <span style="color:${color}; font-weight:800; font-size:13px;">${wi.daysRemaining} días</span>
+                                <div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%; background:${color};"></div></div>
+                           </div>`;
+
+                    return `
+                        <tr>
+                            <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${w.id}</td>
+                            <td style="font-weight:700;">${w.client}</td>
+                            <td>${w.model}</td>
+                            <td style="color:var(--text-dim); font-size:12px;">${wi.start}</td>
+                            <td style="color:var(--text-dim); font-size:12px;">${wi.end}</td>
+                            <td>${timeLeft}</td>
+                            <td><span class="wbadge ${badgeClass}">${badgeLabel}</span></td>
+                        </tr>`;
+                }).join('');
+            }
+
             lucide.createIcons();
         }
+    };
 
-        window.onload = () => Engine.init();
+    function go(v, el) {
+        document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+        document.getElementById('v-' + v).classList.add('active');
+        el.classList.add('active');
+        lucide.createIcons();
+    }
 
-
-        
+    window.onload = () => Engine.init();
     </script>
 </body>
 </html>

@@ -284,6 +284,7 @@
             <div class="nav-item" onclick="go('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
             <div class="nav-item" onclick="go('inv', this)"><i data-lucide="package"></i> Inventario</div>
             <div class="nav-item" onclick="go('clients', this)"><i data-lucide="users"></i> Clientes</div>
+            <div class="nav-item" onclick="go('warranty', this)"><i data-lucide="shield-check"></i> Garantías</div>
         </div>
 
         <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
@@ -293,6 +294,28 @@
     </aside>
 
     <main>
+<section id="v-warranty" class="view">
+    <div class="view-title">
+        <h1>Control de Garantías</h1>
+        <p>Seguimiento de coberturas activas y vencimientos.</p>
+    </div>
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ticket</th>
+                    <th>Cliente / Tel</th>
+                    <th>Dispositivo</th>
+                    <th>Vence el</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="warranty-list"></tbody>
+        </table>
+    </div>
+</section>
         
         <section id="v-dash" class="view active">
             <div class="view-title">
@@ -348,25 +371,26 @@
                 <p>Ingreso de órdenes y seguimiento de reparaciones.</p>
             </div>
 
-            <div class="smart-panel" id="lab-panel">
-                <div class="input-row">
-                    <div class="field"><label>Cliente</label><input type="text" id="l-name" placeholder="Nombre completo"></div>
-                    <div class="field"><label>WhatsApp</label><input type="text" id="l-phone" placeholder="7788-9900"></div>
-                </div>
-                <div class="input-row" style="grid-template-columns: 2fr 1fr 1fr;">
-                    <div class="field"><label>Modelo del Equipo</label><input type="text" id="l-model" placeholder="iPhone 15 Pro Max"></div>
-                    <div class="field"><label>PIN Acceso</label><input type="text" id="l-pin" placeholder="1234"></div>
-                    <div class="field"><label>Presupuesto</label><input type="number" id="l-price" placeholder="0.00"></div>
-                </div>
-                <div class="field" style="margin-bottom: 30px;"><label>Diagnóstico Inicial</label><textarea id="l-fail" rows="2" placeholder="Falla reportada por el cliente..."></textarea></div>
-                
-                <div style="display:flex; gap:12px;">
-                    <button class="btn-main" id="btn-lab-save" onclick="Engine.processOrder()">
-                        <i data-lucide="check-circle-2"></i> <span id="txt-lab-btn">REGISTRAR ENTRADA</span>
-                    </button>
-                    <button class="btn-main" id="btn-lab-cancel" style="display:none; background:rgba(255,255,255,0.05); color:#fff;" onclick="Engine.cancelEdit('lab')">CANCELAR</button>
-                </div>
-            </div>
+           <div class="smart-panel" id="lab-panel">
+    <div class="input-row">
+        <div class="field"><label>Cliente</label><input type="text" id="l-name" placeholder="Nombre completo"></div>
+        <div class="field"><label>WhatsApp</label><input type="text" id="l-phone" placeholder="7788-9900"></div>
+    </div>
+    <div class="input-row" style="grid-template-columns: 2fr 1fr 1fr 1fr;">
+        <div class="field"><label>Modelo del Equipo</label><input type="text" id="l-model" placeholder="iPhone 15 Pro Max"></div>
+        <div class="field"><label>PIN Acceso</label><input type="text" id="l-pin" placeholder="1234"></div>
+        <div class="field"><label>Presupuesto</label><input type="number" id="l-price" placeholder="0.00"></div>
+        <div class="field"><label>Garantía (Meses)</label><input type="number" id="l-warranty" placeholder="3" value="3"></div>
+    </div>
+    <div class="field" style="margin-bottom: 30px;"><label>Diagnóstico Inicial</label><textarea id="l-fail" rows="2" placeholder="Falla reportada por el cliente..."></textarea></div>
+    
+    <div style="display:flex; gap:12px;">
+        <button class="btn-main" id="btn-lab-save" onclick="Engine.processOrder()">
+            <i data-lucide="check-circle-2"></i> <span id="txt-lab-btn">REGISTRAR ENTRADA</span>
+        </button>
+        <button class="btn-main" id="btn-lab-cancel" style="display:none; background:rgba(255,255,255,0.05); color:#fff;" onclick="Engine.cancelEdit('lab')">CANCELAR</button>
+    </div>
+</div>
 
             <div class="table-box">
                 <table>
@@ -450,7 +474,7 @@
 
     <script>
         const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
+            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] },
             editState: { lab: null, inv: null },
 
 // Añade esto dentro de Engine: { ... }
@@ -513,17 +537,21 @@ addClientManual() {
                 this.renderLab();
                 this.renderInv();
                 this.renderClients();
+                this.renderWarranty();
                 lucide.createIcons();
             },
 
             processOrder() {
                 const data = {
-                    client: document.getElementById('l-name').value,
-                    phone: document.getElementById('l-phone').value,
-                    model: document.getElementById('l-model').value,
-                    pin: document.getElementById('l-pin').value,
-                    price: parseFloat(document.getElementById('l-price').value) || 0,
-                    fail: document.getElementById('l-fail').value
+                    const warrantyMonths = parseInt(document.getElementById('l-warranty').value) || 0;
+    const data = {
+        client: document.getElementById('l-name').value,
+        phone: document.getElementById('l-phone').value,
+        model: document.getElementById('l-model').value,
+        pin: document.getElementById('l-pin').value,
+        price: parseFloat(document.getElementById('l-price').value) || 0,
+        fail: document.getElementById('l-fail').value,
+        warranty: warrantyMonths
                 };
 
                 if(!data.client || !data.model) return alert("Por favor, llena los campos esenciales.");
@@ -543,7 +571,25 @@ addClientManual() {
                 this.save();
                 this.cancelEdit('lab');
             },
-
+renderWarranty() {
+    if(!this.db.warranties) this.db.warranties = [];
+    const now = new Date();
+    
+    document.getElementById('warranty-list').innerHTML = this.db.warranties.map(w => {
+        const expDate = new Date(w.expiry);
+        const expired = now > expDate;
+        return `
+            <tr>
+                <td style="font-family:var(--mono); color:var(--accent);">${w.id}</td>
+                <td><b>${w.client}</b></td>
+                <td>${w.model}</td>
+                <td>${expDate.toLocaleDateString()}</td>
+                <td><span class="badge ${expired ? 'badge-urgent' : 'badge-done'}">
+                    ${expired ? 'VENCIDA' : 'ACTIVA'}</span></td>
+            </tr>
+        `;
+    }).join('');
+},
             editOrder(id) {
                 const o = this.db.orders.find(ord => ord.id === id);
                 this.editState.lab = id;

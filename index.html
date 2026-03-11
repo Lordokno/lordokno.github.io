@@ -204,7 +204,13 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
         }
         .inv-card:hover { border-color: var(--accent); }
         .inv-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
-
+/* Agregar al final de los estilos */
+#inv-list td small {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-left: 4px;
+}
     </style>
 </head>
 <body>
@@ -314,7 +320,20 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                 </div>
             </div>
 
-            <div class="inv-grid" id="inv-grid"></div>
+            <div class="table-box">
+    <table>
+        <thead>
+            <tr>
+                <th>Repuesto</th>
+                <th>Stock</th>
+                <th>Costo Unit.</th>
+                <th>Valor Total</th>
+                <th>Gestión</th>
+            </tr>
+        </thead>
+        <tbody id="inv-list"></tbody>
+    </table>
+</div>
         </section>
 
     </main>
@@ -508,22 +527,34 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             },
 
             renderInv() {
-                document.getElementById('inv-grid').innerHTML = this.db.stock.map(x => `
-                    <div class="inv-card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <h3 style="font-size:16px; font-weight:800; letter-spacing:-0.5px; flex:1;">${x.name}</h3>
-                            <div style="display:flex; gap:4px;">
-                                <div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="14"></i></div>
-                                <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})"><i data-lucide="x" size="14"></i></div>
-                            </div>
+    document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
+        const totalValue = (x.qty * x.cost).toFixed(2);
+        // Alerta visual si el stock es bajo (menos de 3 unidades)
+        const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
+        
+        return `
+            <tr>
+                <td style="font-weight:700; color: #fff;">${x.name}</td>
+                <td style="${stockStyle}">${x.qty} <small>uds</small></td>
+                <td style="color: var(--text-dim); font-family: var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
+                <td style="color: var(--success); font-weight: 800;">$${totalValue}</td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        <div class="action-icon edit" onclick="Engine.editInv(${x.id})">
+                            <i data-lucide="edit-3" size="16"></i>
                         </div>
-                        <div class="inv-meta">
-                            <div><p style="font-size:10px; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Disponibles</p><p style="font-size:24px; font-weight:800;">${x.qty}</p></div>
-                            <div style="text-align:right;"><p style="font-size:10px; font-weight:800; color:var(--text-dim); text-transform:uppercase;">Valor Unit.</p><p style="font-size:20px; font-weight:800; color:var(--success);">$${x.cost}</p></div>
+                        <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})">
+                            <i data-lucide="trash-2" size="16"></i>
                         </div>
                     </div>
-                `).join('');
-            }
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Reiniciar iconos de Lucide para la nueva lista
+    lucide.createIcons();
+}
         };
 
         function go(v, el) {

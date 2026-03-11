@@ -486,371 +486,259 @@
         
     </main>
 
-    <script>
-        const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] },
-            editState: { lab: null, inv: null },
-// Asegúrate de que db tenga la propiedad warranties al inicio
-// db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] }
+   <script>
+    const Engine = {
+        // Base de datos con respaldo para evitar errores de 'undefined'
+        db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [], warranties: [] },
+        editState: { lab: null, inv: null },
 
-addWarranty() {
-    const name = document.getElementById('g-name').value;
-    const phone = document.getElementById('g-phone').value;
-    const days = parseInt(document.getElementById('g-days').value);
-
-    if (!name || !phone || !days) return alert("Completa todos los campos");
-
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(startDate.getDate() + days);
-
-    const newWarranty = {
-        id: Date.now(),
-        client: name,
-        phone: phone,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        days: days
-    };
-
-    if(!this.db.warranties) this.db.warranties = [];
-    this.db.warranties.unshift(newWarranty);
-    this.save();
-    
-    // Limpiar campos
-    document.getElementById('g-name').value = '';
-    document.getElementById('g-phone').value = '';
-},
-
-renderWarranties() {
-    if(!this.db.warranties) this.db.warranties = [];
-    const now = new Date();
-    
-    document.getElementById('guarantee-list').innerHTML = this.db.warranties.map(w => {
-        const end = new Date(w.end);
-        const diffTime = end - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        const isExpired = diffDays <= 0;
-
-        const statusBadge = isExpired 
-            ? `<span class="badge badge-expired">VENCIDA</span>` 
-            : `<span class="badge badge-warranty">ACTIVA</span> <br> <span class="time-left">Quedan ${diffDays} días</span>`;
-
-        // Mensaje de WhatsApp
-        const msg = window.encodeURIComponent(`Hola ${w.client}, te saludamos de AETERNA. Te informamos que el periodo de garantía de tu reparación ha finalizado hoy. ¡Gracias por tu confianza!`);
-        const waLink = `https://wa.me/${w.phone}?text=${msg}`;
-
-        return `
-            <tr>
-                <td><strong>${w.client}</strong><br><small style="color:var(--success)">${w.phone}</small></td>
-                <td style="font-size:12px;">${new Date(w.start).toLocaleDateString()}</td>
-                <td style="font-size:12px; font-weight:700;">${end.toLocaleDateString()}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    <a href="${waLink}" target="_blank" class="action-icon" style="color:var(--success)">
-                        <i data-lucide="message-circle" size="18"></i>
-                    </a>
-                    <div class="action-icon" onclick="Engine.deleteWarranty(${w.id})">
-                        <i data-lucide="trash-2" size="18"></i>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    lucide.createIcons();
-},
-
-deleteWarranty(id) {
-    if(confirm("¿Eliminar registro de garantía?")) {
-        this.db.warranties = this.db.warranties.filter(w => w.id !== id);
-        this.save();
-    }
-}
-// Añade esto dentro de Engine: { ... }
-addClientManual() {
-    const name = document.getElementById('c-name').value;
-    const phone = document.getElementById('c-phone').value;
-
-    if(!name || !phone) return alert("Completa el nombre y teléfono");
-
-    const newClient = {
-        name: name,
-        phone: phone,
-        lastSeen: new Date().toLocaleDateString()
-    };
-
-    // Evitar duplicados por nombre
-    const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
-    if(exists > -1) {
-        this.db.clients[exists] = newClient;
-    } else {
-        this.db.clients.unshift(newClient);
-    }
-
-    // Limpiar campos y guardar
-    document.getElementById('c-name').value = '';
-    document.getElementById('c-phone').value = '';
-    this.save();
-    alert("Cliente registrado con éxito");
-},
-
-
-
+        init() {
+            // Inicializar base de datos si faltan secciones
+            if (!this.db.warranties) this.db.warranties = [];
+            if (!this.db.clients) this.db.clients = [];
             
-            init() {
-                this.refresh();
-                
-                // Lógica de autorelleno de cliente
-                document.getElementById('l-name').addEventListener('input', (e) => {
-                    const term = e.target.value.toLowerCase();
-                    if(term.length < 2) return; 
-                    const found = Engine.db.clients.find(c => c.name.toLowerCase().includes(term));
-                    if(found && !Engine.editState.lab) {
-                        document.getElementById('l-phone').value = found.phone;
-                    }
-                });
-
-                setInterval(() => {
-                    const now = new Date();
-                    document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                }, 1000);
-            },
-
-            save() {
-                localStorage.setItem('AETERNA_DB', JSON.stringify(this.db));
-                this.refresh();
-            },
-
-            refresh() {
-                this.renderDash();
-                this.renderLab();
-                this.renderInv();
-                this.renderClients();
-                this.renderWarranties()
-                lucide.createIcons();
-            },
-
-            processOrder() {
-                const data = {
-                    client: document.getElementById('l-name').value,
-                    phone: document.getElementById('l-phone').value,
-                    model: document.getElementById('l-model').value,
-                    pin: document.getElementById('l-pin').value,
-                    price: parseFloat(document.getElementById('l-price').value) || 0,
-                    fail: document.getElementById('l-fail').value
-                };
-
-                if(!data.client || !data.model) return alert("Por favor, llena los campos esenciales.");
-
-                // Guardar o actualizar cliente automáticamente
-                const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
-                const cIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
-                if(cIdx > -1) this.db.clients[cIdx] = clientData;
-                else this.db.clients.unshift(clientData);
-
-                if(this.editState.lab) {
-                    const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
-                    this.db.orders[idx] = { ...this.db.orders[idx], ...data };
-                } else {
-                    this.db.orders.unshift({ id: 'TK-' + (Math.floor(Math.random() * 9000) + 1000), ...data, status: 'PENDIENTE' });
+            this.refresh();
+            
+            // Lógica de autorelleno de cliente
+            document.getElementById('l-name').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                if(term.length < 2) return; 
+                const found = this.db.clients.find(c => c.name.toLowerCase().includes(term));
+                if(found && !this.editState.lab) {
+                    document.getElementById('l-phone').value = found.phone;
                 }
-                this.save();
-                this.cancelEdit('lab');
-            },
+            });
 
-            editOrder(id) {
-                const o = this.db.orders.find(ord => ord.id === id);
-                this.editState.lab = id;
-                document.getElementById('l-name').value = o.client;
-                document.getElementById('l-phone').value = o.phone;
-                document.getElementById('l-model').value = o.model;
-                document.getElementById('l-pin').value = o.pin;
-                document.getElementById('l-price').value = o.price;
-                document.getElementById('l-fail').value = o.fail;
+            setInterval(() => {
+                const now = new Date();
+                const clockEl = document.getElementById('clock');
+                if(clockEl) clockEl.innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }, 1000);
+        },
 
-                document.getElementById('lab-panel').classList.add('editing');
-                document.getElementById('txt-lab-btn').innerText = "ACTUALIZAR TICKET";
-                document.getElementById('btn-lab-save').classList.add('update');
-                document.getElementById('btn-lab-cancel').style.display = 'block';
-                document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
-            },
+        save() {
+            localStorage.setItem('AETERNA_DB', JSON.stringify(this.db));
+            this.refresh();
+        },
 
-            processInv() {
-                const data = {
-                    name: document.getElementById('i-item').value,
-                    qty: parseInt(document.getElementById('i-qty').value) || 0,
-                    cost: parseFloat(document.getElementById('i-cost').value) || 0
-                };
-                if(!data.name) return;
-
-                if(this.editState.inv) {
-                    const idx = this.db.stock.findIndex(s => s.id === this.editState.inv);
-                    this.db.stock[idx] = { ...this.db.stock[idx], ...data };
-                } else {
-                    this.db.stock.unshift({ id: Date.now(), ...data });
-                }
-                this.save();
-                this.cancelEdit('inv');
-            },
-
-            editInv(id) {
-                const s = this.db.stock.find(i => i.id === id);
-                this.editState.inv = id;
-                document.getElementById('i-item').value = s.name;
-                document.getElementById('i-qty').value = s.qty;
-                document.getElementById('i-cost').value = s.cost;
-
-                document.getElementById('inv-panel').classList.add('editing');
-                document.getElementById('txt-inv-btn').innerText = "GUARDAR CAMBIOS";
-                document.getElementById('btn-inv-save').classList.add('update');
-                document.getElementById('btn-inv-cancel').style.display = 'block';
-            },
-
-            cancelEdit(type) {
-                this.editState[type] = null;
-                const panel = document.getElementById(type + '-panel');
-                panel.classList.remove('editing');
-                
-                if(type === 'lab') {
-                    ['l-name', 'l-phone', 'l-model', 'l-pin', 'l-price', 'l-fail'].forEach(i => document.getElementById(i).value = '');
-                    document.getElementById('txt-lab-btn').innerText = "REGISTRAR ENTRADA";
-                    document.getElementById('btn-lab-save').classList.remove('update');
-                    document.getElementById('btn-lab-cancel').style.display = 'none';
-                } else {
-                    ['i-item', 'i-qty', 'i-cost'].forEach(i => document.getElementById(i).value = '');
-                    document.getElementById('txt-inv-btn').innerText = "AÑADIR";
-                    document.getElementById('btn-inv-save').classList.remove('update');
-                    document.getElementById('btn-inv-cancel').style.display = 'none';
-                }
-            },
-
-            deleteItem(type, id) {
-                if(confirm("¿Estás seguro de eliminar este registro?")) {
-                    if(type === 'lab') this.db.orders = this.db.orders.filter(o => o.id !== id);
-                    else this.db.stock = this.db.stock.filter(s => s.id !== id);
-                    this.save();
-                }
-            },
-
-            toggleStatusLab(id) {
-                const o = this.db.orders.find(ord => ord.id === id);
-                if (o.status === 'PENDIENTE') o.status = 'URGENTE';
-                else if (o.status === 'URGENTE') o.status = 'LISTO';
-                else o.status = 'PENDIENTE';
-                this.save();
-            },
-
-            renderDash() {
-                const o = this.db.orders;
-                document.getElementById('st-total').innerText = o.length;
-                document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
-                document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
-                document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
-
-                const sortedForDash = [...o].sort((a, b) => {
-                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-                    return 0;
-                });
-
-                document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
-                    const statusClass = x.status.toLowerCase();
-                    return `
-                        <tr class="status-${statusClass}">
-                            <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${x.id}</td>
-                            <td style="font-weight:700;">${x.client}</td>
-                            <td>${x.model}</td>
-                            <td><span class="badge badge-${statusClass}">${x.status}</span></td>
-                        </tr>
-                    `;
-                }).join('');
-            },
-
-            renderLab() {
-                const sortedOrders = [...this.db.orders].sort((a, b) => {
-                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-                    return 0;
-                });
-
-                document.getElementById('lab-table').innerHTML = sortedOrders.map(x => {
-                    const statusClass = x.status.toLowerCase();
-                    const badgeClass = `badge-${statusClass}`;
-                    return `
-                        <tr class="status-${statusClass}">
-                            <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
-                            <td style="font-weight:700;">${x.client}</td>
-                            <td>${x.model}</td>
-                            <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
-                            <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge ${badgeClass}">${x.status}</span></td>
-                            <td>
-                                <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
-                                <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            },
-
-            renderInv() {
-    document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
-        const totalValue = (x.qty * x.cost).toFixed(2);
-        const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
-        return `
-            <tr>
-                <td style="font-weight:700; color: #fff;">${x.name}</td>
-                <td style="${stockStyle}">${x.qty} <small>uds</small></td>
-                <td style="color: var(--text-dim); font-family: var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
-                <td style="color: var(--success); font-weight: 800;">$${totalValue}</td>
-                <td>
-                    <div style="display:flex; gap:8px;">
-                        <div class="action-icon edit" onclick="Engine.editInv(${x.id})">
-                            <i data-lucide="edit-3" size="14"></i>
-                        </div>
-                        <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})">
-                            <i data-lucide="trash-2" size="14"></i>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    lucide.createIcons();
-},
-
-            renderClients() {
-                if(!this.db.clients) this.db.clients = [];
-                document.getElementById('clients-list').innerHTML = this.db.clients.map((c, i) => `
-                    <tr>
-                        <td style="font-weight:700;">${c.name}</td>
-                        <td style="color:var(--success); font-family:var(--mono); font-weight:700;">${c.phone}</td>
-                        <td style="color:var(--text-dim);">${c.lastSeen}</td>
-                        <td><div class="action-icon" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="16"></i></div></td>
-                    </tr>
-                `).join('');
-                lucide.createIcons();
-            },
-
-            delClient(i) {
-                if(confirm("¿Eliminar cliente de la base de datos?")) {
-                    this.db.clients.splice(i, 1);
-                    this.save();
-                }
-            }
-        };
-
-        function go(v, el) {
-            document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-            document.getElementById('v-' + v).classList.add('active');
-            el.classList.add('active');
+        refresh() {
+            this.renderDash();
+            this.renderLab();
+            this.renderInv();
+            this.renderClients();
+            this.renderWarranties();
             lucide.createIcons();
+        },
+
+        // --- GESTIÓN DE GARANTÍAS ---
+        addWarranty() {
+            const name = document.getElementById('g-name').value;
+            const phone = document.getElementById('g-phone').value;
+            const days = parseInt(document.getElementById('g-days').value);
+
+            if (!name || !phone || !days) return alert("Completa todos los campos");
+
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(startDate.getDate() + days);
+
+            const newWarranty = {
+                id: Date.now(),
+                client: name,
+                phone: phone,
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
+                days: days
+            };
+
+            this.db.warranties.unshift(newWarranty);
+            this.save();
+            
+            document.getElementById('g-name').value = '';
+            document.getElementById('g-phone').value = '';
+            alert("Garantía activada correctamente");
+        },
+
+        renderWarranties() {
+            const list = document.getElementById('guarantee-list');
+            if(!list) return;
+            const now = new Date();
+            
+            list.innerHTML = this.db.warranties.map(w => {
+                const end = new Date(w.end);
+                const diffTime = end - now;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const isExpired = diffDays <= 0;
+
+                const statusBadge = isExpired 
+                    ? `<span class="badge badge-expired">VENCIDA</span>` 
+                    : `<span class="badge badge-warranty">ACTIVA</span> <br> <span class="time-left">Quedan ${diffDays} días</span>`;
+
+                const msg = window.encodeURIComponent(`Hola ${w.client}, te saludamos de AETERNA. Te informamos que el periodo de garantía de tu reparación ha finalizado hoy. ¡Gracias por tu confianza!`);
+                const waLink = `https://wa.me/${w.phone}?text=${msg}`;
+
+                return `
+                    <tr>
+                        <td><strong>${w.client}</strong><br><small style="color:var(--success)">${w.phone}</small></td>
+                        <td style="font-size:12px;">${new Date(w.start).toLocaleDateString()}</td>
+                        <td style="font-size:12px; font-weight:700;">${end.toLocaleDateString()}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <a href="${waLink}" target="_blank" class="action-icon" style="color:var(--success)">
+                                <i data-lucide="message-circle"></i>
+                            </a>
+                            <div class="action-icon" onclick="Engine.deleteWarranty(${w.id})">
+                                <i data-lucide="trash-2"></i>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+        },
+
+        deleteWarranty(id) {
+            if(confirm("¿Eliminar registro de garantía?")) {
+                this.db.warranties = this.db.warranties.filter(w => w.id !== id);
+                this.save();
+            }
+        },
+
+        // --- GESTIÓN DE CLIENTES ---
+        addClientManual() {
+            const name = document.getElementById('c-name').value;
+            const phone = document.getElementById('c-phone').value;
+            if(!name || !phone) return alert("Completa el nombre y teléfono");
+
+            const newClient = { name, phone, lastSeen: new Date().toLocaleDateString() };
+            const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+            
+            if(exists > -1) this.db.clients[exists] = newClient;
+            else this.db.clients.unshift(newClient);
+
+            document.getElementById('c-name').value = '';
+            document.getElementById('c-phone').value = '';
+            this.save();
+        },
+
+        renderClients() {
+            const list = document.getElementById('clients-list');
+            if(!list) return;
+            list.innerHTML = this.db.clients.map(c => `
+                <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.phone}</td>
+                    <td>${c.lastSeen}</td>
+                    <td>
+                        <a href="https://wa.me/${c.phone}" target="_blank" class="action-icon" style="color:var(--success)">
+                            <i data-lucide="message-square"></i>
+                        </a>
+                    </td>
+                </tr>`).join('');
+        },
+
+        // --- LABORATORIO E INVENTARIO (Simplificado para el ejemplo) ---
+        processOrder() {
+            const data = {
+                client: document.getElementById('l-name').value,
+                phone: document.getElementById('l-phone').value,
+                model: document.getElementById('l-model').value,
+                pin: document.getElementById('l-pin').value,
+                price: parseFloat(document.getElementById('l-price').value) || 0,
+                fail: document.getElementById('l-fail').value
+            };
+            if(!data.client || !data.model) return alert("Campos incompletos");
+
+            if(this.editState.lab) {
+                const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
+                this.db.orders[idx] = { ...this.db.orders[idx], ...data };
+            } else {
+                this.db.orders.unshift({ id: 'TK-' + Math.floor(1000+Math.random()*9000), ...data, status: 'PENDIENTE' });
+            }
+            this.save();
+            this.cancelEdit('lab');
+        },
+
+        renderDash() {
+            const o = this.db.orders;
+            document.getElementById('st-total').innerText = o.length;
+            document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
+            document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
+            document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
+            
+            document.getElementById('dash-table').innerHTML = o.slice(0, 5).map(x => `
+                <tr class="status-${x.status.toLowerCase()}">
+                    <td>${x.id}</td>
+                    <td>${x.client}</td>
+                    <td>${x.model}</td>
+                    <td><span class="badge badge-${x.status.toLowerCase()}">${x.status}</span></td>
+                </tr>`).join('');
+        },
+
+        renderLab() {
+            document.getElementById('lab-table').innerHTML = this.db.orders.map(x => `
+                <tr>
+                    <td>${x.id}</td>
+                    <td>${x.client}</td>
+                    <td>${x.model}</td>
+                    <td>$${x.price}</td>
+                    <td><span class="badge badge-${x.status.toLowerCase()}" onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer">${x.status}</span></td>
+                    <td>
+                        <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2"></i></div>
+                    </td>
+                </tr>`).join('');
+        },
+
+        renderInv() {
+            document.getElementById('inv-list').innerHTML = this.db.stock.map(x => `
+                <tr>
+                    <td>${x.name}</td>
+                    <td>${x.qty}</td>
+                    <td>$${x.cost}</td>
+                    <td>$${x.qty * x.cost}</td>
+                    <td><div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})"><i data-lucide="trash-2"></i></div></td>
+                </tr>`).join('');
+        },
+
+        toggleStatusLab(id) {
+            const o = this.db.orders.find(ord => ord.id === id);
+            const states = ['PENDIENTE', 'URGENTE', 'LISTO'];
+            let next = states.indexOf(o.status) + 1;
+            o.status = states[next % states.length];
+            this.save();
+        },
+
+        deleteItem(type, id) {
+            if(confirm("¿Eliminar?")) {
+                if(type === 'lab') this.db.orders = this.db.orders.filter(o => o.id !== id);
+                else this.db.stock = this.db.stock.filter(s => s.id !== id);
+                this.save();
+            }
+        },
+
+        cancelEdit(type) {
+            this.editState[type] = null;
+            this.refresh();
+        },
+
+        processInv() {
+            const name = document.getElementById('i-item').value;
+            const qty = parseInt(document.getElementById('i-qty').value);
+            const cost = parseFloat(document.getElementById('i-cost').value);
+            if(!name) return;
+            this.db.stock.unshift({id: Date.now(), name, qty, cost});
+            this.save();
         }
+    };
 
-        window.onload = () => Engine.init();
+    // FUNCIÓN DE NAVEGACIÓN (Fuera de Engine)
+    function go(id, el) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('v-' + id).classList.add('active');
+        el.classList.add('active');
+    }
 
-
-        
-    </script>
+    // INICIO
+    window.onload = () => Engine.init();
+</script>
 </body>
 </html>

@@ -427,11 +427,13 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                 }
             },
 
-            toggleStatus(id) {
-                const o = this.db.orders.find(ord => ord.id === id);
-                o.status = o.status === 'PENDIENTE' ? 'LISTO' : 'PENDIENTE';
-                this.save();
-            },
+            toggleStatusLab(id) {
+            const o = this.db.orders.find(ord => ord.id === id);
+            if (o.status === 'PENDIENTE') o.status = 'URGENTE';
+            else if (o.status === 'URGENTE') o.status = 'LISTO';
+            else o.status = 'PENDIENTE';
+            this.save();
+},
 
             renderDash() {
                 const o = this.db.orders;

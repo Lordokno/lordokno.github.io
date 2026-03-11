@@ -410,6 +410,37 @@
             db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
             editState: { lab: null, inv: null },
 
+// Añade esto dentro de Engine: { ... }
+addClientManual() {
+    const name = document.getElementById('c-name').value;
+    const phone = document.getElementById('c-phone').value;
+
+    if(!name || !phone) return alert("Completa el nombre y teléfono");
+
+    const newClient = {
+        name: name,
+        phone: phone,
+        lastSeen: new Date().toLocaleDateString()
+    };
+
+    // Evitar duplicados por nombre
+    const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+    if(exists > -1) {
+        this.db.clients[exists] = newClient;
+    } else {
+        this.db.clients.unshift(newClient);
+    }
+
+    // Limpiar campos y guardar
+    document.getElementById('c-name').value = '';
+    document.getElementById('c-phone').value = '';
+    this.save();
+    alert("Cliente registrado con éxito");
+},
+
+
+
+            
             init() {
                 this.refresh();
                 
@@ -662,33 +693,7 @@
         window.onload = () => Engine.init();
 
 
-        // Añade esto dentro de Engine: { ... }
-addClientManual() {
-    const name = document.getElementById('c-name').value;
-    const phone = document.getElementById('c-phone').value;
-
-    if(!name || !phone) return alert("Completa el nombre y teléfono");
-
-    const newClient = {
-        name: name,
-        phone: phone,
-        lastSeen: new Date().toLocaleDateString()
-    };
-
-    // Evitar duplicados por nombre
-    const exists = this.db.clients.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
-    if(exists > -1) {
-        this.db.clients[exists] = newClient;
-    } else {
-        this.db.clients.unshift(newClient);
-    }
-
-    // Limpiar campos y guardar
-    document.getElementById('c-name').value = '';
-    document.getElementById('c-phone').value = '';
-    this.save();
-    alert("Cliente registrado con éxito");
-},
+        
     </script>
 </body>
 </html>

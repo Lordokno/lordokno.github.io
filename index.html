@@ -451,14 +451,21 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             renderDash() {
     const o = this.db.orders;
     
-    // Cálculos de contadores
+    // 1. Actualizar contadores
     document.getElementById('st-total').innerText = o.length;
     document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
     document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
     document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
 
-    // Renderizado de tabla resumida (máximo 5 items)
-    document.getElementById('dash-table').innerHTML = o.slice(0, 5).map(x => {
+    // 2. Ordenar para el Dashboard: Urgentes y Pendientes primero, Listos al final
+    const sortedForDash = [...o].sort((a, b) => {
+        if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+        if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+        return 0;
+    });
+
+    // 3. Renderizar solo los primeros 8 elementos para no saturar el Dashboard
+    document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
         const statusClass = x.status.toLowerCase();
         return `
             <tr class="status-${statusClass}">

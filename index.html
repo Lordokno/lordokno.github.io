@@ -173,9 +173,21 @@
         tr:hover td { background: rgba(255,255,255,0.01); }
 
         .badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--edit); }
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+       /* Reemplazar estilos de badges y agregar estados de fila */
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; } /* Naranja */
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: #10b981; }    /* Verde */
+        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; } /* Rojo Intermitente */
 
+        @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* Colores de fuente para la fila completa según estado */
+tr.status-listo td { color: #10b981 !important; }
+tr.status-pendiente td { color: #f59e0b !important; }
+tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
         .action-icon {
             width: 36px; height: 36px; border-radius: 10px; display: inline-flex;
             align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -434,20 +446,33 @@
             },
 
             renderLab() {
-                document.getElementById('lab-table').innerHTML = this.db.orders.map(x => `
-                    <tr>
-                        <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
-                        <td style="font-weight:700;">${x.client}</td>
-                        <td>${x.model}</td>
-                        <td style="color:var(--success); font-weight:800;">$${x.price.toFixed(2)}</td>
-                        <td><span onclick="Engine.toggleStatus('${x.id}')" style="cursor:pointer" class="badge badge-${x.status.toLowerCase()}">${x.status}</span></td>
-                        <td>
-                            <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
-                            <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
-                        </td>
-                    </tr>
-                `).join('');
-            },
+    // Ordenar: Listos al final, Urgentes y Pendientes arriba
+                const sortedOrders = [...this.db.orders].sort((a, b) => {
+                if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+                if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+                return 0;
+                });
+
+                document.getElementById('lab-table').innerHTML = sortedOrders.map(x => {
+        // Determinar clase de fila y badge
+                const statusClass = x.status.toLowerCase();
+                const badgeClass = `badge-${statusClass}`;
+        
+                return `
+                  <tr class="status-${statusClass}">
+                <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
+                <td style="font-weight:700;">${x.client}</td>
+                <td>${x.model}</td>
+                <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
+                <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge ${badgeClass}">${x.status}</span></td>
+                <td>
+                    <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
+                    <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
+                </td>
+                </tr>
+                    `;
+                }).join('');
+            }
 
             renderInv() {
                 document.getElementById('inv-grid').innerHTML = this.db.stock.map(x => `

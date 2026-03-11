@@ -173,21 +173,20 @@
         tr:hover td { background: rgba(255,255,255,0.01); }
 
         .badge { padding: 6px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-       /* Reemplazar estilos de badges y agregar estados de fila */
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; } /* Naranja */
-        .badge-done { background: rgba(16, 185, 129, 0.1); color: #10b981; }    /* Verde */
-        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; } /* Rojo Intermitente */
+        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #f59e0b; } 
+        .badge-done { background: rgba(16, 185, 129, 0.1); color: #10b981; }    
+        .badge-urgent { background: rgba(239, 68, 68, 0.1); color: #ef4444; animation: blink 1s infinite; } 
 
         @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.3; }
-    100% { opacity: 1; }
-}
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
 
-/* Colores de fuente para la fila completa según estado */
-tr.status-listo td { color: #10b981 !important; }
-tr.status-pendiente td { color: #f59e0b !important; }
-tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
+        tr.status-listo td { color: #10b981 !important; }
+        tr.status-pendiente td { color: #f59e0b !important; }
+        tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
+
         .action-icon {
             width: 36px; height: 36px; border-radius: 10px; display: inline-flex;
             align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
@@ -196,21 +195,12 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
         .action-icon:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: var(--border); }
         .action-icon.edit:hover { color: var(--edit); }
 
-        /* --- INVENTARIO GRID --- */
-        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .inv-card {
-            background: var(--panel); border: 1px solid var(--border); padding: 28px; border-radius: var(--radius-lg);
-            position: relative; transition: 0.3s;
+        #inv-list td small {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-left: 4px;
         }
-        .inv-card:hover { border-color: var(--accent); }
-        .inv-meta { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; }
-/* Agregar al final de los estilos */
-#inv-list td small {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-left: 4px;
-}
     </style>
 </head>
 <body>
@@ -225,6 +215,7 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             <div class="nav-item active" onclick="go('dash', this)"><i data-lucide="layout-grid"></i> Dashboard</div>
             <div class="nav-item" onclick="go('lab', this)"><i data-lucide="wrench"></i> Laboratorio</div>
             <div class="nav-item" onclick="go('inv', this)"><i data-lucide="package"></i> Inventario</div>
+            <div class="nav-item" onclick="go('clients', this)"><i data-lucide="users"></i> Clientes</div>
         </div>
 
         <div style="padding: 20px; background: rgba(255,255,255,0.02); border-radius: 16px;">
@@ -241,24 +232,24 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                 <p>Monitoreo de rendimiento y flujo de trabajo en tiempo real.</p>
             </div>
 
-            <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
-    <div class="stat-card">
-        <div class="label">Servicios</div>
-        <div class="value" id="st-total">0</div>
-    </div>
-    <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.2);">
-        <div class="label" style="color: #ef4444;">Urgentes</div>
-        <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
-    </div>
-    <div class="stat-card">
-        <div class="label" style="color: var(--edit);">Pendientes</div>
-        <div class="value" id="st-process" style="color: var(--edit);">0</div>
-    </div>
-    <div class="stat-card">
-        <div class="label" style="color: var(--success);">Capital</div>
-        <div class="value" id="st-cash" style="color: var(--success);">$0</div>
-    </div>
-</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Servicios</div>
+                    <div class="value" id="st-total">0</div>
+                </div>
+                <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.2);">
+                    <div class="label" style="color: #ef4444;">Urgentes</div>
+                    <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label" style="color: var(--edit);">Pendientes</div>
+                    <div class="value" id="st-process" style="color: var(--edit);">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label" style="color: var(--success);">Capital</div>
+                    <div class="value" id="st-cash" style="color: var(--success);">$0</div>
+                </div>
+            </div>
 
             <div class="table-box">
                 <table>
@@ -321,30 +312,61 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             </div>
 
             <div class="table-box">
-    <table>
-        <thead>
-            <tr>
-                <th>Repuesto</th>
-                <th>Stock</th>
-                <th>Costo Unit.</th>
-                <th>Valor Total</th>
-                <th>Gestión</th>
-            </tr>
-        </thead>
-        <tbody id="inv-list"></tbody>
-    </table>
-</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Repuesto</th>
+                            <th>Stock</th>
+                            <th>Costo Unit.</th>
+                            <th>Valor Total</th>
+                            <th>Gestión</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inv-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="v-clients" class="view">
+            <div class="view-title">
+                <h1>Directorio de Clientes</h1>
+                <p>Base de datos de contactos guardados automáticamente.</p>
+            </div>
+            <div class="table-box">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>WhatsApp</th>
+                            <th>Última Visita</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-list"></tbody>
+                </table>
+            </div>
         </section>
 
     </main>
 
     <script>
         const Engine = {
-            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [] },
+            db: JSON.parse(localStorage.getItem('AETERNA_DB')) || { orders: [], stock: [], clients: [] },
             editState: { lab: null, inv: null },
 
             init() {
                 this.refresh();
+                
+                // Lógica de autorelleno de cliente
+                document.getElementById('l-name').addEventListener('input', (e) => {
+                    const term = e.target.value.toLowerCase();
+                    if(term.length < 2) return; 
+                    const found = Engine.db.clients.find(c => c.name.toLowerCase().includes(term));
+                    if(found && !Engine.editState.lab) {
+                        document.getElementById('l-phone').value = found.phone;
+                    }
+                });
+
                 setInterval(() => {
                     const now = new Date();
                     document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -360,6 +382,7 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                 this.renderDash();
                 this.renderLab();
                 this.renderInv();
+                this.renderClients();
                 lucide.createIcons();
             },
 
@@ -374,6 +397,12 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
                 };
 
                 if(!data.client || !data.model) return alert("Por favor, llena los campos esenciales.");
+
+                // Guardar o actualizar cliente automáticamente
+                const clientData = { name: data.client, phone: data.phone, lastSeen: new Date().toLocaleDateString() };
+                const cIdx = this.db.clients.findIndex(c => c.name.toLowerCase() === data.client.toLowerCase());
+                if(cIdx > -1) this.db.clients[cIdx] = clientData;
+                else this.db.clients.unshift(clientData);
 
                 if(this.editState.lab) {
                     const idx = this.db.orders.findIndex(o => o.id === this.editState.lab);
@@ -460,101 +489,106 @@ tr.status-urgente td { color: #ef4444 !important; font-weight: 700; }
             },
 
             toggleStatusLab(id) {
-            const o = this.db.orders.find(ord => ord.id === id);
-            if (o.status === 'PENDIENTE') o.status = 'URGENTE';
-            else if (o.status === 'URGENTE') o.status = 'LISTO';
-            else o.status = 'PENDIENTE';
-            this.save();
-},
+                const o = this.db.orders.find(ord => ord.id === id);
+                if (o.status === 'PENDIENTE') o.status = 'URGENTE';
+                else if (o.status === 'URGENTE') o.status = 'LISTO';
+                else o.status = 'PENDIENTE';
+                this.save();
+            },
 
             renderDash() {
-    const o = this.db.orders;
-    
-    // 1. Actualizar contadores
-    document.getElementById('st-total').innerText = o.length;
-    document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
-    document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
-    document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
+                const o = this.db.orders;
+                document.getElementById('st-total').innerText = o.length;
+                document.getElementById('st-urgent').innerText = o.filter(x => x.status === 'URGENTE').length;
+                document.getElementById('st-process').innerText = o.filter(x => x.status === 'PENDIENTE').length;
+                document.getElementById('st-cash').innerText = '$' + o.reduce((a, b) => a + b.price, 0).toLocaleString();
 
-    // 2. Ordenar para el Dashboard: Urgentes y Pendientes primero, Listos al final
-    const sortedForDash = [...o].sort((a, b) => {
-        if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-        if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-        return 0;
-    });
+                const sortedForDash = [...o].sort((a, b) => {
+                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+                    return 0;
+                });
 
-    // 3. Renderizar solo los primeros 8 elementos para no saturar el Dashboard
-    document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
-        const statusClass = x.status.toLowerCase();
-        return `
-            <tr class="status-${statusClass}">
-                <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${x.id}</td>
-                <td style="font-weight:700;">${x.client}</td>
-                <td>${x.model}</td>
-                <td><span class="badge badge-${statusClass}">${x.status}</span></td>
-            </tr>
-        `;
-    }).join('');
-},
+                document.getElementById('dash-table').innerHTML = sortedForDash.slice(0, 8).map(x => {
+                    const statusClass = x.status.toLowerCase();
+                    return `
+                        <tr class="status-${statusClass}">
+                            <td style="font-family:var(--mono); color:var(--accent); font-weight:700;">${x.id}</td>
+                            <td style="font-weight:700;">${x.client}</td>
+                            <td>${x.model}</td>
+                            <td><span class="badge badge-${statusClass}">${x.status}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            },
 
             renderLab() {
-    // Ordenar: Listos al final, Urgentes y Pendientes arriba
                 const sortedOrders = [...this.db.orders].sort((a, b) => {
-                if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
-                if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
-                return 0;
+                    if (a.status === 'LISTO' && b.status !== 'LISTO') return 1;
+                    if (a.status !== 'LISTO' && b.status === 'LISTO') return -1;
+                    return 0;
                 });
 
                 document.getElementById('lab-table').innerHTML = sortedOrders.map(x => {
-        // Determinar clase de fila y badge
-                const statusClass = x.status.toLowerCase();
-                const badgeClass = `badge-${statusClass}`;
-        
-                return `
-                  <tr class="status-${statusClass}">
-                <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
-                <td style="font-weight:700;">${x.client}</td>
-                <td>${x.model}</td>
-                <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
-                <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge ${badgeClass}">${x.status}</span></td>
-                <td>
-                    <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
-                    <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
-                </td>
-                </tr>
+                    const statusClass = x.status.toLowerCase();
+                    const badgeClass = `badge-${statusClass}`;
+                    return `
+                        <tr class="status-${statusClass}">
+                            <td style="font-family:var(--mono); font-weight:700;">${x.id}</td>
+                            <td style="font-weight:700;">${x.client}</td>
+                            <td>${x.model}</td>
+                            <td style="font-weight:800;">$${x.price.toFixed(2)}</td>
+                            <td><span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge ${badgeClass}">${x.status}</span></td>
+                            <td>
+                                <div class="action-icon edit" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="16"></i></div>
+                                <div class="action-icon" onclick="Engine.deleteItem('lab', '${x.id}')"><i data-lucide="trash-2" size="16"></i></div>
+                            </td>
+                        </tr>
                     `;
                 }).join('');
             },
 
             renderInv() {
-    document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
-        const totalValue = (x.qty * x.cost).toFixed(2);
-        // Alerta visual si el stock es bajo (menos de 3 unidades)
-        const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
-        
-        return `
-            <tr>
-                <td style="font-weight:700; color: #fff;">${x.name}</td>
-                <td style="${stockStyle}">${x.qty} <small>uds</small></td>
-                <td style="color: var(--text-dim); font-family: var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
-                <td style="color: var(--success); font-weight: 800;">$${totalValue}</td>
-                <td>
-                    <div style="display:flex; gap:8px;">
-                        <div class="action-icon edit" onclick="Engine.editInv(${x.id})">
-                            <i data-lucide="edit-3" size="16"></i>
-                        </div>
-                        <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})">
-                            <i data-lucide="trash-2" size="16"></i>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
-    // Reiniciar iconos de Lucide para la nueva lista
-    lucide.createIcons();
-}
+                document.getElementById('inv-list').innerHTML = this.db.stock.map(x => {
+                    const totalValue = (x.qty * x.cost).toFixed(2);
+                    const stockStyle = x.qty <= 3 ? 'color: #ef4444; font-weight: 800;' : '';
+                    return `
+                        <tr>
+                            <td style="font-weight:700; color: #fff;">${x.name}</td>
+                            <td style="${stockStyle}">${x.qty} <small>uds</small></td>
+                            <td style="color: var(--text-dim); font-family: var(--mono);">$${parseFloat(x.cost).toFixed(2)}</td>
+                            <td style="color: var(--success); font-weight: 800;">$${totalValue}</td>
+                            <td>
+                                <div style="display:flex; gap:8px;">
+                                    <div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="16"></i></div>
+                                    <div class="action-icon" onclick="Engine.deleteItem('inv', ${x.id})"><i data-lucide="trash-2" size="16"></i></div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            renderClients() {
+                if(!this.db.clients) this.db.clients = [];
+                document.getElementById('clients-list').innerHTML = this.db.clients.map((c, i) => `
+                    <tr>
+                        <td style="font-weight:700;">${c.name}</td>
+                        <td style="color:var(--success); font-family:var(--mono); font-weight:700;">${c.phone}</td>
+                        <td style="color:var(--text-dim);">${c.lastSeen}</td>
+                        <td><div class="action-icon" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="16"></i></div></td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            },
+
+            delClient(i) {
+                if(confirm("¿Eliminar cliente de la base de datos?")) {
+                    this.db.clients.splice(i, 1);
+                    this.save();
+                }
+            }
         };
 
         function go(v, el) {

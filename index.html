@@ -28,7 +28,32 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        
+        /* --- COMPACTACIÓN GLOBAL DE TABLAS (Dash, Lab, Clientes) --- */
+#dash-table td, 
+#lab-table td, 
+#clients-list td {
+    padding: 8px 24px !important; /* Reducción de espaciado vertical */
+    font-size: 13px; /* Tamaño de fuente optimizado */
+}
+
+/* Ajuste de iconos de acción para que coincidan con el nuevo alto de fila */
+#lab-table .action-icon,
+#clients-list .action-icon {
+    width: 28px;
+    height: 28px;
+}
+
+#lab-table .action-icon i,
+#clients-list .action-icon i {
+    width: 14px;
+    height: 14px;
+}
+
+/* Ajuste específico para las insignias (badges) en modo compacto */
+.badge {
+    padding: 4px 8px;
+    font-size: 10px;
+}
         body { 
             background: var(--bg);
             background-image: 

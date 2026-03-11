@@ -458,14 +458,14 @@
     </div>
 
     <div class="smart-panel">
-        <div class="input-row">
-            <div class="field"><label>Cliente</label><input type="text" id="g-name" placeholder="Nombre"></div>
-            <div class="field"><label>WhatsApp</label><input type="text" id="g-phone" placeholder="7788-9900"></div>
-            <div class="field"><label>Días de Garantía</label><input type="number" id="g-days" value="30"></div>
-            <button class="btn-main" onclick="Engine.addWarranty()">
-                <i data-lucide="shield-plus"></i> ACTIVAR GARANTÍA
-            </button>
-        </div>
+       <div class="form-group">
+    <input type="text" id="c-name" placeholder="Nombre del Cliente">
+    <input type="text" id="c-phone" placeholder="Teléfono">
+    
+    <button onclick="Engine.addClientManual()" id="btn-add-client">
+        AGREGAR GARANTÍA
+    </button>
+</div>
     </div>
 
     <div class="table-box">

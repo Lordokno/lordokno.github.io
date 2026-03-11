@@ -28,6 +28,34 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+
+/* Estilo refinado para los iconos de las tarjetas */
+.stat-icon {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.5px;
+    /* Efecto de resplandor suave */
+    filter: drop-shadow(0 0 5px currentColor);
+    opacity: 0.9;
+}
+
+/* Ajuste a la etiqueta para alinear el icono a la derecha */
+.stat-card .label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+/* Mejora visual de la tarjeta al pasar el mouse */
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+}
         /* --- COMPACTACIÓN GLOBAL DE TABLAS (Dash, Lab, Clientes) --- */
 #dash-table td, 
 #lab-table td, 
@@ -273,23 +301,38 @@
             </div>
 
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="label">Servicios</div>
-                    <div class="value" id="st-total">0</div>
-                </div>
-                <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.2);">
-                    <div class="label" style="color: #ef4444;">Urgentes</div>
-                    <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label" style="color: var(--edit);">Pendientes</div>
-                    <div class="value" id="st-process" style="color: var(--edit);">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="label" style="color: var(--success);">Capital</div>
-                    <div class="value" id="st-cash" style="color: var(--success);">$0</div>
-                </div>
-            </div>
+    <div class="stat-card">
+        <div class="label">
+            Servicios 
+            <i data-lucide="layers" class="stat-icon" style="color: var(--accent);"></i>
+        </div>
+        <div class="value" id="st-total">0</div>
+    </div>
+
+    <div class="stat-card" style="border-color: rgba(239, 68, 68, 0.3);">
+        <div class="label" style="color: #ef4444;">
+            Urgentes 
+            <i data-lucide="zap" class="stat-icon" style="color: #ef4444; animation: blink 1.5s infinite;"></i>
+        </div>
+        <div class="value" id="st-urgent" style="color: #ef4444; animation: blink 1.5s infinite;">0</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="label" style="color: var(--edit);">
+            Pendientes 
+            <i data-lucide="clock-4" class="stat-icon" style="color: var(--edit);"></i>
+        </div>
+        <div class="value" id="st-process" style="color: var(--edit);">0</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="label" style="color: var(--success);">
+            Capital 
+            <i data-lucide="wallet" class="stat-icon" style="color: var(--success);"></i>
+        </div>
+        <div class="value" id="st-cash" style="color: var(--success);">$0</div>
+    </div>
+</div>
 
             <div class="table-box">
                 <table>

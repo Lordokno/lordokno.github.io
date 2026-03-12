@@ -604,14 +604,10 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div id="top-devices"></div>
         </div>
     </div>
-    <div class="charts-grid" style="grid-template-columns:1fr 1fr">
+    <div class="charts-grid" style="grid-template-columns:1fr">
         <div class="chart-box">
-            <div class="chart-title">Estado Actual de Órdenes</div>
+            <div class="chart-title">Estado Actual de Ordenes</div>
             <div class="chart-container"><canvas id="chart-status"></canvas></div>
-        </div>
-        <div class="chart-box">
-            <div class="chart-title">Métodos de Pago</div>
-            <div class="chart-container"><canvas id="chart-metodos"></canvas></div>
         </div>
     </div>
 </section>
@@ -630,11 +626,11 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             </div>
             <div class="field" style="flex:1;min-width:160px"><label>Tipo de Mensaje</label>
                 <select id="wa-msg-type" onchange="Engine.updateWaPreview()">
-                    <option value="recibido">📥 Equipo Recibido</option>
-                    <option value="diagnostico">🔍 Diagnóstico Listo</option>
-                    <option value="listo">✅ Equipo Listo para Retirar</option>
-                    <option value="garantia">🛡️ Info de Garantía</option>
-                    <option value="recordatorio">⏰ Recordatorio de Retiro</option>
+                    <option value="recibido">Equipo Recibido</option>
+                    <option value="diagnostico">Diagnostico Listo</option>
+                    <option value="listo">Equipo Listo para Retirar</option>
+                    <option value="garantia">Info de Garantia</option>
+                    <option value="recordatorio">Recordatorio de Retiro</option>
                 </select>
             </div>
         </div>
@@ -844,18 +840,28 @@ const Engine = {
             warrantyDays: parseInt(document.getElementById('l-warranty').value)||0,
         };
         if (!data.client||!data.model) return alert('Llena los campos esenciales.');
-        const clientData = { name:data.client, phone:data.phone, lastSeen:new Date().toLocaleDateString('es-ES') };
-        const cIdx = this.db.clients.findIndex(c=>c.name.toLowerCase()===data.client.toLowerCase());
-        if (cIdx>-1) this.db.clients[cIdx]=clientData; else this.db.clients.unshift(clientData);
+
         if (this.editState.lab) {
+            // Edición: actualizar orden y sincronizar cliente (sin crear duplicado)
             const idx = this.db.orders.findIndex(o=>o.id===this.editState.lab);
             const existing = this.db.orders[idx];
+            // Si el nombre del cliente cambió, eliminar el cliente viejo si no tiene otras órdenes
+            if (existing.client.toLowerCase() !== data.client.toLowerCase()) {
+                const oldHasOtherOrders = this.db.orders.some((o,i) => i!==idx && o.client.toLowerCase()===existing.client.toLowerCase());
+                if (!oldHasOtherOrders) this.db.clients = this.db.clients.filter(c=>c.name.toLowerCase()!==existing.client.toLowerCase());
+            }
             const newData = {...existing,...data};
             if (data.warrantyDays!==existing.warrantyDays) newData.warrantyStart=null;
             this.db.orders[idx]=newData;
         } else {
             this.db.orders.unshift({ id:'TK-'+Date.now().toString().slice(-4), ...data, status:'PENDIENTE', warrantyStart:null, createdAt:new Date().toISOString() });
         }
+
+        // Upsert cliente (crea o actualiza por nombre)
+        const clientData = { name:data.client, phone:data.phone, lastSeen:new Date().toLocaleDateString('es-ES') };
+        const cIdx = this.db.clients.findIndex(c=>c.name.toLowerCase()===data.client.toLowerCase());
+        if (cIdx>-1) this.db.clients[cIdx]=clientData; else this.db.clients.unshift(clientData);
+
         await this.save(); this.cancelEdit('lab');
     },
 
@@ -1000,14 +1006,75 @@ const Engine = {
         if (!order) return '';
         const wi=this.getWarrantyInfo(order);
         const taller = 'NEXTCOM Multiservicios';
+        const contacto = 'Tel: 7512-0282 | info@nextcom.com.gt';
+        const tc = `_Términos: La garantía aplica únicamente para la falla reparada. No cubre daños por agua, golpes o manipulación de terceros. El equipo no retirado en 30 días generará cargo de bodegaje._`;
         const msgs = {
-            recibido: `¡Hola ${order.client}! 👋\n\nTe confirmamos que hemos recibido tu equipo *${order.model}* en *${taller}*.\n\n🔖 *Ticket:* ${order.id}\n🔍 *Diagnóstico inicial:* ${order.fail||'En revisión'}\n\nTe avisaremos cuando tengamos el diagnóstico completo. ¡Gracias por tu confianza! 🙏`,
-            diagnostico: `Hola ${order.client} 😊\n\nHemos completado el diagnóstico de tu *${order.model}*.\n\n🔖 *Ticket:* ${order.id}\n🔧 *Diagnóstico:* ${order.fail||'Ver detalles en tienda'}\n💰 *Presupuesto:* ${this.formatMoney(order.price)}\n\n¿Deseas que procedamos con la reparación? Respóndenos aquí. ✅`,
-            listo: `¡Buenas noticias, ${order.client}! 🎉\n\nTu equipo *${order.model}* ya está listo para retirar.\n\n🔖 *Ticket:* ${order.id}\n💰 *Monto a cancelar:* ${this.formatMoney(order.price)}\n${wi ? `🛡️ *Garantía:* ${order.warrantyDays} días incluidos` : ''}\n\nNos encontramos en nuestra tienda. ¡Te esperamos! 😄`,
+            recibido:
+`Hola ${order.client},
+
+Le confirmamos que hemos recibido su equipo *${order.model}* en *${taller}*.
+
+*Ticket:* ${order.id}
+*Diagnostico inicial:* ${order.fail||'En revision'}
+
+Le notificaremos cuando tengamos el diagnostico completo.
+
+${contacto}
+
+${tc}`,
+            diagnostico:
+`Hola ${order.client},
+
+Hemos completado el diagnostico de su *${order.model}*.
+
+*Ticket:* ${order.id}
+*Diagnostico:* ${order.fail||'Ver detalles en tienda'}
+*Presupuesto:* ${this.formatMoney(order.price)}
+
+Confirmenos si desea proceder con la reparacion.
+
+${contacto}`,
+            listo:
+`Hola ${order.client},
+
+Su equipo *${order.model}* ya esta listo para retirar.
+
+*Ticket:* ${order.id}
+*Monto a cancelar:* ${this.formatMoney(order.price)}
+${wi ? `*Garantia incluida:* ${order.warrantyDays} dias` : ''}
+
+Puede pasar por nuestra tienda en horario de atencion.
+
+${contacto}
+
+${tc}`,
             garantia: wi
-                ? `Hola ${order.client} 🛡️\n\nInformación sobre la garantía de tu *${order.model}*:\n\n🔖 *Ticket:* ${order.id}\n📅 *Inicio:* ${wi.start}\n📅 *Vence:* ${wi.end}\n⏱️ *Días restantes:* ${wi.daysRemaining} días\n📌 *Estado:* ${wi.statusKey==='expired'?'❌ VENCIDA':wi.statusKey==='expiring'?'⚠️ Por vencer':'✅ Vigente'}\n\nCualquier consulta sobre tu garantía, escríbenos. 👍`
-                : `Este equipo no tiene garantía registrada activa.`,
-            recordatorio: `Hola ${order.client} ⏰\n\nTe recordamos que tu equipo *${order.model}* lleva tiempo listo para retirar en *${taller}*.\n\n🔖 *Ticket:* ${order.id}\n💰 *Monto:* ${this.formatMoney(order.price)}\n\nPor favor pasa a retirarlo cuando puedas. ¡Gracias! 🙏`,
+                ?
+`Hola ${order.client},
+
+Informacion sobre la garantia de su *${order.model}*:
+
+*Ticket:* ${order.id}
+*Inicio:* ${wi.start}
+*Vence:* ${wi.end}
+*Dias restantes:* ${wi.daysRemaining}
+*Estado:* ${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}
+
+${contacto}
+
+${tc}`
+                : `Este equipo no tiene garantia registrada activa.`,
+            recordatorio:
+`Hola ${order.client},
+
+Le recordamos que su equipo *${order.model}* lleva tiempo listo para retirar en *${taller}*.
+
+*Ticket:* ${order.id}
+*Monto:* ${this.formatMoney(order.price)}
+
+Por favor pase a retirarlo a la brevedad posible.
+
+${contacto}`,
         };
         return msgs[type]||'';
     },
@@ -1016,114 +1083,182 @@ const Engine = {
         const o = this.db.orders.find(x => x.id === id);
         if (!o) return;
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ unit:'mm', format:'a6', orientation:'portrait' });
-        const W = doc.internal.pageSize.getWidth();
+        const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        const W = doc.internal.pageSize.getWidth();   // 210
+        const H = doc.internal.pageSize.getHeight();  // 297
         const wi = this.getWarrantyInfo(o);
+        const now = new Date();
+        const emitido = `${now.toLocaleDateString('es-ES')} ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
 
-        // — FONDO —
-        doc.setFillColor(3, 3, 5);
-        doc.rect(0, 0, W, 148, 'F');
+        // ── FONDO BLANCO ──
+        doc.setFillColor(255,255,255);
+        doc.rect(0,0,W,H,'F');
 
-        // — BARRA SUPERIOR DEGRADADO (simulada) —
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, W, 14, 'F');
+        // ── BARRA SUPERIOR ──
+        doc.setFillColor(30,30,50);
+        doc.rect(0,0,W,28,'F');
+        doc.setFillColor(79,70,229);
+        doc.rect(0,25,W,3,'F');
 
-        // — NOMBRE DEL TALLER —
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.text('NEXTCOM Multiservicios', W/2, 9, { align:'center' });
-
-        // — TICKET ID —
-        doc.setFillColor(18, 18, 26);
-        doc.roundedRect(8, 18, W-16, 18, 3, 3, 'F');
-        doc.setTextColor(79, 70, 229);
+        // Logo / nombre taller
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica','bold');
+        doc.text('NEXTCOM Multiservicios', 14, 13);
         doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text('TICKET DE SERVICIO', W/2, 24, { align:'center' });
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text(o.id, W/2, 32, { align:'center' });
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(180,180,210);
+        doc.text('Servicio Tecnico Profesional', 14, 20);
 
-        // — ESTADO badge color —
-        const statusColors = { LISTO:[16,185,129], PENDIENTE:[245,158,11], URGENTE:[239,68,68] };
-        const sc = statusColors[o.status] || [100,100,100];
-        doc.setFillColor(sc[0], sc[1], sc[2]);
-        const statusLabel = o.status;
-        doc.roundedRect(W/2 - 14, 35, 28, 7, 2, 2, 'F');
-        doc.setTextColor(0,0,0);
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.text(statusLabel, W/2, 40, { align:'center' });
+        // Datos de contacto en header derecho
+        doc.setFontSize(8);
+        doc.setTextColor(180,180,210);
+        doc.text('Tel: 7512-0282', W-14, 11, {align:'right'});
+        doc.text('info@nextcom.com.gt', W-14, 17, {align:'right'});
+        doc.text('www.nextcom.com.gt', W-14, 23, {align:'right'});
 
-        // — SEPARADOR —
-        doc.setDrawColor(255,255,255,0.08);
-        doc.setLineWidth(0.2);
-        doc.line(8, 45, W-8, 45);
+        // ── TICKET ID — bloque central ──
+        doc.setFillColor(245,246,250);
+        doc.roundedRect(14,34,W-28,24,3,3,'F');
+        doc.setFillColor(79,70,229);
+        doc.roundedRect(14,34,6,24,2,2,'F');
 
-        // — DATOS —
-        const fields = [
-            ['CLIENTE', o.client],
-            ['WHATSAPP', o.phone || '—'],
-            ['EQUIPO', o.model],
-            ['PIN ACCESO', o.pin || '—'],
-            ['DIAGNÓSTICO', o.fail || '—'],
-            ['PRESUPUESTO', this.formatMoney(o.price)],
-        ];
+        doc.setFontSize(9);
+        doc.setFont('helvetica','bold');
+        doc.setTextColor(120,120,160);
+        doc.text('ORDEN DE SERVICIO', 26,42);
 
-        let y = 52;
-        doc.setFontSize(7);
-        fields.forEach(([label, value]) => {
-            doc.setTextColor(100, 116, 139);
-            doc.setFont('helvetica', 'bold');
-            doc.text(label, 10, y);
-            doc.setTextColor(240, 240, 255);
-            doc.setFont('helvetica', 'normal');
-            const lines = doc.splitTextToSize(String(value), W - 50);
-            doc.text(lines, W - 10, y, { align:'right' });
-            y += lines.length > 1 ? 8 * lines.length : 8;
-        });
+        doc.setFontSize(22);
+        doc.setFont('helvetica','bold');
+        doc.setTextColor(30,30,50);
+        doc.text(o.id, 26, 53);
 
-        // — GARANTÍA —
-        doc.setDrawColor(255,255,255,0.06);
-        doc.line(8, y, W-8, y);
-        y += 6;
+        // Badge estado
+        const statusColors = { LISTO:[16,185,129], PENDIENTE:[230,140,20], URGENTE:[220,50,50] };
+        const sc = statusColors[o.status]||[100,100,100];
+        doc.setFillColor(...sc);
+        doc.roundedRect(W-50,38,32,12,3,3,'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(9);
+        doc.setFont('helvetica','bold');
+        doc.text(o.status, W-34, 46, {align:'center'});
 
+        // Fecha emision
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(130,130,160);
+        doc.text(`Emitido: ${emitido}`, W-14, 55, {align:'right'});
+
+        // ── SECCIÓN: DATOS DEL CLIENTE ──
+        let y = 68;
+        const drawSection = (title, yPos) => {
+            doc.setFillColor(30,30,50);
+            doc.rect(14,yPos,W-28,7,'F');
+            doc.setFontSize(8);
+            doc.setFont('helvetica','bold');
+            doc.setTextColor(255,255,255);
+            doc.text(title.toUpperCase(), 18, yPos+5);
+            return yPos+7;
+        };
+
+        const drawRow = (label, value, yPos, highlight=false) => {
+            doc.setFillColor(highlight ? 248 : 255, highlight ? 249 : 255, highlight ? 255 : 255);
+            doc.rect(14,yPos,W-28,8,'F');
+            doc.setDrawColor(220,220,235);
+            doc.setLineWidth(0.2);
+            doc.line(14,yPos+8,W-14,yPos+8);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica','bold');
+            doc.setTextColor(100,100,140);
+            doc.text(label, 18, yPos+5.5);
+
+            doc.setFont('helvetica','normal');
+            doc.setTextColor(30,30,50);
+            const lines = doc.splitTextToSize(String(value||'—'), 100);
+            doc.text(lines[0], 80, yPos+5.5);
+            return yPos+8;
+        };
+
+        y = drawSection('Datos del Cliente', y);
+        y = drawRow('Cliente', o.client, y, true);
+        y = drawRow('Telefono / WhatsApp', o.phone||'—', y);
+        y += 4;
+
+        y = drawSection('Detalles del Equipo', y);
+        y = drawRow('Dispositivo', o.model, y, true);
+        y = drawRow('PIN / Acceso', o.pin||'—', y);
+        y = drawRow('Falla Reportada', o.fail||'—', y, true);
+        y = drawRow('Presupuesto', this.formatMoney(o.price), y);
+        y += 4;
+
+        // ── GARANTÍA ──
         if (o.warrantyDays > 0) {
-            doc.setFillColor(6, 182, 212, 0.15);
-            doc.roundedRect(8, y, W-16, wi ? 22 : 12, 3, 3, 'F');
-            doc.setTextColor(6, 182, 212);
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'bold');
-            doc.text('GARANTÍA', 12, y+5);
+            y = drawSection('Garantia de Servicio', y);
             if (wi) {
-                doc.setTextColor(200, 240, 255);
-                doc.setFont('helvetica', 'normal');
-                doc.text(`${wi.daysTotal} días  |  Inicio: ${wi.start}  |  Vence: ${wi.end}`, 12, y+10);
-                const gLabel = wi.statusKey==='expired' ? 'VENCIDA' : wi.statusKey==='expiring' ? 'POR VENCER' : 'VIGENTE';
-                const gColor = wi.statusKey==='expired' ? [239,68,68] : wi.statusKey==='expiring' ? [245,158,11] : [16,185,129];
-                doc.setTextColor(...gColor);
-                doc.setFont('helvetica','bold');
-                doc.text(gLabel, 12, y+16);
+                y = drawRow('Periodo', `${wi.daysTotal} dias`, y, true);
+                y = drawRow('Fecha de Inicio', wi.start, y);
+                y = drawRow('Fecha de Vencimiento', wi.end, y, true);
+                const gLabel = wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE';
+                y = drawRow('Estado', gLabel, y);
             } else {
-                doc.setTextColor(200,240,255);
-                doc.setFont('helvetica','normal');
-                doc.text(`${o.warrantyDays} días (se activa al completar)`, 12, y+10);
+                y = drawRow('Periodo', `${o.warrantyDays} dias (se activa al completar)`, y, true);
             }
-            y += wi ? 28 : 18;
+            y += 4;
         }
 
-        // — FECHA —
-        doc.setDrawColor(255,255,255,0.06);
-        doc.line(8, y, W-8, y);
-        y += 5;
-        const now = new Date();
-        doc.setTextColor(100, 116, 139);
-        doc.setFontSize(6.5);
+        // ── TÉRMINOS Y CONDICIONES ──
+        y = drawSection('Terminos y Condiciones', y);
+        doc.setFillColor(252,252,255);
+        doc.rect(14,y,W-28,52,'F');
+
+        const tcs = [
+            '1. La garantia cubre unicamente la falla especificada en esta orden. No aplica para danos causados por',
+            '   liquidos, golpes, caidas o manipulacion de terceros despues de la reparacion.',
+            '2. NEXTCOM Multiservicios no se hace responsable por perdida de datos durante el proceso de reparacion.',
+            '   Se recomienda realizar respaldo previo a entregar el equipo.',
+            '3. Los equipos no retirados en un plazo de 30 dias calendario generaran un cargo de bodegaje.',
+            '   Despues de 90 dias sin retiro, el equipo podra considerarse abandonado.',
+            '4. El presupuesto indicado puede variar si durante la reparacion se detectan fallas adicionales.',
+            '   Cualquier cambio sera notificado al cliente antes de proceder.',
+            '5. Al recibir el equipo, el cliente acepta haber revisado y aprobado el trabajo realizado.',
+            '   Posterior a la entrega no se aceptan reclamaciones por la falla reparada.',
+            '6. Para hacer valida la garantia es indispensable presentar este ticket de servicio.',
+        ];
+
+        doc.setFontSize(7.2);
         doc.setFont('helvetica','normal');
-        doc.text(`Emitido: ${now.toLocaleDateString('es-ES')} ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`, W/2, y+4, {align:'center'});
-        doc.text('NEXTCOM Multiservicios — Servicio Técnico Profesional', W/2, y+9, {align:'center'});
+        doc.setTextColor(60,60,90);
+        let ty = y+6;
+        tcs.forEach(line => {
+            doc.text(line, 18, ty);
+            ty += 4.4;
+        });
+        y += 52 + 4;
+
+        // ── FIRMA ──
+        doc.setDrawColor(200,200,220);
+        doc.setLineWidth(0.3);
+        doc.line(14, y+16, 80, y+16);
+        doc.line(W-80, y+16, W-14, y+16);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(130,130,160);
+        doc.text('Firma del Cliente', 47, y+21, {align:'center'});
+        doc.text('Firma Tecnico / NEXTCOM', W-47, y+21, {align:'center'});
+
+        // ── PIE DE PAGINA ──
+        doc.setFillColor(30,30,50);
+        doc.rect(0,H-14,W,14,'F');
+        doc.setFillColor(79,70,229);
+        doc.rect(0,H-14,W,2,'F');
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica','bold');
+        doc.setTextColor(180,180,210);
+        doc.text('NEXTCOM Multiservicios — Servicio Tecnico Profesional', W/2, H-7, {align:'center'});
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(7);
+        doc.text('Tel: 7512-0282  |  info@nextcom.com.gt', W/2, H-3, {align:'center'});
 
         doc.save(`Ticket-${o.id}-${o.client.replace(/\s+/g,'_')}.pdf`);
     },
@@ -1304,14 +1439,6 @@ const Engine = {
         if(this.charts.status) this.charts.status.destroy();
         const ctxS=document.getElementById('chart-status');
         if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)'],borderColor:['#f59e0b','#ef4444','#10b981'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
-
-        // Chart: Métodos de pago
-        const metodos={};
-        this.db.movimientos.forEach(m=>{ if(m.tipo==='ingreso') metodos[m.metodo]=(metodos[m.metodo]||0)+m.amount; });
-        if(this.charts.metodos) this.charts.metodos.destroy();
-        const ctxM=document.getElementById('chart-metodos');
-        if(ctxM&&Object.keys(metodos).length>0) this.charts.metodos=new Chart(ctxM,{type:'doughnut',data:{labels:Object.keys(metodos),datasets:[{data:Object.values(metodos),backgroundColor:['rgba(79,70,229,.7)','rgba(6,182,212,.7)','rgba(167,139,250,.7)'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
-        else if(ctxM&&Object.keys(metodos).length===0){ const ctx2=ctxM.getContext('2d'); ctx2.clearRect(0,0,ctxM.width,ctxM.height); }
     }
 };
 

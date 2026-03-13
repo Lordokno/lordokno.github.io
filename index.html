@@ -180,6 +180,101 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:28px;}
 
 /* SCROLLBAR */
+/* BANNER EQUIPOS LISTOS */
+.ready-banner {
+    background: linear-gradient(135deg, rgba(16,185,129,.12) 0%, rgba(6,182,212,.08) 100%);
+    border: 1px solid rgba(16,185,129,.3);
+    border-radius: var(--rx);
+    padding: 20px 28px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    overflow: hidden;
+}
+.ready-banner::before {
+    content:'';
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, var(--success), var(--warranty));
+    border-radius: 2px 0 0 2px;
+}
+.ready-banner-icon {
+    width: 48px; height: 48px; flex-shrink: 0;
+    background: rgba(16,185,129,.15);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+}
+.ready-banner-text { flex: 1; }
+.ready-banner-text p { font-size: 13px; color: var(--text-dim); margin-top: 3px; font-weight: 500; }
+.ready-banner-count { font-size: 42px; font-weight: 800; color: var(--success); line-height: 1; font-family: var(--mono); flex-shrink: 0; }
+
+/* POS */
+.pos-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+.pos-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; }
+.pos-product-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 16px;
+    cursor: pointer;
+    transition: .25s;
+    position: relative;
+}
+.pos-product-card:hover { border-color: var(--accent); transform: translateY(-2px); background: rgba(79,70,229,.06); }
+.pos-product-card.out-of-stock { opacity: .4; cursor: not-allowed; pointer-events: none; }
+.pos-product-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.3; }
+.pos-product-price { font-size: 18px; font-weight: 800; color: var(--success); font-family: var(--mono); }
+.pos-product-stock { font-size: 10px; color: var(--text-dim); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.pos-stock-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(239,68,68,.15); color: #ef4444;
+    font-size: 9px; font-weight: 800; padding: 2px 7px;
+    border-radius: 6px; text-transform: uppercase; letter-spacing: .5px;
+}
+/* Carrito */
+.pos-cart {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--rx);
+    position: sticky; top: 24px;
+    overflow: hidden;
+}
+.pos-cart-header {
+    background: rgba(79,70,229,.1);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+    font-size: 13px; font-weight: 800; color: #fff;
+    text-transform: uppercase; letter-spacing: 1px;
+    display: flex; align-items: center; gap: 10px;
+}
+.pos-cart-items { min-height: 200px; max-height: 340px; overflow-y: auto; }
+.pos-cart-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+}
+.pos-cart-item-name { flex: 1; font-size: 13px; font-weight: 600; color: #fff; }
+.pos-cart-item-price { font-size: 12px; color: var(--success); font-weight: 700; font-family: var(--mono); white-space: nowrap; }
+.pos-qty-ctrl { display: flex; align-items: center; gap: 6px; }
+.pos-qty-btn { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: .2s; }
+.pos-qty-btn:hover { background: rgba(255,255,255,.1); }
+.pos-qty-num { font-size: 13px; font-weight: 700; color: #fff; min-width: 20px; text-align: center; }
+.pos-cart-empty { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 13px; }
+.pos-cart-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+.pos-total-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.pos-total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); }
+.pos-total-amount { font-size: 28px; font-weight: 800; color: var(--success); font-family: var(--mono); }
+.pos-client-row { margin: 12px 0; }
+.pos-checkout-btn { width: 100%; padding: 15px; border-radius: 13px; border: none; background: var(--success); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: .2s; }
+.pos-checkout-btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(16,185,129,.25); }
+.pos-checkout-btn:disabled { background: rgba(255,255,255,.08); color: var(--text-dim); cursor: not-allowed; transform: none; box-shadow: none; }
+.pos-clear-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-weight: 600; font-size: 12px; cursor: pointer; margin-top: 8px; transition: .2s; }
+.pos-clear-btn:hover { color: var(--danger); border-color: var(--danger); }
+/* Precio venta en inventario */
+.pos-price-tag { font-size: 11px; color: var(--warranty); font-weight: 700; font-family: var(--mono); }
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -343,6 +438,11 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
     /* Clock en sidebar */
     aside#sidebar > div:last-child { display: none; }
+
+    /* POS layout en móvil: columna */
+    .pos-layout { grid-template-columns: 1fr !important; }
+    .pos-cart { position: static !important; }
+    .pos-products-grid { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 @media (max-width: 420px) {
@@ -380,6 +480,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="nav-item" onclick="go('caja',this)"><i data-lucide="landmark" size="16"></i> Caja Diaria</div>
         <div class="nav-item" onclick="go('reportes',this)"><i data-lucide="bar-chart-2" size="16"></i> Reportes</div>
         <div class="nav-item" onclick="go('whatsapp',this)"><i data-lucide="message-circle" size="16"></i> WhatsApp</div>
+        <div class="nav-item" onclick="go('pos',this)"><i data-lucide="shopping-cart" size="16"></i> Punto de Venta</div>
     </div>
     <div style="padding:16px;background:rgba(255,255,255,.02);border-radius:14px;margin-top:auto;">
         <p id="clock" style="font-size:13px;font-weight:700;color:#fff;font-family:var(--mono);"></p>
@@ -438,6 +539,15 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="value" id="st-stock-low" style="color:var(--danger)">0</div>
         </div>
     </div>
+    <!-- Banner equipos listos -->
+    <div class="ready-banner" id="ready-banner">
+        <div class="ready-banner-icon"><i data-lucide="package-check" size="24" style="color:var(--success)"></i></div>
+        <div class="ready-banner-text">
+            <div style="font-size:16px;font-weight:800;color:#fff">Tu taller tiene <span id="ready-count" style="color:var(--success)">0</span> equipo(s) listo(s) para ser entregado(s) hoy.</div>
+            <p id="ready-subtitle">Revisa el laboratorio para contactar a los clientes.</p>
+        </div>
+        <div class="ready-banner-count" id="ready-count-big">0</div>
+    </div>
     <div class="table-box">
         <div class="table-title">Órdenes Recientes</div>
         <table><thead><tr><th>Ticket</th><th>Cliente</th><th>Dispositivo</th><th>Estado</th><th>Garantía</th></tr></thead>
@@ -493,14 +603,15 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
             <div class="field" style="flex:2"><label>Nombre del Repuesto</label><input type="text" id="i-item" placeholder="Pantalla iPhone 14"></div>
             <div class="field" style="flex:1"><label>Stock</label><input type="number" id="i-qty" min="0"></div>
-            <div class="field" style="flex:1"><label>Costo Unit.</label><input type="number" id="i-cost" min="0"></div>
+            <div class="field" style="flex:1"><label>Costo Unit.</label><input type="number" id="i-cost" min="0" placeholder="0.00"></div>
+            <div class="field" style="flex:1"><label>Precio Venta</label><input type="number" id="i-sale" min="0" placeholder="0.00"></div>
             <div class="field" style="flex:1"><label>Stock Mínimo</label><input type="number" id="i-min" placeholder="3" min="0"></div>
             <button class="btn-main" id="btn-inv-save" onclick="Engine.processInv()"><i data-lucide="plus" size="16"></i><span id="txt-inv-btn">AÑADIR</span></button>
             <button class="btn-main ghost" id="btn-inv-cancel" style="display:none" onclick="Engine.cancelEdit('inv')"><i data-lucide="x" size="16"></i></button>
         </div>
     </div>
     <div class="table-box">
-        <table><thead><tr><th>Repuesto</th><th>Stock</th><th>Mínimo</th><th>Costo Unit.</th><th>Valor Total</th><th>Alerta</th><th>Acciones</th></tr></thead>
+        <table><thead><tr><th>Repuesto</th><th>Stock</th><th>Mínimo</th><th>Costo</th><th>P. Venta</th><th>Valor Total</th><th>Alerta</th><th>Acciones</th></tr></thead>
         <tbody id="inv-list"></tbody></table>
     </div>
 </section>
@@ -652,6 +763,60 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </section>
 
+<!-- ======= PUNTO DE VENTA POS ======= -->
+<section id="v-pos" class="view">
+    <div class="view-title"><h1>Punto de Venta</h1><p>Vende accesorios e insumos del inventario de forma rápida.</p></div>
+    <div class="pos-layout">
+        <!-- Productos -->
+        <div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <input type="text" id="pos-search" placeholder="Buscar producto..." oninput="Engine.renderPosProducts()" style="flex:1;max-width:320px;">
+            </div>
+            <div class="pos-products-grid" id="pos-products-grid">
+                <div style="color:var(--text-dim);font-size:13px;padding:20px 0">Cargando productos...</div>
+            </div>
+        </div>
+        <!-- Carrito -->
+        <div>
+            <div class="pos-cart">
+                <div class="pos-cart-header">
+                    <i data-lucide="shopping-cart" size="16"></i>
+                    Carrito de Venta
+                    <span id="pos-cart-badge" style="background:var(--accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:99px;margin-left:auto;display:none">0</span>
+                </div>
+                <div class="pos-cart-items" id="pos-cart-items">
+                    <div class="pos-cart-empty">El carrito está vacío.<br>Selecciona productos.</div>
+                </div>
+                <div class="pos-cart-footer">
+                    <div class="pos-total-line">
+                        <span class="pos-total-label">Total a cobrar</span>
+                    </div>
+                    <div class="pos-total-amount" id="pos-total">$0.00</div>
+                    <div class="pos-client-row">
+                        <div class="field">
+                            <label>Cliente (opcional)</label>
+                            <input type="text" id="pos-client-name" placeholder="Nombre del cliente">
+                        </div>
+                        <div class="field" style="margin-top:10px">
+                            <label>Método de Pago</label>
+                            <select id="pos-metodo">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="pos-checkout-btn" id="pos-checkout-btn" onclick="Engine.posCheckout()" disabled>
+                        <i data-lucide="check-circle" size="16"></i>
+                        COBRAR VENTA
+                    </button>
+                    <button class="pos-clear-btn" onclick="Engine.posClearCart()">Vaciar carrito</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 </main>
 
 <!-- MODAL HISTORIAL -->
@@ -714,6 +879,7 @@ const Engine = {
     warrantyFilter: 'all',
     charts: {},
     _saving: false,
+    cart: [],   // POS cart: [{stockId, name, qty, salePrice}]
 
     // ── INIT ──
     init() {
@@ -790,6 +956,8 @@ const Engine = {
         this.renderCaja();
         this.renderReportes();
         this.renderWaOrders();
+        this.renderPosProducts();
+        this.renderPosCart();
         this.updateNavDots();
         lucide.createIcons();
     },
@@ -912,7 +1080,7 @@ const Engine = {
             document.getElementById('btn-lab-cancel').style.display='none';
             document.querySelectorAll('#lab-checklist .check-item').forEach(c=>c.classList.remove('checked'));
         } else {
-            ['i-item','i-qty','i-cost','i-min'].forEach(i=>document.getElementById(i).value='');
+            ['i-item','i-qty','i-cost','i-sale','i-min'].forEach(i=>document.getElementById(i).value='');
             document.getElementById('txt-inv-btn').innerText='AÑADIR';
             document.getElementById('btn-inv-save').classList.remove('update');
             document.getElementById('btn-inv-cancel').style.display='none';
@@ -921,7 +1089,13 @@ const Engine = {
 
     // ── INVENTARIO ──
     async processInv() {
-        const data = { name:document.getElementById('i-item').value.trim(), qty:parseInt(document.getElementById('i-qty').value)||0, cost:parseFloat(document.getElementById('i-cost').value)||0, minStock:parseInt(document.getElementById('i-min').value)||3 };
+        const data = {
+            name: document.getElementById('i-item').value.trim(),
+            qty: parseInt(document.getElementById('i-qty').value)||0,
+            cost: parseFloat(document.getElementById('i-cost').value)||0,
+            salePrice: parseFloat(document.getElementById('i-sale').value)||0,
+            minStock: parseInt(document.getElementById('i-min').value)||3
+        };
         if (!data.name) return;
         if (this.editState.inv) {
             const idx=this.db.stock.findIndex(s=>s.id===this.editState.inv);
@@ -938,6 +1112,7 @@ const Engine = {
         document.getElementById('i-item').value=s.name;
         document.getElementById('i-qty').value=s.qty;
         document.getElementById('i-cost').value=s.cost;
+        document.getElementById('i-sale').value=s.salePrice||0;
         document.getElementById('i-min').value=s.minStock||3;
         document.getElementById('inv-panel').classList.add('editing');
         document.getElementById('txt-inv-btn').innerText='GUARDAR CAMBIOS';
@@ -1006,7 +1181,7 @@ const Engine = {
         if (!order) return '';
         const wi=this.getWarrantyInfo(order);
         const taller = 'NEXTCOM Multiservicios';
-        const contacto = 'Tel: 7512-0282 | lordokno@gmail.com';
+        const contacto = 'Tel: 7512-0282 | info@nextcom.com.gt';
         const tc = `_Términos: La garantía aplica únicamente para la falla reparada. No cubre daños por agua, golpes o manipulación de terceros. El equipo no retirado en 30 días generará cargo de bodegaje._`;
         const msgs = {
             recibido:
@@ -1114,8 +1289,8 @@ ${contacto}`,
         doc.setFontSize(8);
         doc.setTextColor(180,180,210);
         doc.text('Tel: 7512-0282', W-14, 11, {align:'right'});
-        doc.text('lordokno@gmail.com', W-14, 17, {align:'right'});
-        doc.text('facebook.com/nextcomstore', W-14, 23, {align:'right'});
+        doc.text('info@nextcom.com.gt', W-14, 17, {align:'right'});
+        doc.text('www.nextcom.com.gt', W-14, 23, {align:'right'});
 
         // ── TICKET ID — bloque central ──
         doc.setFillColor(245,246,250);
@@ -1308,6 +1483,22 @@ ${contacto}`,
         document.getElementById('st-warranties').innerText=this.getWarrantiesWithInfo().filter(w=>w.wInfo.statusKey==='active').length;
         document.getElementById('st-stock-low').innerText=this.getLowStock().length;
 
+        // Banner equipos listos
+        const listos = o.filter(x=>x.status==='LISTO');
+        const n = listos.length;
+        const rcEl = document.getElementById('ready-count');
+        const rcBig = document.getElementById('ready-count-big');
+        const rSub = document.getElementById('ready-subtitle');
+        const banner = document.getElementById('ready-banner');
+        if (rcEl) rcEl.innerText = n;
+        if (rcBig) rcBig.innerText = n;
+        if (banner) banner.style.borderColor = n > 0 ? 'rgba(16,185,129,.4)' : 'rgba(100,116,139,.2)';
+        if (rSub) {
+            if (n === 0) rSub.innerText = 'No hay equipos listos en este momento.';
+            else if (n === 1) rSub.innerText = `"${listos[0].client}" está esperando retirar su ${listos[0].model}.`;
+            else rSub.innerText = listos.slice(0,3).map(x=>x.client).join(', ') + (n>3?` y ${n-3} más.`:'.');
+        }
+
         const sorted=[...o].sort((a,b)=>(a.status==='LISTO'?1:0)-(b.status==='LISTO'?1:0));
         document.getElementById('dash-table').innerHTML=sorted.slice(0,8).map(x=>{
             const sc=x.status.toLowerCase();
@@ -1343,7 +1534,8 @@ ${contacto}`,
             const isLow=x.qty<=(x.minStock||3);
             const stockColor=isLow?'color:#ef4444;font-weight:800':'';
             const alertBadge=isLow?`<span class="badge" style="background:rgba(239,68,68,.1);color:#ef4444">⚠ BAJO</span>`:`<span class="badge" style="background:rgba(16,185,129,.1);color:#10b981">OK</span>`;
-            return `<tr><td style="font-weight:700;color:#fff">${x.name}</td><td style="${stockColor}">${x.qty}<small>uds</small></td><td style="color:var(--text-dim)">${x.minStock||3}<small>uds</small></td><td style="color:var(--text-dim);font-family:var(--mono)">${this.formatMoney(x.cost)}</td><td style="color:var(--success);font-weight:800">${this.formatMoney(total)}</td><td>${alertBadge}</td><td><div style="display:flex;gap:6px"><div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="13"></i></div><div class="action-icon del" onclick="Engine.deleteItem('inv',${x.id})"><i data-lucide="trash-2" size="13"></i></div></div></td></tr>`;
+            const salePriceCell = x.salePrice ? `<span class="pos-price-tag">${this.formatMoney(x.salePrice)}</span>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
+            return `<tr><td style="font-weight:700;color:#fff">${x.name}</td><td style="${stockColor}">${x.qty}<small>uds</small></td><td style="color:var(--text-dim)">${x.minStock||3}<small>uds</small></td><td style="color:var(--text-dim);font-family:var(--mono)">${this.formatMoney(x.cost)}</td><td>${salePriceCell}</td><td style="color:var(--success);font-weight:800">${this.formatMoney(total)}</td><td>${alertBadge}</td><td><div style="display:flex;gap:6px"><div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="13"></i></div><div class="action-icon del" onclick="Engine.deleteItem('inv',${x.id})"><i data-lucide="trash-2" size="13"></i></div></div></td></tr>`;
         }).join('');
         lucide.createIcons();
     },
@@ -1439,6 +1631,125 @@ ${contacto}`,
         if(this.charts.status) this.charts.status.destroy();
         const ctxS=document.getElementById('chart-status');
         if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)'],borderColor:['#f59e0b','#ef4444','#10b981'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
+    },
+
+    // ══════════════════════════════
+    //  PUNTO DE VENTA (POS)
+    // ══════════════════════════════
+
+    renderPosProducts() {
+        const search = (document.getElementById('pos-search')?.value||'').toLowerCase();
+        const items = this.db.stock.filter(x => !search || x.name.toLowerCase().includes(search));
+        const grid = document.getElementById('pos-products-grid');
+        if (!grid) return;
+        if (items.length === 0) {
+            grid.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:20px 0;grid-column:1/-1">Sin productos en inventario. Agrégalos en Inventario.</div>`;
+            return;
+        }
+        grid.innerHTML = items.map(x => {
+            const price = x.salePrice || x.cost || 0;
+            const outOfStock = x.qty <= 0;
+            return `<div class="pos-product-card${outOfStock?' out-of-stock':''}" onclick="Engine.posAddToCart(${x.id})">
+                ${outOfStock ? `<div class="pos-stock-badge">Sin stock</div>` : ''}
+                <div class="pos-product-name">${x.name}</div>
+                <div class="pos-product-price">${this.formatMoney(price)}</div>
+                <div class="pos-product-stock">${x.qty} en stock</div>
+            </div>`;
+        }).join('');
+    },
+
+    posAddToCart(stockId) {
+        const item = this.db.stock.find(x => x.id === stockId);
+        if (!item || item.qty <= 0) return;
+        const inCart = this.cart.find(c => c.stockId === stockId);
+        const maxQty = item.qty;
+        if (inCart) {
+            if (inCart.qty >= maxQty) { alert(`Solo hay ${maxQty} unidad(es) disponibles.`); return; }
+            inCart.qty++;
+        } else {
+            this.cart.push({ stockId, name: item.name, qty: 1, salePrice: item.salePrice || item.cost || 0 });
+        }
+        this.renderPosCart();
+    },
+
+    posRemoveFromCart(stockId) {
+        const idx = this.cart.findIndex(c => c.stockId === stockId);
+        if (idx === -1) return;
+        if (this.cart[idx].qty > 1) this.cart[idx].qty--;
+        else this.cart.splice(idx, 1);
+        this.renderPosCart();
+    },
+
+    posClearCart() {
+        this.cart = [];
+        this.renderPosCart();
+    },
+
+    renderPosCart() {
+        const cartEl = document.getElementById('pos-cart-items');
+        const totalEl = document.getElementById('pos-total');
+        const btnEl = document.getElementById('pos-checkout-btn');
+        const badgeEl = document.getElementById('pos-cart-badge');
+        if (!cartEl) return;
+
+        const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
+        const totalItems = this.cart.reduce((sum, c) => sum + c.qty, 0);
+
+        if (badgeEl) {
+            badgeEl.innerText = totalItems;
+            badgeEl.style.display = totalItems > 0 ? 'inline' : 'none';
+        }
+        if (totalEl) totalEl.innerText = this.formatMoney(total);
+        if (btnEl) btnEl.disabled = this.cart.length === 0;
+
+        if (this.cart.length === 0) {
+            cartEl.innerHTML = `<div class="pos-cart-empty">El carrito está vacío.<br>Selecciona productos.</div>`;
+            return;
+        }
+        cartEl.innerHTML = this.cart.map(c => `
+            <div class="pos-cart-item">
+                <div class="pos-cart-item-name">${c.name}</div>
+                <div class="pos-qty-ctrl">
+                    <button class="pos-qty-btn" onclick="Engine.posRemoveFromCart(${c.stockId})">−</button>
+                    <span class="pos-qty-num">${c.qty}</span>
+                    <button class="pos-qty-btn" onclick="Engine.posAddToCart(${c.stockId})">+</button>
+                </div>
+                <div class="pos-cart-item-price">${this.formatMoney(c.qty * c.salePrice)}</div>
+            </div>`).join('');
+    },
+
+    async posCheckout() {
+        if (this.cart.length === 0) return;
+        const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
+        const clientName = document.getElementById('pos-client-name')?.value.trim() || 'Cliente POS';
+        const metodo = document.getElementById('pos-metodo')?.value || 'Efectivo';
+
+        // Descontar stock
+        this.cart.forEach(c => {
+            const idx = this.db.stock.findIndex(x => x.id === c.stockId);
+            if (idx !== -1) this.db.stock[idx].qty = Math.max(0, this.db.stock[idx].qty - c.qty);
+        });
+
+        // Registrar ingreso en caja
+        const desc = this.cart.length === 1
+            ? `Venta: ${this.cart[0].name} x${this.cart[0].qty}`
+            : `Venta POS: ${this.cart.length} productos (${clientName})`;
+        this.db.movimientos.unshift({
+            id: Date.now(),
+            tipo: 'ingreso',
+            desc,
+            amount: total,
+            metodo,
+            date: this.today(),
+            time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+        });
+
+        await this.save();
+        alert(`Venta registrada: ${this.formatMoney(total)}\nIngresado a Caja Diaria.`);
+        this.cart = [];
+        document.getElementById('pos-client-name').value = '';
+        this.renderPosCart();
+        this.renderPosProducts();
     }
 };
 

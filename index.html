@@ -693,6 +693,32 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <table><thead><tr><th>Ticket</th><th>Cliente</th><th>Dispositivo</th><th>Estado</th><th>Garantía</th></tr></thead>
         <tbody id="dash-table"></tbody></table>
     </div>
+
+    <!-- Liberaciones en Dashboard -->
+    <div class="section-divider" style="margin-top:8px">Liberaciones Activas</div>
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
+            <div class="label" style="color:#818cf8">Total Liberaciones <i data-lucide="signal" class="stat-icon" style="color:#818cf8"></i></div>
+            <div class="value" id="dash-lib-total" style="color:#818cf8">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.2)">
+            <div class="label" style="color:var(--edit)">En Proceso <i data-lucide="loader" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="dash-lib-proceso" style="color:var(--edit)">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+            <div class="label" style="color:var(--success)">Listas p/ Entregar <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="dash-lib-listo" style="color:var(--success)">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label" style="color:var(--cash)">Saldo Pendiente <i data-lucide="wallet" class="stat-icon" style="color:var(--cash)"></i></div>
+            <div class="value" id="dash-lib-saldo" style="color:var(--cash)">$0</div>
+        </div>
+    </div>
+    <div class="table-box" id="dash-lib-box">
+        <div class="table-title">Liberaciones Recientes</div>
+        <table><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>IMEI</th><th>Carrier</th><th>Entrega</th><th>Estado</th></tr></thead>
+        <tbody id="dash-lib-table"></tbody></table>
+    </div>
 </section>
 
 <!-- ======= LABORATORIO ======= -->
@@ -2073,6 +2099,59 @@ ${tc}`,
             else if (x.warrantyDays>0) wCell=`<span style="color:var(--text-dim);font-size:11px">${x.warrantyDays}d (pendiente)</span>`;
             return `<tr class="status-${sc}"><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${x.id}</td><td style="font-weight:700">${x.client}</td><td>${x.model}</td><td><span class="badge badge-${sc}">${x.status}</span></td><td>${wCell}</td></tr>`;
         }).join('');
+
+        // ── LIBERACIONES en dashboard ──
+        const libs = this.db.liberaciones || [];
+        const libActivas = libs.filter(l => l.status !== 'entregado');
+        const libProceso = libs.filter(l => l.status === 'en-proceso').length;
+        const libListo   = libs.filter(l => l.status === 'listo').length;
+        const libSaldo   = libActivas.reduce((s,l) => {
+            const ab = (l.abonos||[]).reduce((a,b)=>a+b.monto,0);
+            return s + Math.max(0, l.price - ab);
+        },0);
+
+        const elT = document.getElementById('dash-lib-total');   if(elT) elT.innerText = libs.length;
+        const elP = document.getElementById('dash-lib-proceso');  if(elP) elP.innerText = libProceso;
+        const elL = document.getElementById('dash-lib-listo');    if(elL) elL.innerText = libListo;
+        const elS = document.getElementById('dash-lib-saldo');    if(elS) elS.innerText = this.formatMoney(libSaldo);
+
+        const libBox = document.getElementById('dash-lib-box');
+        if (libBox) libBox.style.display = libs.length === 0 ? 'none' : '';
+
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        const libTableBody = document.getElementById('dash-lib-table');
+        if (libTableBody) {
+            const libSorted = [...libs].filter(l=>l.status!=='entregado')
+                .sort((a,b) => new Date(a.fechaEntrega||'9999') - new Date(b.fechaEntrega||'9999'));
+            if (libSorted.length === 0) {
+                libTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-dim)">No hay liberaciones activas.</td></tr>`;
+            } else {
+                const statusLabel = {recibido:'RECIBIDO','en-proceso':'EN PROCESO',listo:'LISTO',entregado:'ENTREGADO'};
+                const statusColor = {recibido:'#818cf8','en-proceso':'#f59e0b',listo:'#10b981',entregado:'#64748b'};
+                libTableBody.innerHTML = libSorted.slice(0,6).map(l => {
+                    const fe = l.fechaEntrega ? new Date(l.fechaEntrega+'T00:00:00') : null;
+                    let diasCell = '—';
+                    if (fe) {
+                        fe.setHours(0,0,0,0);
+                        const diff = Math.ceil((fe-hoy)/(1000*60*60*24));
+                        diasCell = diff < 0
+                            ? `<span style="color:var(--danger);font-weight:700;font-size:12px">Vencido ${Math.abs(diff)}d</span>`
+                            : diff === 0
+                                ? `<span style="color:#f59e0b;font-weight:700;font-size:12px">Hoy</span>`
+                                : `<span style="font-size:12px">${fe.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;
+                    }
+                    return `<tr>
+                        <td style="font-family:var(--mono);color:#818cf8;font-weight:700;font-size:12px">${l.id}</td>
+                        <td style="font-weight:700">${l.client}</td>
+                        <td style="font-size:13px">${l.model}</td>
+                        <td style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">${l.imei}</td>
+                        <td style="font-size:12px;color:var(--text-dim)">${l.carrier}</td>
+                        <td>${diasCell}</td>
+                        <td><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;background:${statusColor[l.status]}18;color:${statusColor[l.status]}">${statusLabel[l.status]||l.status}</span></td>
+                    </tr>`;
+                }).join('');
+            }
+        }
     },
 
     renderLab() {
@@ -2086,14 +2165,15 @@ ${tc}`,
             else if (!x.warrantyStart) wCell=`<span style="color:var(--text-dim);font-size:11px">⏳ ${x.warrantyDays}d al completar</span>`;
             else { const color=this.getWarrantyBarColor(wi.statusKey); const label=wi.statusKey==='expired'?'VENCIDA':`${wi.daysRemaining}d`; wCell=`<div class="days-cell"><span style="color:${color};font-weight:700;font-size:12px">${label}</span><div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%;background:${color}"></div></div></div>`; }
 
-            // Anticipo / saldo logic
+            // Anticipo / saldo logic — ENTREGADO siempre muestra pagado
             const abonos = x.abonos || [];
             const totalAbonado = abonos.reduce((s,a)=>s+a.monto,0);
-            const saldo = Math.max(0, x.price - totalAbonado);
-            const pct = x.price > 0 ? Math.min(100,(totalAbonado/x.price)*100) : 0;
-            const pagoEstado = saldo===0 ? 'pagado' : totalAbonado>0 ? 'parcial' : 'pendiente';
-            const pagoLabel  = saldo===0 ? 'Pagado' : totalAbonado>0 ? 'Parcial' : 'Pendiente';
-            const antipoCell = `<div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--success)">${this.formatMoney(totalAbonado)}</div>`;
+            const isEntregado = x.status === 'ENTREGADO';
+            const saldo = isEntregado ? 0 : Math.max(0, x.price - totalAbonado);
+            const pct = isEntregado ? 100 : (x.price > 0 ? Math.min(100,(totalAbonado/x.price)*100) : 0);
+            const pagoEstado = (saldo===0 || isEntregado) ? 'pagado' : totalAbonado>0 ? 'parcial' : 'pendiente';
+            const pagoLabel  = (saldo===0 || isEntregado) ? 'Pagado' : totalAbonado>0 ? 'Parcial' : 'Pendiente';
+            const antipoCell = `<div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--success)">${isEntregado ? this.formatMoney(x.price) : this.formatMoney(totalAbonado)}</div>`;
             const saldoCell  = `<div>
                 <div style="display:flex;align-items:center;gap:6px">
                     <span style="font-size:12px;font-weight:800;font-family:var(--mono);color:${saldo===0?'var(--success)':'#f59e0b'}">${this.formatMoney(saldo)}</span>

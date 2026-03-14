@@ -818,7 +818,79 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             </div>
         </div>
     </div>
+
+    <!-- ── HISTORIAL DE VENTAS ── -->
+    <div id="pos-history-section" style="margin-top:40px">
+        <div class="section-divider">Historial de Ventas por Día</div>
+
+        <!-- Resumen del día -->
+        <div class="stats-grid-3" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+            <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+                <div class="label" style="color:var(--success)">Ventas del Día <i data-lucide="shopping-bag" class="stat-icon" style="color:var(--success)"></i></div>
+                <div class="value" id="pos-hist-count" style="color:var(--success)">0</div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(79,70,229,.2)">
+                <div class="label" style="color:var(--accent)">Total Recaudado <i data-lucide="trending-up" class="stat-icon" style="color:var(--accent)"></i></div>
+                <div class="value" id="pos-hist-total" style="color:var(--accent)">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="label" style="color:var(--warranty)">Por Método <i data-lucide="credit-card" class="stat-icon" style="color:var(--warranty)"></i></div>
+                <div id="pos-hist-metodos" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+        </div>
+
+        <!-- Filtro + exportar -->
+        <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+            <div class="field" style="flex:0 0 auto">
+                <label>Seleccionar Fecha</label>
+                <input type="date" id="pos-history-date" onchange="Engine.renderPosHistory()" style="width:180px">
+            </div>
+            <button class="btn-main ghost" onclick="Engine.exportPosCSV()" style="font-size:12px;padding:10px 16px"><i data-lucide="file-spreadsheet" size="14"></i>Exportar CSV</button>
+            <button class="btn-main ghost" onclick="Engine.exportPosPDF()" style="font-size:12px;padding:10px 16px"><i data-lucide="file-text" size="14"></i>Exportar PDF</button>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-box">
+            <table>
+                <thead><tr><th>ID</th><th>Hora</th><th>Productos</th><th>Cliente</th><th>Método</th><th>Total</th><th>Acciones</th></tr></thead>
+                <tbody id="pos-hist-tbody"></tbody>
+            </table>
+        </div>
+    </div>
 </section>
+
+<!-- MODAL EDITAR VENTA POS -->
+<div id="modal-edit-venta" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:480px;width:100%">
+        <h2 style="margin-bottom:4px">Editar Venta</h2>
+        <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Modifica los datos de esta venta</p>
+        <input type="hidden" id="edit-venta-id">
+        <div class="field" style="margin-bottom:14px">
+            <label>Cliente</label>
+            <input type="text" id="edit-venta-client" placeholder="Consumidor Final">
+        </div>
+        <div class="field" style="margin-bottom:14px">
+            <label>Método de Pago</label>
+            <select id="edit-venta-metodo">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta">Tarjeta</option>
+            </select>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+            <label>Total</label>
+            <input type="number" id="edit-venta-total" min="0" step="0.01">
+        </div>
+        <div class="field" style="margin-bottom:20px">
+            <label>Productos (referencia)</label>
+            <textarea id="edit-venta-items" rows="4" readonly style="opacity:.55;resize:none;cursor:default"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-main" onclick="Engine.saveEditPosVenta()"><i data-lucide="save" size="15"></i>GUARDAR</button>
+            <button class="btn-main ghost" onclick="document.getElementById('modal-edit-venta').style.display='none'">CANCELAR</button>
+        </div>
+    </div>
+</div>
 
 </main>
 
@@ -877,7 +949,7 @@ function setStatus(msg, color='#64748b') {
 //  ENGINE COMPLETO
 // =============================================
 const Engine = {
-    db: { orders:[], stock:[], clients:[], movimientos:[] },
+    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[] },
     editState: { lab:null, inv:null },
     warrantyFilter: 'all',
     charts: {},
@@ -897,7 +969,8 @@ const Engine = {
                             orders:      data.orders      || [],
                             stock:       data.stock       || [],
                             clients:     data.clients     || [],
-                            movimientos: data.movimientos || []
+                            movimientos: data.movimientos || [],
+                            ventas:      data.ventas      || []
                         };
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
                     }
@@ -930,6 +1003,10 @@ const Engine = {
             document.getElementById('clock').innerText = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
             document.getElementById('date-display').innerText = now.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
         }, 1000);
+
+        // Fecha por defecto en el historial POS
+        const histDateEl = document.getElementById('pos-history-date');
+        if (histDateEl && !histDateEl.value) histDateEl.value = this.today();
     },
 
     async save() {
@@ -941,6 +1018,7 @@ const Engine = {
                 stock:       this.db.stock,
                 clients:     this.db.clients,
                 movimientos: this.db.movimientos,
+                ventas:      this.db.ventas,
                 updatedAt:   new Date().toISOString()
             });
         } catch(e) {
@@ -961,6 +1039,7 @@ const Engine = {
         this.renderWaOrders();
         this.renderPosProducts();
         this.renderPosCart();
+        this.renderPosHistory();
         this.updateNavDots();
         lucide.createIcons();
     },
@@ -1745,8 +1824,10 @@ ${tc}`,
     async posCheckout() {
         if (this.cart.length === 0) return;
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
-        const clientName = document.getElementById('pos-client-name')?.value.trim() || 'Cliente POS';
+        const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
         const metodo = document.getElementById('pos-metodo')?.value || 'Efectivo';
+        const now = new Date();
+        const ventaId = 'V-' + Date.now().toString().slice(-6);
 
         // Descontar stock
         this.cart.forEach(c => {
@@ -1754,10 +1835,24 @@ ${tc}`,
             if (idx !== -1) this.db.stock[idx].qty = Math.max(0, this.db.stock[idx].qty - c.qty);
         });
 
+        // Guardar venta detallada en db.ventas
+        const venta = {
+            id: ventaId,
+            date: this.today(),
+            time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+            client: clientName || 'Consumidor Final',
+            metodo,
+            total,
+            items: this.cart.map(c => ({ stockId:c.stockId, name:c.name, qty:c.qty, salePrice:c.salePrice })),
+            createdAt: now.toISOString()
+        };
+        if (!this.db.ventas) this.db.ventas = [];
+        this.db.ventas.unshift(venta);
+
         // Registrar ingreso en caja
         const desc = this.cart.length === 1
-            ? `Venta: ${this.cart[0].name} x${this.cart[0].qty}`
-            : `Venta POS: ${this.cart.length} productos (${clientName})`;
+            ? `Venta POS: ${this.cart[0].name} x${this.cart[0].qty}`
+            : `Venta POS ${ventaId}: ${this.cart.length} productos${clientName ? ' — '+clientName : ''}`;
         this.db.movimientos.unshift({
             id: Date.now(),
             tipo: 'ingreso',
@@ -1765,15 +1860,171 @@ ${tc}`,
             amount: total,
             metodo,
             date: this.today(),
-            time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+            time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
         });
 
         await this.save();
-        alert(`Venta registrada: ${this.formatMoney(total)}\nIngresado a Caja Diaria.`);
         this.cart = [];
         document.getElementById('pos-client-name').value = '';
         this.renderPosCart();
         this.renderPosProducts();
+        this.renderPosHistory();
+    },
+
+    // ── HISTORIAL DE VENTAS POS ──
+
+    renderPosHistory() {
+        const container = document.getElementById('pos-history-section');
+        if (!container) return;
+        const ventas = this.db.ventas || [];
+        const filterDate = document.getElementById('pos-history-date')?.value || this.today();
+        const filtered = ventas.filter(v => v.date === filterDate);
+
+        const totalDia = filtered.reduce((s,v) => s+v.total, 0);
+        const countDia = filtered.length;
+        const byMetodo = {};
+        filtered.forEach(v => { byMetodo[v.metodo] = (byMetodo[v.metodo]||0) + v.total; });
+
+        document.getElementById('pos-hist-count').innerText = countDia;
+        document.getElementById('pos-hist-total').innerText = this.formatMoney(totalDia);
+        const metEl = document.getElementById('pos-hist-metodos');
+        if (metEl) metEl.innerHTML = Object.entries(byMetodo).map(([m,t]) =>
+            `<span style="background:rgba(79,70,229,.12);color:#818cf8;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">${m}: ${this.formatMoney(t)}</span>`
+        ).join('') || `<span style="color:var(--text-dim);font-size:12px">Sin ventas este día</span>`;
+
+        const tbody = document.getElementById('pos-hist-tbody');
+        if (!tbody) return;
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text-dim)">Sin ventas registradas para esta fecha.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = filtered.map(v => {
+            const itemsSummary = v.items.map(i => `${i.name} x${i.qty}`).join(', ');
+            return `<tr>
+                <td style="font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px">${v.id}</td>
+                <td style="color:var(--text-dim);font-size:12px">${v.time}</td>
+                <td style="font-weight:600;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${itemsSummary}">${itemsSummary}</td>
+                <td style="font-weight:600">${v.client}</td>
+                <td><span class="badge" style="background:rgba(79,70,229,.1);color:#818cf8;font-size:10px">${v.metodo}</span></td>
+                <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(v.total)}</td>
+                <td><div style="display:flex;gap:5px">
+                    <div class="action-icon edit" title="Editar" onclick="Engine.editPosVenta('${v.id}')"><i data-lucide="edit-2" size="13"></i></div>
+                    <div class="action-icon del" title="Eliminar" onclick="Engine.deletePosVenta('${v.id}')"><i data-lucide="trash-2" size="13"></i></div>
+                </div></td>
+            </tr>`;
+        }).join('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    editPosVenta(id) {
+        const v = (this.db.ventas||[]).find(x => x.id === id);
+        if (!v) return;
+        document.getElementById('edit-venta-id').value = v.id;
+        document.getElementById('edit-venta-client').value = v.client;
+        document.getElementById('edit-venta-metodo').value = v.metodo;
+        document.getElementById('edit-venta-total').value = v.total;
+        document.getElementById('edit-venta-items').value = v.items.map(i => `${i.name} x${i.qty} @ ${this.formatMoney(i.salePrice)}`).join('\n');
+        document.getElementById('modal-edit-venta').style.display = 'flex';
+    },
+
+    async saveEditPosVenta() {
+        const id = document.getElementById('edit-venta-id').value;
+        const idx = (this.db.ventas||[]).findIndex(v => v.id === id);
+        if (idx === -1) return;
+        this.db.ventas[idx].client = document.getElementById('edit-venta-client').value.trim() || 'Consumidor Final';
+        this.db.ventas[idx].metodo = document.getElementById('edit-venta-metodo').value;
+        this.db.ventas[idx].total  = parseFloat(document.getElementById('edit-venta-total').value) || this.db.ventas[idx].total;
+        document.getElementById('modal-edit-venta').style.display = 'none';
+        await this.save();
+        this.renderPosHistory();
+    },
+
+    async deletePosVenta(id) {
+        if (!confirm('¿Eliminar esta venta del historial?')) return;
+        this.db.ventas = (this.db.ventas||[]).filter(v => v.id !== id);
+        await this.save();
+        this.renderPosHistory();
+    },
+
+    exportPosCSV() {
+        const filterDate = document.getElementById('pos-history-date')?.value || this.today();
+        const ventas = (this.db.ventas||[]).filter(v => v.date === filterDate);
+        if (ventas.length === 0) return alert('No hay ventas para exportar en esta fecha.');
+        const rows = [['ID','Fecha','Hora','Cliente','Productos','Metodo','Total']];
+        ventas.forEach(v => rows.push([v.id, v.date, v.time, v.client,
+            v.items.map(i=>`${i.name} x${i.qty}`).join(' | '), v.metodo, v.total.toFixed(2)]));
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+        const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Ventas-POS-${filterDate}.csv`;
+        a.click();
+    },
+
+    exportPosPDF() {
+        const filterDate = document.getElementById('pos-history-date')?.value || this.today();
+        const ventas = (this.db.ventas||[]).filter(v => v.date === filterDate);
+        if (ventas.length === 0) return alert('No hay ventas para exportar en esta fecha.');
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+
+        // Header
+        doc.setFillColor(30,30,50); doc.rect(0,0,W,22,'F');
+        doc.setFillColor(79,70,229); doc.rect(0,19,W,3,'F');
+        doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
+        doc.text('NEXTCOM Multiservicios', 14, 10);
+        doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,210);
+        doc.text('Reporte de Ventas POS', 14, 17);
+        doc.text('Tel: 7512-0282  |  info@nextcom.com.gt', W-14, 10, {align:'right'});
+        doc.text(`Fecha: ${filterDate}`, W-14, 17, {align:'right'});
+
+        // Resumen
+        let y = 32;
+        const totalDia = ventas.reduce((s,v)=>s+v.total,0);
+        doc.setFillColor(245,246,250); doc.roundedRect(14,y,W-28,16,2,2,'F');
+        doc.setDrawColor(220,220,235); doc.setLineWidth(0.3); doc.roundedRect(14,y,W-28,16,2,2,'S');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,120);
+        doc.text(`Total de ventas del día: ${ventas.length}`, 20, y+7);
+        doc.text(`Ingresos totales: ${this.formatMoney(totalDia)}`, 20, y+13);
+        y += 22;
+
+        // Table header
+        doc.setFillColor(30,30,50); doc.rect(14,y,W-28,7,'F');
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+        const cols = [[17,'ID'],[35,'HORA'],[52,'CLIENTE'],[90,'PRODUCTOS'],[148,'METODO'],[172,'TOTAL']];
+        cols.forEach(([x,lbl]) => doc.text(lbl, x, y+5));
+        y += 7;
+
+        ventas.forEach((v,i) => {
+            if (y > H-25) { doc.addPage(); y = 15; }
+            doc.setFillColor(i%2===0?255:248, i%2===0?255:249, 255);
+            doc.rect(14,y,W-28,8,'F');
+            doc.setDrawColor(220,220,235); doc.line(14,y+8,W-14,y+8);
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,50);
+            doc.text(v.id, 17, y+5.5);
+            doc.text(v.time, 35, y+5.5);
+            doc.text(doc.splitTextToSize(v.client,32)[0], 52, y+5.5);
+            doc.text(doc.splitTextToSize(v.items.map(i=>`${i.name} x${i.qty}`).join(', '),52)[0], 90, y+5.5);
+            doc.text(v.metodo, 148, y+5.5);
+            doc.setFont('helvetica','bold'); doc.setTextColor(16,140,80);
+            doc.text(this.formatMoney(v.total), 172, y+5.5);
+            y += 8;
+        });
+
+        // Total final
+        doc.setFillColor(30,30,50); doc.rect(14,y,W-28,8,'F');
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+        doc.text('TOTAL DEL DÍA', 17, y+5.5);
+        doc.setTextColor(100,220,160);
+        doc.text(this.formatMoney(totalDia), 172, y+5.5);
+
+        // Footer
+        doc.setFillColor(30,30,50); doc.rect(0,H-12,W,12,'F');
+        doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,210);
+        doc.text('NEXTCOM Multiservicios — Reporte generado automaticamente', W/2, H-5, {align:'center'});
+
+        doc.save(`Ventas-POS-${filterDate}.pdf`);
     }
 };
 

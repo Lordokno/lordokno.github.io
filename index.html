@@ -1503,7 +1503,6 @@ ${tc}`,
         const caja=this.getCajaHoy();
         document.getElementById('st-caja-hoy').innerText=this.formatMoney(caja.balance);
         document.getElementById('st-warranties').innerText=this.getWarrantiesWithInfo().filter(w=>w.wInfo.statusKey==='active').length;
-        document.getElementById('st-stock-low').innerText=this.getLowStock().length;
 
         // Banner equipos listos (solo LISTO, no ENTREGADO)
         const listos = o.filter(x=>x.status==='LISTO');

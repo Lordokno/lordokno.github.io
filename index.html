@@ -330,6 +330,44 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .pos-credit-btn:hover { background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.6); }
 .pos-credit-btn:disabled { opacity:.35; cursor:not-allowed; }
 
+/* CIERRE DE CAJA */
+.caja-estado-banner {
+    display:flex; align-items:center; gap:18px;
+    padding:18px 24px; border-radius:var(--rx); margin-bottom:24px;
+    border:1px solid; transition:.3s;
+}
+.caja-estado-banner.abierta {
+    background:rgba(16,185,129,.06); border-color:rgba(16,185,129,.3);
+}
+.caja-estado-banner.cerrada {
+    background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.25);
+}
+.caja-estado-dot {
+    width:12px; height:12px; border-radius:50%; flex-shrink:0;
+}
+.caja-estado-banner.abierta .caja-estado-dot { background:var(--success); box-shadow:0 0 8px var(--success); animation:pulse-dot 2s infinite; }
+.caja-estado-banner.cerrada .caja-estado-dot { background:var(--danger); }
+.caja-estado-info { flex:1; }
+.caja-estado-title { font-size:15px; font-weight:800; color:#fff; }
+.caja-estado-sub   { font-size:12px; color:var(--text-dim); margin-top:2px; font-weight:500; }
+.cierre-card {
+    background:var(--panel); border:1px solid var(--border);
+    border-radius:var(--rx); padding:22px 26px; margin-bottom:14px;
+    position:relative; overflow:hidden;
+}
+.cierre-card::before {
+    content:''; position:absolute; top:0; left:0;
+    width:100%; height:2px;
+    background:linear-gradient(90deg, var(--accent), var(--warranty));
+}
+.cierre-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.cierre-card-fecha  { font-size:13px; font-weight:700; color:#fff; }
+.cierre-card-hora   { font-size:11px; color:var(--text-dim); font-family:var(--mono); margin-top:2px; }
+.cierre-nums { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.cierre-num-item { background:rgba(0,0,0,.2); border-radius:12px; padding:12px 14px; }
+.cierre-num-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); margin-bottom:4px; }
+.cierre-num-val   { font-size:20px; font-weight:800; font-family:var(--mono); }
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -710,6 +748,18 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 <!-- ======= CAJA DIARIA ======= -->
 <section id="v-caja" class="view">
     <div class="view-title"><h1>Caja Diaria</h1><p>Control de ingresos y egresos del día.</p></div>
+
+    <!-- Banner estado caja -->
+    <div class="caja-estado-banner abierta" id="caja-estado-banner">
+        <div class="caja-estado-dot"></div>
+        <div class="caja-estado-info">
+            <div class="caja-estado-title" id="caja-estado-title">Caja Abierta</div>
+            <div class="caja-estado-sub"   id="caja-estado-sub">Registra tus movimientos del día.</div>
+        </div>
+        <button class="btn-main" id="btn-abrir-caja"  onclick="Engine.abrirCaja()"  style="display:none;background:var(--success);color:#fff"><i data-lucide="lock-open" size="15"></i>ABRIR CAJA</button>
+        <button class="btn-main" id="btn-cerrar-caja" onclick="Engine.cerrarCaja()" style="background:var(--danger);color:#fff"><i data-lucide="lock" size="15"></i>CERRAR CAJA</button>
+    </div>
+
     <div class="caja-grid">
         <div class="caja-card" style="border-color:rgba(16,185,129,.2)">
             <div class="c-label" style="color:var(--success)"><i data-lucide="arrow-down-circle" size="14"></i> Ingresos Hoy</div>
@@ -779,6 +829,12 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="chart-title">Estado Actual de Ordenes</div>
             <div class="chart-container"><canvas id="chart-status"></canvas></div>
         </div>
+    </div>
+
+    <!-- Historial de Cierres de Caja -->
+    <div class="section-divider">Historial de Cierres de Caja</div>
+    <div id="cierres-list" style="margin-bottom:32px">
+        <div style="color:var(--text-dim);font-size:13px;padding:20px 0">Sin cierres registrados aún.</div>
     </div>
 </section>
 
@@ -1074,7 +1130,8 @@ function setStatus(msg, color='#64748b') {
 //  ENGINE COMPLETO
 // =============================================
 const Engine = {
-    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[] },
+    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[] },
+    cajaAbierta: true,
     editState: { lab:null, inv:null },
     warrantyFilter: 'all',
     charts: {},
@@ -1096,8 +1153,11 @@ const Engine = {
                             clients:     data.clients     || [],
                             movimientos: data.movimientos || [],
                             ventas:      data.ventas      || [],
-                            deudores:    data.deudores    || []
+                            deudores:    data.deudores    || [],
+                            cierres:     data.cierres     || []
                         };
+                        // Restaurar estado de caja
+                        this.cajaAbierta = data.cajaAbierta !== false;
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
                     }
                     this.refresh();
@@ -1146,6 +1206,8 @@ const Engine = {
                 movimientos: this.db.movimientos,
                 ventas:      this.db.ventas,
                 deudores:    this.db.deudores,
+                cierres:     this.db.cierres,
+                cajaAbierta: this.cajaAbierta,
                 updatedAt:   new Date().toISOString()
             });
         } catch(e) {
@@ -1168,6 +1230,7 @@ const Engine = {
         this.renderPosCart();
         this.renderPosHistory();
         this.renderDeudores();
+        this.renderCajaEstado();
         this.updateNavDots();
         lucide.createIcons();
     },
@@ -1362,6 +1425,7 @@ const Engine = {
 
     // ── CAJA ──
     async addMovimiento() {
+        if (!this.cajaAbierta) return alert('La caja está cerrada. Abre la caja antes de registrar movimientos.');
         const tipo=document.getElementById('mov-tipo').value;
         const desc=document.getElementById('mov-desc').value.trim();
         const amount=parseFloat(document.getElementById('mov-amount').value)||0;
@@ -1868,6 +1932,7 @@ ${tc}`,
         if(this.charts.status) this.charts.status.destroy();
         const ctxS=document.getElementById('chart-status');
         if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo','Entregado'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)','rgba(129,140,248,.7)'],borderColor:['#f59e0b','#ef4444','#10b981','#818cf8'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
+        this.renderCierres();
     },
 
     // ══════════════════════════════
@@ -2358,6 +2423,126 @@ ${tc}`,
         this.db.deudores = (this.db.deudores||[]).filter(d => d.id !== id);
         await this.save();
         this.renderDeudores();
+    },
+
+    // ══════════════════════════════
+    //  CIERRE / APERTURA DE CAJA
+    // ══════════════════════════════
+
+    async cerrarCaja() {
+        if (!this.cajaAbierta) return alert('La caja ya está cerrada.');
+        const { ingresos, egresos, balance } = this.getCajaHoy();
+        const now = new Date();
+        const confirmMsg = `¿Cerrar caja ahora?\n\nResumen del día:\n• Ingresos:  ${this.formatMoney(ingresos)}\n• Egresos:   ${this.formatMoney(egresos)}\n• Balance:   ${this.formatMoney(balance)}\n\nHora de cierre: ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
+        if (!confirm(confirmMsg)) return;
+
+        // Registrar cierre
+        const cierre = {
+            id:         'C-' + Date.now().toString().slice(-6),
+            fecha:       this.today(),
+            fechaLabel:  now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+            horaCierre:  now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+            horaApertura: this.db.cierres.length > 0 && this.db.cierres[0].horaApertura
+                           ? this.db.cierres[0].horaApertura : '—',
+            ingresos,
+            egresos,
+            balance,
+            movimientos: this.db.movimientos.filter(m => m.date === this.today()).length,
+            ventasPOS:   (this.db.ventas||[]).filter(v => v.date === this.today()).length,
+            createdAt:   now.toISOString()
+        };
+
+        if (!this.db.cierres) this.db.cierres = [];
+        this.db.cierres.unshift(cierre);
+        this.cajaAbierta = false;
+        await this.save();
+        this.renderCajaEstado();
+        this.renderCierres();
+        alert(`Caja cerrada exitosamente.\nCierre registrado en Reportes.`);
+    },
+
+    async abrirCaja() {
+        if (this.cajaAbierta) return;
+        const now = new Date();
+        if (!confirm(`¿Abrir caja a las ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}?`)) return;
+
+        // Guardar hora de apertura en el último cierre para referencia
+        if (this.db.cierres && this.db.cierres.length > 0) {
+            this.db.cierres[0].horaApertura = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+        }
+        this.cajaAbierta = true;
+        await this.save();
+        this.renderCajaEstado();
+        alert(`Caja abierta. ¡Buen día de trabajo!`);
+    },
+
+    renderCajaEstado() {
+        const banner   = document.getElementById('caja-estado-banner');
+        const title    = document.getElementById('caja-estado-title');
+        const sub      = document.getElementById('caja-estado-sub');
+        const btnAbrir = document.getElementById('btn-abrir-caja');
+        const btnCerrar= document.getElementById('btn-cerrar-caja');
+        const panel    = document.querySelector('#v-caja .smart-panel');
+        if (!banner) return;
+
+        const now = new Date();
+        if (this.cajaAbierta) {
+            banner.className = 'caja-estado-banner abierta';
+            title.innerText  = 'Caja Abierta';
+            sub.innerText    = `Desde el ${now.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})} — registra tus movimientos del día.`;
+            if (btnAbrir)  btnAbrir.style.display  = 'none';
+            if (btnCerrar) btnCerrar.style.display = '';
+            if (panel) panel.style.opacity = '1'; if (panel) panel.style.pointerEvents = '';
+        } else {
+            banner.className = 'caja-estado-banner cerrada';
+            // Last cierre info
+            const ultimo = this.db.cierres && this.db.cierres[0];
+            title.innerText = 'Caja Cerrada';
+            sub.innerText   = ultimo
+                ? `Cerrada el ${ultimo.fechaLabel} a las ${ultimo.horaCierre} — Balance: ${this.formatMoney(ultimo.balance)}`
+                : 'La caja está cerrada. Abre para registrar movimientos.';
+            if (btnAbrir)  btnAbrir.style.display  = '';
+            if (btnCerrar) btnCerrar.style.display = 'none';
+            if (panel) panel.style.opacity = '.45'; if (panel) panel.style.pointerEvents = 'none';
+        }
+    },
+
+    renderCierres() {
+        const el = document.getElementById('cierres-list');
+        if (!el) return;
+        const cierres = this.db.cierres || [];
+        if (cierres.length === 0) {
+            el.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:20px 0">Sin cierres registrados aún.</div>`;
+            return;
+        }
+        el.innerHTML = cierres.map(c => `
+            <div class="cierre-card">
+                <div class="cierre-card-header">
+                    <div>
+                        <div class="cierre-card-fecha">${c.fechaLabel || c.fecha}</div>
+                        <div class="cierre-card-hora">
+                            ${c.horaApertura && c.horaApertura !== '—' ? `Apertura: ${c.horaApertura} &nbsp;·&nbsp; ` : ''}
+                            Cierre: ${c.horaCierre}
+                            &nbsp;·&nbsp; ${c.movimientos} movimiento(s) &nbsp;·&nbsp; ${c.ventasPOS} venta(s) POS
+                        </div>
+                    </div>
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--text-dim);background:rgba(255,255,255,.04);padding:4px 10px;border-radius:8px">${c.id}</span>
+                </div>
+                <div class="cierre-nums">
+                    <div class="cierre-num-item">
+                        <div class="cierre-num-label">Ingresos</div>
+                        <div class="cierre-num-val" style="color:var(--success)">${this.formatMoney(c.ingresos)}</div>
+                    </div>
+                    <div class="cierre-num-item">
+                        <div class="cierre-num-label">Egresos</div>
+                        <div class="cierre-num-val" style="color:var(--danger)">${this.formatMoney(c.egresos)}</div>
+                    </div>
+                    <div class="cierre-num-item">
+                        <div class="cierre-num-label">Balance Neto</div>
+                        <div class="cierre-num-val" style="color:${c.balance>=0?'var(--cash)':'var(--danger)'}">${this.formatMoney(c.balance)}</div>
+                    </div>
+                </div>
+            </div>`).join('');
     }
 };
 

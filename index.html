@@ -1940,10 +1940,18 @@ ${tc}`,
     },
 
     async deletePosVenta(id) {
-        if (!confirm('¿Eliminar esta venta del historial?')) return;
+        if (!confirm('¿Eliminar esta venta? El stock de los productos será restaurado.')) return;
+        const venta = (this.db.ventas||[]).find(v => v.id === id);
+        if (venta && venta.items) {
+            venta.items.forEach(item => {
+                const idx = this.db.stock.findIndex(s => s.id === item.stockId);
+                if (idx !== -1) this.db.stock[idx].qty += item.qty;
+            });
+        }
         this.db.ventas = (this.db.ventas||[]).filter(v => v.id !== id);
         await this.save();
         this.renderPosHistory();
+        this.renderPosProducts();
     },
 
     exportPosCSV() {

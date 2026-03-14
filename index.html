@@ -95,10 +95,12 @@ tr:hover td{background:rgba(255,255,255,.01);}
 .badge-listo,.badge-done{background:rgba(16,185,129,.1);color:#10b981;}
 .badge-pendiente,.badge-pending{background:rgba(245,158,11,.1);color:#f59e0b;}
 .badge-urgente,.badge-urgent{background:rgba(239,68,68,.1);color:#ef4444;animation:blink 1s infinite;}
+.badge-entregado{background:rgba(129,140,248,.12);color:#818cf8;}
 @keyframes blink{0%{opacity:1;}50%{opacity:.3;}100%{opacity:1;}}
 tr.status-listo td{color:#10b981!important;}
 tr.status-pendiente td{color:#f59e0b!important;}
 tr.status-urgente td{color:#ef4444!important;font-weight:700;}
+tr.status-entregado td{color:#818cf8!important;opacity:.8;}
 .action-icon{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;color:var(--text-dim);border:1px solid transparent;}
 .action-icon:hover{background:rgba(255,255,255,.05);color:#fff;border-color:var(--border);}
 .action-icon.edit:hover{color:var(--edit);}
@@ -519,12 +521,12 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="label" style="color:var(--edit)">Pendientes <i data-lucide="clock-4" class="stat-icon" style="color:var(--edit)"></i></div>
             <div class="value" id="st-process" style="color:var(--edit)">0</div>
         </div>
-        <div class="stat-card">
-            <div class="label" style="color:var(--success)">Capital <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
-            <div class="value" id="st-cash" style="color:var(--success)">$0</div>
+        <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
+            <div class="label" style="color:#818cf8">Entregados <i data-lucide="package-check" class="stat-icon" style="color:#818cf8"></i></div>
+            <div class="value" id="st-delivered" style="color:#818cf8">0</div>
         </div>
     </div>
-    <!-- Fila 2: caja hoy + garantías -->
+    <!-- Fila 2: caja hoy + garantías + capital -->
     <div class="stats-grid-3" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="stat-card" style="border-color:rgba(167,139,250,.2)">
             <div class="label" style="color:var(--cash)">Caja Hoy <i data-lucide="trending-up" class="stat-icon" style="color:var(--cash)"></i></div>
@@ -534,9 +536,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="label" style="color:var(--warranty)">Garantías Activas <i data-lucide="shield-check" class="stat-icon" style="color:var(--warranty)"></i></div>
             <div class="value" id="st-warranties" style="color:var(--warranty)">0</div>
         </div>
-        <div class="stat-card" style="border-color:rgba(239,68,68,.2)">
-            <div class="label" style="color:var(--danger)">Stock Bajo <i data-lucide="alert-triangle" class="stat-icon" style="color:var(--danger)"></i></div>
-            <div class="value" id="st-stock-low" style="color:var(--danger)">0</div>
+        <div class="stat-card">
+            <div class="label" style="color:var(--success)">Capital Pendiente <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="st-cash" style="color:var(--success)">$0</div>
         </div>
     </div>
     <!-- Banner equipos listos -->
@@ -740,6 +742,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                     <option value="recibido">Equipo Recibido</option>
                     <option value="diagnostico">Diagnostico Listo</option>
                     <option value="listo">Equipo Listo para Retirar</option>
+                    <option value="entregado">Equipo Entregado</option>
                     <option value="garantia">Info de Garantia</option>
                     <option value="recordatorio">Recordatorio de Retiro</option>
                 </select>
@@ -1056,9 +1059,11 @@ const Engine = {
         const o = this.db.orders.find(x=>x.id===id);
         if (o.status==='PENDIENTE') o.status='URGENTE';
         else if (o.status==='URGENTE') o.status='LISTO';
+        else if (o.status==='LISTO') o.status='ENTREGADO';
         else o.status='PENDIENTE';
         if (o.status==='LISTO' && o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart=new Date().toISOString();
         if (o.status==='PENDIENTE') o.warrantyStart=null;
+        if (o.status==='ENTREGADO' && !o.deliveredAt) o.deliveredAt=new Date().toISOString();
         await this.save();
     },
 
@@ -1250,6 +1255,20 @@ Le recordamos que su equipo *${order.model}* lleva tiempo listo para retirar en 
 Por favor pase a retirarlo a la brevedad posible.
 
 ${contacto}`,
+            entregado:
+`Hola ${order.client},
+
+Le confirmamos que su equipo *${order.model}* ha sido entregado satisfactoriamente.
+
+*Ticket:* ${order.id}
+*Monto cobrado:* ${this.formatMoney(order.price)}
+${wi ? `*Garantia:* ${order.warrantyDays} dias a partir de hoy` : ''}
+
+Gracias por confiar en *${taller}*. Quedamos a sus ordenes para cualquier consulta.
+
+${contacto}
+
+${tc}`,
         };
         return msgs[type]||'';
     },
@@ -1309,7 +1328,7 @@ ${contacto}`,
         doc.text(o.id, 26, 53);
 
         // Badge estado
-        const statusColors = { LISTO:[16,185,129], PENDIENTE:[230,140,20], URGENTE:[220,50,50] };
+        const statusColors = { LISTO:[16,185,129], PENDIENTE:[230,140,20], URGENTE:[220,50,50], ENTREGADO:[129,140,248] };
         const sc = statusColors[o.status]||[100,100,100];
         doc.setFillColor(...sc);
         doc.roundedRect(W-50,38,32,12,3,3,'F');
@@ -1477,14 +1496,18 @@ ${contacto}`,
         document.getElementById('st-total').innerText=o.length;
         document.getElementById('st-urgent').innerText=o.filter(x=>x.status==='URGENTE').length;
         document.getElementById('st-process').innerText=o.filter(x=>x.status==='PENDIENTE').length;
-        document.getElementById('st-cash').innerText=this.formatMoney(o.reduce((a,b)=>a+b.price,0));
+        document.getElementById('st-delivered').innerText=o.filter(x=>x.status==='ENTREGADO').length;
+        // Capital pendiente = solo órdenes no entregadas aún
+        const capitalPendiente = o.filter(x=>x.status!=='ENTREGADO').reduce((a,b)=>a+b.price,0);
+        document.getElementById('st-cash').innerText=this.formatMoney(capitalPendiente);
         const caja=this.getCajaHoy();
         document.getElementById('st-caja-hoy').innerText=this.formatMoney(caja.balance);
         document.getElementById('st-warranties').innerText=this.getWarrantiesWithInfo().filter(w=>w.wInfo.statusKey==='active').length;
         document.getElementById('st-stock-low').innerText=this.getLowStock().length;
 
-        // Banner equipos listos
+        // Banner equipos listos (solo LISTO, no ENTREGADO)
         const listos = o.filter(x=>x.status==='LISTO');
+        const entregadosHoy = o.filter(x=>x.status==='ENTREGADO' && x.deliveredAt && x.deliveredAt.startsWith(this.today())).length;
         const n = listos.length;
         const rcEl = document.getElementById('ready-count');
         const rcBig = document.getElementById('ready-count-big');
@@ -1494,12 +1517,13 @@ ${contacto}`,
         if (rcBig) rcBig.innerText = n;
         if (banner) banner.style.borderColor = n > 0 ? 'rgba(16,185,129,.4)' : 'rgba(100,116,139,.2)';
         if (rSub) {
-            if (n === 0) rSub.innerText = 'No hay equipos listos en este momento.';
+            if (n === 0) rSub.innerText = entregadosHoy > 0 ? `Hoy ya entregaste ${entregadosHoy} equipo(s). ¡Buen trabajo!` : 'No hay equipos listos en este momento.';
             else if (n === 1) rSub.innerText = `"${listos[0].client}" está esperando retirar su ${listos[0].model}.`;
             else rSub.innerText = listos.slice(0,3).map(x=>x.client).join(', ') + (n>3?` y ${n-3} más.`:'.');
         }
 
-        const sorted=[...o].sort((a,b)=>(a.status==='LISTO'?1:0)-(b.status==='LISTO'?1:0));
+        const statusOrder = {URGENTE:0,PENDIENTE:1,LISTO:2,ENTREGADO:3};
+        const sorted=[...o].sort((a,b)=>(statusOrder[a.status]??1)-(statusOrder[b.status]??1));
         document.getElementById('dash-table').innerHTML=sorted.slice(0,8).map(x=>{
             const sc=x.status.toLowerCase();
             const wi=this.getWarrantyInfo(x);
@@ -1511,7 +1535,8 @@ ${contacto}`,
     },
 
     renderLab() {
-        const sorted=[...this.db.orders].sort((a,b)=>(a.status==='LISTO'?1:0)-(b.status==='LISTO'?1:0));
+        const statusOrder2 = {URGENTE:0,PENDIENTE:1,LISTO:2,ENTREGADO:3};
+        const sorted=[...this.db.orders].sort((a,b)=>(statusOrder2[a.status]??1)-(statusOrder2[b.status]??1));
         document.getElementById('lab-table').innerHTML=sorted.map(x=>{
             const sc=x.status.toLowerCase();
             const wi=this.getWarrantyInfo(x);
@@ -1597,7 +1622,7 @@ ${contacto}`,
     renderReportes() {
         const o=this.db.orders;
         document.getElementById('r-total').innerText=o.length;
-        document.getElementById('r-done').innerText=o.filter(x=>x.status==='LISTO').length;
+        document.getElementById('r-done').innerText=o.filter(x=>x.status==='LISTO'||x.status==='ENTREGADO').length;
         const avg=o.length>0?o.reduce((a,b)=>a+b.price,0)/o.length:0;
         document.getElementById('r-avg').innerText=this.formatMoney(avg);
         document.getElementById('r-clients').innerText=this.db.clients.length;
@@ -1627,10 +1652,10 @@ ${contacto}`,
         if(topEl) topEl.innerHTML=sorted.length===0?`<div style="color:var(--text-dim);font-size:13px;padding:20px 0">Sin datos aún</div>`:sorted.map(([name,cnt],i)=>`<div class="top-item"><span class="top-rank">${i+1}</span><span style="font-size:13px;font-weight:600;flex:2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span><div class="top-bar-wrap"><div class="top-bar-fill" style="width:${(cnt/maxVal)*100}%"></div></div><span class="top-count">${cnt}</span></div>`).join('');
 
         // Chart: Estado
-        const statuses={PENDIENTE:o.filter(x=>x.status==='PENDIENTE').length,URGENTE:o.filter(x=>x.status==='URGENTE').length,LISTO:o.filter(x=>x.status==='LISTO').length};
+        const statuses={PENDIENTE:o.filter(x=>x.status==='PENDIENTE').length,URGENTE:o.filter(x=>x.status==='URGENTE').length,LISTO:o.filter(x=>x.status==='LISTO').length,ENTREGADO:o.filter(x=>x.status==='ENTREGADO').length};
         if(this.charts.status) this.charts.status.destroy();
         const ctxS=document.getElementById('chart-status');
-        if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)'],borderColor:['#f59e0b','#ef4444','#10b981'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
+        if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo','Entregado'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)','rgba(129,140,248,.7)'],borderColor:['#f59e0b','#ef4444','#10b981','#818cf8'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
     },
 
     // ══════════════════════════════

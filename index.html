@@ -277,6 +277,59 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 /* Precio venta en inventario */
 .pos-price-tag { font-size: 11px; color: var(--warranty); font-weight: 700; font-family: var(--mono); }
 
+/* DEUDORES */
+.deudor-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--rx);
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    transition: .25s;
+    position: relative;
+    overflow: hidden;
+}
+.deudor-card::before {
+    content:'';
+    position:absolute; top:0; left:0;
+    width:4px; height:100%;
+    border-radius:2px 0 0 2px;
+}
+.deudor-card.vencido::before  { background: var(--danger); }
+.deudor-card.por-vencer::before { background: var(--edit); }
+.deudor-card.vigente::before  { background: var(--warranty); }
+.deudor-card:hover { border-color:rgba(255,255,255,.1); transform:translateY(-2px); }
+.deudor-avatar {
+    width:44px; height:44px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; font-weight:800; color:#fff;
+    background: linear-gradient(135deg, rgba(79,70,229,.4), rgba(129,140,248,.2));
+    border:1px solid rgba(129,140,248,.2);
+}
+.deudor-info { flex:1; min-width:0; }
+.deudor-name { font-size:15px; font-weight:800; color:#fff; margin-bottom:3px; }
+.deudor-phone { font-size:12px; color:var(--text-dim); font-weight:600; font-family:var(--mono); }
+.deudor-meta { font-size:11px; color:var(--text-dim); margin-top:5px; }
+.deudor-amount { font-size:22px; font-weight:800; font-family:var(--mono); flex-shrink:0; }
+.deudor-plazo {
+    font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.8px;
+    padding:3px 9px; border-radius:7px; margin-top:5px; display:inline-block;
+}
+.deudor-plazo.vencido  { background:rgba(239,68,68,.1);   color:#ef4444; }
+.deudor-plazo.por-vencer { background:rgba(245,158,11,.1); color:#f59e0b; }
+.deudor-plazo.vigente  { background:rgba(6,182,212,.1);   color:var(--warranty); }
+.deudores-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; margin-bottom:32px; }
+.nav-dot.orange { background:var(--edit); box-shadow:0 0 6px var(--edit); animation:pulse-dot 2s infinite; }
+.pos-credit-btn {
+    width:100%; padding:13px; border-radius:13px; border:1px solid rgba(245,158,11,.4);
+    background:rgba(245,158,11,.07); color:#f59e0b; font-weight:800; font-size:13px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:.2s; margin-top:8px;
+}
+.pos-credit-btn:hover { background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.6); }
+.pos-credit-btn:disabled { opacity:.35; cursor:not-allowed; }
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -483,6 +536,10 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="nav-item" onclick="go('reportes',this)"><i data-lucide="bar-chart-2" size="16"></i> Reportes</div>
         <div class="nav-item" onclick="go('whatsapp',this)"><i data-lucide="message-circle" size="16"></i> WhatsApp</div>
         <div class="nav-item" onclick="go('pos',this)"><i data-lucide="shopping-cart" size="16"></i> Punto de Venta</div>
+        <div class="nav-item" onclick="go('deudores',this)">
+            <i data-lucide="user-x" size="16"></i> Deudores
+            <span class="nav-dot orange" id="deudores-dot" style="display:none"></span>
+        </div>
     </div>
     <div style="padding:16px;background:rgba(255,255,255,.02);border-radius:14px;margin-top:auto;">
         <p id="clock" style="font-size:13px;font-weight:700;color:#fff;font-family:var(--mono);"></p>
@@ -801,6 +858,10 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                             <input type="text" id="pos-client-name" placeholder="Nombre del cliente">
                         </div>
                         <div class="field" style="margin-top:10px">
+                            <label>Teléfono / WhatsApp</label>
+                            <input type="text" id="pos-client-phone" placeholder="7788-9900">
+                        </div>
+                        <div class="field" style="margin-top:10px">
                             <label>Método de Pago</label>
                             <select id="pos-metodo">
                                 <option value="Efectivo">Efectivo</option>
@@ -812,6 +873,10 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                     <button class="pos-checkout-btn" id="pos-checkout-btn" onclick="Engine.posCheckout()" disabled>
                         <i data-lucide="check-circle" size="16"></i>
                         COBRAR VENTA
+                    </button>
+                    <button class="pos-credit-btn" id="pos-credit-btn" onclick="Engine.posCreditCheckout()" disabled>
+                        <i data-lucide="clock" size="14"></i>
+                        AL CRÉDITO
                     </button>
                     <button class="pos-clear-btn" onclick="Engine.posClearCart()">Vaciar carrito</button>
                 </div>
@@ -859,6 +924,29 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </section>
 
+<!-- MODAL CREDITO -->
+<div id="modal-credito" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:440px;width:100%">
+        <h2 style="margin-bottom:4px">Venta al Credito</h2>
+        <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Define los terminos del credito antes de registrar</p>
+        <div id="credito-resumen" style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:16px 18px;margin-bottom:18px">
+            <div style="font-size:12px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Monto a credito</div>
+            <div id="credito-monto" style="font-size:28px;font-weight:800;color:#f59e0b;font-family:var(--mono)">$0.00</div>
+        </div>
+        <div class="field" style="margin-bottom:14px"><label>Nombre del Cliente *</label><input type="text" id="credito-client" placeholder="Nombre completo"></div>
+        <div class="field" style="margin-bottom:14px"><label>Telefono / WhatsApp *</label><input type="text" id="credito-phone" placeholder="7788-9900"></div>
+        <div class="input-row" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+            <div class="field"><label>Fecha de Pago</label><input type="date" id="credito-fecha"></div>
+            <div class="field"><label>Dias de Plazo</label><select id="credito-dias" onchange="Engine.creditoUpdateFecha()"><option value="7">7 dias</option><option value="15">15 dias</option><option value="30" selected>30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option><option value="custom">Fecha manual</option></select></div>
+        </div>
+        <div class="field" style="margin-bottom:20px"><label>Nota (opcional)</label><input type="text" id="credito-nota" placeholder="Ej: Abono inicial Q50..."></div>
+        <div class="modal-actions">
+            <button class="btn-main" style="background:var(--edit);color:#000" onclick="Engine.confirmarCredito()"><i data-lucide="clock" size="15"></i>REGISTRAR CREDITO</button>
+            <button class="btn-main ghost" onclick="document.getElementById('modal-credito').style.display='none'">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL EDITAR VENTA POS -->
 <div id="modal-edit-venta" class="modal-overlay" style="display:none">
     <div class="modal" style="max-width:480px;width:100%">
@@ -891,6 +979,43 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
     </div>
 </div>
+
+<!-- ======= DEUDORES ======= -->
+<section id="v-deudores" class="view">
+    <div class="view-title"><h1>Deudores</h1><p>Clientes con ventas al crédito pendientes de cobro.</p></div>
+
+    <!-- KPIs -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:28px">
+        <div class="stat-card" style="border-color:rgba(239,68,68,.2)">
+            <div class="label" style="color:var(--danger)">Total Adeudado <i data-lucide="alert-circle" class="stat-icon" style="color:var(--danger)"></i></div>
+            <div class="value" id="deud-total" style="color:var(--danger)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.2)">
+            <div class="label" style="color:var(--edit)">Deudores <i data-lucide="users" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="deud-count" style="color:var(--edit)">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(239,68,68,.3)">
+            <div class="label" style="color:var(--danger)">Vencidos <i data-lucide="alarm-clock" class="stat-icon" style="color:var(--danger)"></i></div>
+            <div class="value" id="deud-vencidos" style="color:var(--danger)">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+            <div class="label" style="color:var(--success)">Cobrados <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="deud-cobrados" style="color:var(--success)">0</div>
+        </div>
+    </div>
+
+    <!-- Deudores activos -->
+    <div id="deudores-grid" class="deudores-grid"></div>
+
+    <!-- Historial cobrados -->
+    <div class="section-divider">Historial de Cobros</div>
+    <div class="table-box">
+        <table>
+            <thead><tr><th>Cliente</th><th>Productos</th><th>Monto</th><th>Cobrado el</th><th>Plazo original</th></tr></thead>
+            <tbody id="deudores-cobrados-list"></tbody>
+        </table>
+    </div>
+</section>
 
 </main>
 
@@ -949,7 +1074,7 @@ function setStatus(msg, color='#64748b') {
 //  ENGINE COMPLETO
 // =============================================
 const Engine = {
-    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[] },
+    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[] },
     editState: { lab:null, inv:null },
     warrantyFilter: 'all',
     charts: {},
@@ -970,7 +1095,8 @@ const Engine = {
                             stock:       data.stock       || [],
                             clients:     data.clients     || [],
                             movimientos: data.movimientos || [],
-                            ventas:      data.ventas      || []
+                            ventas:      data.ventas      || [],
+                            deudores:    data.deudores    || []
                         };
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
                     }
@@ -1019,6 +1145,7 @@ const Engine = {
                 clients:     this.db.clients,
                 movimientos: this.db.movimientos,
                 ventas:      this.db.ventas,
+                deudores:    this.db.deudores,
                 updatedAt:   new Date().toISOString()
             });
         } catch(e) {
@@ -1040,6 +1167,7 @@ const Engine = {
         this.renderPosProducts();
         this.renderPosCart();
         this.renderPosHistory();
+        this.renderDeudores();
         this.updateNavDots();
         lucide.createIcons();
     },
@@ -1076,6 +1204,12 @@ const Engine = {
         const hasUrgentW = ws.some(w => w.wInfo.statusKey!=='active');
         const dot = document.getElementById('warranty-dot');
         if(dot) dot.style.display = hasUrgentW ? 'block':'none';
+
+        // Deudores vencidos
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        const vencidos = (this.db.deudores||[]).filter(d => !d.cobrado && new Date(d.fechaPago) < hoy).length;
+        const deudDot = document.getElementById('deudores-dot');
+        if(deudDot) deudDot.style.display = vencidos > 0 ? 'block' : 'none';
     },
 
     // ── LABORATORIO ──
@@ -1804,6 +1938,8 @@ ${tc}`,
         }
         if (totalEl) totalEl.innerText = this.formatMoney(total);
         if (btnEl) btnEl.disabled = this.cart.length === 0;
+        const creditBtn = document.getElementById('pos-credit-btn');
+        if (creditBtn) creditBtn.disabled = this.cart.length === 0;
 
         if (this.cart.length === 0) {
             cartEl.innerHTML = `<div class="pos-cart-empty">El carrito está vacío.<br>Selecciona productos.</div>`;
@@ -2033,6 +2169,195 @@ ${tc}`,
         doc.text('NEXTCOM Multiservicios — Reporte generado automaticamente', W/2, H-5, {align:'center'});
 
         doc.save(`Ventas-POS-${filterDate}.pdf`);
+    },
+
+    // ══════════════════════════════
+    //  CRÉDITO & DEUDORES
+    // ══════════════════════════════
+
+    posCreditCheckout() {
+        if (this.cart.length === 0) return;
+        const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
+        const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
+        const phone = document.getElementById('pos-client-phone')?.value.trim() || '';
+
+        // Pre-fill modal
+        document.getElementById('credito-monto').innerText = this.formatMoney(total);
+        document.getElementById('credito-client').value = clientName;
+        document.getElementById('credito-phone').value = phone;
+        document.getElementById('credito-nota').value = '';
+        document.getElementById('credito-dias').value = '30';
+        this.creditoUpdateFecha();
+        document.getElementById('modal-credito').style.display = 'flex';
+    },
+
+    creditoUpdateFecha() {
+        const dias = document.getElementById('credito-dias')?.value;
+        if (dias === 'custom') return;
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() + parseInt(dias));
+        const fechaEl = document.getElementById('credito-fecha');
+        if (fechaEl) fechaEl.value = fecha.toISOString().split('T')[0];
+    },
+
+    async confirmarCredito() {
+        const client = document.getElementById('credito-client').value.trim();
+        const phone  = document.getElementById('credito-phone').value.trim();
+        const fecha  = document.getElementById('credito-fecha').value;
+        if (!client) return alert('Ingresa el nombre del cliente.');
+        if (!phone)  return alert('Ingresa el teléfono del cliente.');
+        if (!fecha)  return alert('Selecciona la fecha de pago.');
+
+        const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
+        const now   = new Date();
+        const deudorId = 'D-' + Date.now().toString().slice(-6);
+        const nota  = document.getElementById('credito-nota').value.trim();
+
+        // Descontar stock igual que venta normal
+        this.cart.forEach(c => {
+            const idx = this.db.stock.findIndex(x => x.id === c.stockId);
+            if (idx !== -1) this.db.stock[idx].qty = Math.max(0, this.db.stock[idx].qty - c.qty);
+        });
+
+        // Guardar deudor
+        if (!this.db.deudores) this.db.deudores = [];
+        this.db.deudores.unshift({
+            id: deudorId,
+            client,
+            phone,
+            total,
+            fechaPago: fecha,
+            nota,
+            items: this.cart.map(c => ({ stockId:c.stockId, name:c.name, qty:c.qty, salePrice:c.salePrice })),
+            cobrado: false,
+            cobradoEl: null,
+            createdAt: now.toISOString(),
+            date: this.today()
+        });
+
+        // Registrar en caja como "crédito pendiente" (egreso diferido NO, solo log)
+        // No se suma a ingresos hasta cobrar
+
+        document.getElementById('modal-credito').style.display = 'none';
+        await this.save();
+        this.cart = [];
+        document.getElementById('pos-client-name').value = '';
+        document.getElementById('pos-client-phone').value = '';
+        this.renderPosCart();
+        this.renderPosProducts();
+        this.renderDeudores();
+
+        // Navegar a deudores
+        const deudNav = document.querySelector('.nav-item[onclick*="deudores"]');
+        if (deudNav) go('deudores', deudNav);
+    },
+
+    renderDeudores() {
+        const deudores = (this.db.deudores || []);
+        const activos  = deudores.filter(d => !d.cobrado);
+        const cobrados = deudores.filter(d =>  d.cobrado);
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+        const totalAdeudado = activos.reduce((s,d) => s+d.total, 0);
+        const vencidos = activos.filter(d => new Date(d.fechaPago) < hoy).length;
+
+        const el = id => document.getElementById(id);
+        if (el('deud-total'))    el('deud-total').innerText    = this.formatMoney(totalAdeudado);
+        if (el('deud-count'))    el('deud-count').innerText    = activos.length;
+        if (el('deud-vencidos')) el('deud-vencidos').innerText = vencidos;
+        if (el('deud-cobrados')) el('deud-cobrados').innerText = cobrados.length;
+
+        // Tarjetas de deudores activos
+        const grid = el('deudores-grid');
+        if (grid) {
+            if (activos.length === 0) {
+                grid.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:20px 0;grid-column:1/-1">No hay deudores activos. ¡Todo al día!</div>`;
+            } else {
+                grid.innerHTML = activos.map(d => {
+                    const fechaPago = new Date(d.fechaPago);
+                    fechaPago.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((fechaPago - hoy) / (1000*60*60*24));
+                    let estado, estadoClass;
+                    if (diffDays < 0)       { estado = `Vencido hace ${Math.abs(diffDays)} día(s)`;  estadoClass = 'vencido'; }
+                    else if (diffDays <= 5) { estado = `Vence en ${diffDays} día(s)`;               estadoClass = 'por-vencer'; }
+                    else                   { estado = `Vence el ${fechaPago.toLocaleDateString('es-ES')}`; estadoClass = 'vigente'; }
+                    const initial = d.client.charAt(0).toUpperCase();
+                    const itemsTxt = d.items.map(i=>`${i.name} x${i.qty}`).join(', ');
+                    const waMsg = encodeURIComponent(`Hola ${d.client}, le recordamos que tiene un saldo pendiente de *${this.formatMoney(d.total)}* con NEXTCOM Multiservicios con fecha de pago ${d.fechaPago}. Por favor comuníquese con nosotros. Tel: 7512-0282`);
+                    const phoneClean = d.phone.replace(/[^0-9]/g,'');
+                    return `
+                    <div class="deudor-card ${estadoClass}">
+                        <div class="deudor-avatar">${initial}</div>
+                        <div class="deudor-info">
+                            <div class="deudor-name">${d.client}</div>
+                            <div class="deudor-phone">${d.phone}</div>
+                            <div class="deudor-meta" title="${itemsTxt}">${d.items.length} producto(s) — ${itemsTxt.length>40?itemsTxt.slice(0,40)+'…':itemsTxt}</div>
+                            ${d.nota ? `<div class="deudor-meta" style="color:var(--accent);margin-top:3px">${d.nota}</div>` : ''}
+                            <span class="deudor-plazo ${estadoClass}">${estado}</span>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                            <div class="deudor-amount" style="color:${estadoClass==='vencido'?'var(--danger)':estadoClass==='por-vencer'?'var(--edit)':'var(--success)'}">${this.formatMoney(d.total)}</div>
+                            <div style="display:flex;gap:6px">
+                                <button onclick="window.open('https://wa.me/${phoneClean}?text=${waMsg}','_blank')" style="background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.25);color:#25d366;border-radius:9px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px"><i data-lucide="message-circle" size="12"></i>WA</button>
+                                <button onclick="Engine.cobrarDeudor('${d.id}')" style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#10b981;border-radius:9px;padding:6px 10px;cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;gap:5px"><i data-lucide="check" size="12"></i>COBRAR</button>
+                                <button onclick="Engine.deleteDeudor('${d.id}')" style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);color:#ef4444;border-radius:9px;padding:6px 8px;cursor:pointer;display:flex;align-items:center"><i data-lucide="trash-2" size="12"></i></button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        // Tabla de cobrados
+        const tbody = el('deudores-cobrados-list');
+        if (tbody) {
+            if (cobrados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-dim)">Sin cobros registrados aún.</td></tr>`;
+            } else {
+                tbody.innerHTML = cobrados.map(d => {
+                    const itemsTxt = d.items.map(i=>`${i.name} x${i.qty}`).join(', ');
+                    return `<tr>
+                        <td style="font-weight:700">${d.client} <span style="color:var(--text-dim);font-size:11px;font-family:var(--mono)">${d.phone}</span></td>
+                        <td style="font-size:12px;color:var(--text-dim);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${itemsTxt}">${itemsTxt}</td>
+                        <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(d.total)}</td>
+                        <td style="color:var(--text-dim);font-size:12px">${d.cobradoEl ? new Date(d.cobradoEl).toLocaleDateString('es-ES') : '—'}</td>
+                        <td style="color:var(--text-dim);font-size:12px">${d.fechaPago}</td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    async cobrarDeudor(id) {
+        const idx = (this.db.deudores||[]).findIndex(d => d.id === id);
+        if (idx === -1) return;
+        const d = this.db.deudores[idx];
+        if (!confirm(`¿Marcar como cobrado el crédito de ${d.client} por ${this.formatMoney(d.total)}?`)) return;
+
+        this.db.deudores[idx].cobrado   = true;
+        this.db.deudores[idx].cobradoEl = new Date().toISOString();
+
+        // Registrar ingreso en caja al cobrar
+        this.db.movimientos.unshift({
+            id: Date.now(),
+            tipo: 'ingreso',
+            desc: `Cobro crédito ${d.id} — ${d.client}`,
+            amount: d.total,
+            metodo: 'Efectivo',
+            date: this.today(),
+            time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+        });
+
+        await this.save();
+        this.renderDeudores();
+    },
+
+    async deleteDeudor(id) {
+        if (!confirm('¿Eliminar este deudor? El stock no será restaurado.')) return;
+        this.db.deudores = (this.db.deudores||[]).filter(d => d.id !== id);
+        await this.save();
+        this.renderDeudores();
     }
 };
 

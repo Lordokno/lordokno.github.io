@@ -602,6 +602,24 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     /* Clock en sidebar */
     aside#sidebar > div:last-child { display: none; }
 
+    /* Deudores grid en móvil */
+    .deudores-grid { grid-template-columns: 1fr !important; }
+    .deudor-card-right { flex-direction: row; flex-wrap: wrap; }
+
+    /* Liberaciones en móvil */
+    .lib-card-row { flex-direction: column; }
+    .lib-card-right { align-items: flex-start; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+
+    /* Lab filter tabs scroll */
+    .lab-filter-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+    .lab-tab { flex-shrink: 0; }
+    .lab-search-bar { flex-direction: column; align-items: stretch; }
+    .lab-search-input { max-width: 100% !important; }
+
+    /* Toast bottom offset on mobile */
+    .toast-container { bottom: 16px; right: 12px; left: 12px; }
+    .toast { min-width: unset; }
+
     /* POS layout en móvil: columna */
     .pos-layout { grid-template-columns: 1fr !important; }
     .pos-cart { position: static !important; }
@@ -1371,6 +1389,19 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </section>
 
+<!-- MODAL CONFIRMACION CUSTOM -->
+<div id="modal-confirm" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:380px;width:100%;text-align:center">
+        <div id="confirm-icon" style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <h2 id="confirm-title" style="margin-bottom:8px;font-size:18px">¿Confirmar acción?</h2>
+        <p id="confirm-msg" style="color:var(--text-dim);font-size:13px;margin-bottom:24px;line-height:1.6"></p>
+        <div class="modal-actions" style="justify-content:center">
+            <button id="confirm-ok-btn" class="btn-main danger"><i data-lucide="check" size="15"></i><span id="confirm-ok-label">CONFIRMAR</span></button>
+            <button class="btn-main ghost" onclick="Engine._confirmReject()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
 
@@ -1491,8 +1522,13 @@ const Engine = {
         if (histDateEl && !histDateEl.value) histDateEl.value = this.today();
     },
 
+    _saveTimer: null,
+
     async save() {
         if (!window.__fb) return;
+        // Debounce: delay 400ms to batch rapid changes
+        clearTimeout(this._saveTimer);
+        await new Promise(resolve => { this._saveTimer = setTimeout(resolve, 400); });
         setStatus('Guardando...', '#f59e0b');
         try {
             await window.__fb.save({
@@ -1670,10 +1706,13 @@ const Engine = {
         if (o.status==='PENDIENTE') o.warrantyStart=null;
         if (o.status==='ENTREGADO' && !o.deliveredAt) o.deliveredAt=new Date().toISOString();
         await this.save();
+        const statusLabels = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo para entregar',ENTREGADO:'Entregado'};
+        const statusTypes  = {PENDIENTE:'info',URGENTE:'error',LISTO:'success',ENTREGADO:'info'};
+        Engine.toast(`${o.id} → ${statusLabels[o.status]||o.status}`, statusTypes[o.status]||'info', 2000);
     },
 
     async deleteItem(type,id) {
-        if (!confirm('¿Eliminar este registro?')) return;
+        if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
         if (type==='lab') this.db.orders=this.db.orders.filter(o=>o.id!==id);
         else this.db.stock=this.db.stock.filter(s=>s.id!==id);
         await this.save();
@@ -1738,7 +1777,7 @@ const Engine = {
     // ── CLIENTES ──
     async addClientManual() {
         const name=document.getElementById('c-name').value.trim(), phone=document.getElementById('c-phone').value.trim();
-        if (!name||!phone) return alert('Completa nombre y teléfono');
+        if (!name||!phone) return Engine.toast('Completa nombre y teléfono.','error');
         const newClient={name,phone,lastSeen:new Date().toLocaleDateString('es-ES')};
         const exists=this.db.clients.findIndex(c=>c.name.toLowerCase()===name.toLowerCase());
         if (exists>-1) this.db.clients[exists]=newClient; else this.db.clients.unshift(newClient);
@@ -1746,7 +1785,7 @@ const Engine = {
         await this.save();
     },
 
-    async delClient(i) { if(confirm('¿Eliminar cliente?')){ this.db.clients.splice(i,1); await this.save(); } },
+    async delClient(i) { if(await Engine.confirm('Eliminar cliente', '¿Eliminar este cliente del directorio?')){ this.db.clients.splice(i,1); await this.save(); Engine.toast('Cliente eliminado.','info'); } },
 
     showHistorial(clientName) {
         const orders=this.db.orders.filter(o=>o.client.toLowerCase()===clientName.toLowerCase());
@@ -1759,12 +1798,12 @@ const Engine = {
 
     // ── CAJA ──
     async addMovimiento() {
-        if (!this.cajaAbierta) return alert('La caja está cerrada. Abre la caja antes de registrar movimientos.');
+        if (!this.cajaAbierta) return Engine.toast('La caja está cerrada. Abre para registrar movimientos.','error');
         const tipo=document.getElementById('mov-tipo').value;
         const desc=document.getElementById('mov-desc').value.trim();
         const amount=parseFloat(document.getElementById('mov-amount').value)||0;
         const metodo=document.getElementById('mov-metodo').value;
-        if (!desc||amount===0) return alert('Completa concepto y monto');
+        if (!desc||amount===0) return Engine.toast('Completa concepto y monto.','error');
         this.db.movimientos.unshift({ id:Date.now(), tipo, desc, amount, metodo, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
         document.getElementById('mov-desc').value='';
         document.getElementById('mov-amount').value='';
@@ -2115,7 +2154,7 @@ ${tc}`,
         const id=document.getElementById('wa-order-select').value;
         const type=document.getElementById('wa-msg-type').value;
         const order=this.db.orders.find(o=>o.id===id);
-        if (!order) return alert('Selecciona un ticket');
+        if (!order) return Engine.toast('Selecciona un ticket primero.','error');
         const msg=this.getWaMessage(order,type);
         const phone=(order.phone||'').replace(/[^0-9]/g,'');
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank');
@@ -2124,14 +2163,14 @@ ${tc}`,
     sendFreeWhatsApp() {
         const number=document.getElementById('wa-free-number').value.replace(/[^0-9]/g,'');
         const msg=document.getElementById('wa-free-msg').value.trim();
-        if (!number||!msg) return alert('Completa número y mensaje');
+        if (!number||!msg) return Engine.toast('Completa número y mensaje.','error');
         window.open(`https://wa.me/${number}?text=${encodeURIComponent(msg)}`,'_blank');
     },
 
     copyWaMsg() {
         const text=document.getElementById('wa-preview').innerText;
         if (!text||text.startsWith('Selecciona')) return;
-        navigator.clipboard.writeText(text).then(()=>alert('¡Mensaje copiado!'));
+        navigator.clipboard.writeText(text).then(()=>Engine.toast('Mensaje copiado al portapapeles.','success'));
     },
 
     // ══════════════════════════════
@@ -2342,7 +2381,8 @@ ${tc}`,
     },
 
     quickWa(id) {
-        go('whatsapp', document.querySelectorAll('.nav-item')[7]);
+        const waNav = document.querySelector('.nav-item[onclick*="whatsapp"]');
+        if (waNav) go('whatsapp', waNav);
         setTimeout(()=>{ document.getElementById('wa-order-select').value=id; Engine.updateWaPreview(); },100);
     },
 
@@ -2658,7 +2698,7 @@ ${tc}`,
     },
 
     async deletePosVenta(id) {
-        if (!confirm('¿Eliminar esta venta? El stock de los productos será restaurado.')) return;
+        if (!await Engine.confirm('Eliminar venta', '¿Eliminar esta venta? El stock de los productos será restaurado automáticamente.')) return;
         const venta = (this.db.ventas||[]).find(v => v.id === id);
         if (venta && venta.items) {
             venta.items.forEach(item => {
@@ -2675,7 +2715,7 @@ ${tc}`,
     exportPosCSV() {
         const filterDate = document.getElementById('pos-history-date')?.value || this.today();
         const ventas = (this.db.ventas||[]).filter(v => v.date === filterDate);
-        if (ventas.length === 0) return alert('No hay ventas para exportar en esta fecha.');
+        if (ventas.length === 0) return Engine.toast('No hay ventas para exportar en esta fecha.','info');
         const rows = [['ID','Fecha','Hora','Cliente','Productos','Metodo','Total']];
         ventas.forEach(v => rows.push([v.id, v.date, v.time, v.client,
             v.items.map(i=>`${i.name} x${i.qty}`).join(' | '), v.metodo, v.total.toFixed(2)]));
@@ -2690,7 +2730,7 @@ ${tc}`,
     exportPosPDF() {
         const filterDate = document.getElementById('pos-history-date')?.value || this.today();
         const ventas = (this.db.ventas||[]).filter(v => v.date === filterDate);
-        if (ventas.length === 0) return alert('No hay ventas para exportar en esta fecha.');
+        if (ventas.length === 0) return Engine.toast('No hay ventas para exportar en esta fecha.','info');
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
         const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
@@ -2786,9 +2826,9 @@ ${tc}`,
         const client = document.getElementById('credito-client').value.trim();
         const phone  = document.getElementById('credito-phone').value.trim();
         const fecha  = document.getElementById('credito-fecha').value;
-        if (!client) return alert('Ingresa el nombre del cliente.');
-        if (!phone)  return alert('Ingresa el teléfono del cliente.');
-        if (!fecha)  return alert('Selecciona la fecha de pago.');
+        if (!client) return Engine.toast('Ingresa el nombre del cliente.','error');
+        if (!phone)  return Engine.toast('Ingresa el teléfono del cliente.','error');
+        if (!fecha)  return Engine.toast('Selecciona la fecha de pago.','error');
 
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
         const now   = new Date();
@@ -2915,7 +2955,7 @@ ${tc}`,
         const idx = (this.db.deudores||[]).findIndex(d => d.id === id);
         if (idx === -1) return;
         const d = this.db.deudores[idx];
-        if (!confirm(`¿Marcar como cobrado el crédito de ${d.client} por ${this.formatMoney(d.total)}?`)) return;
+        if (!await Engine.confirm('Marcar como cobrado', `¿Registrar cobro de ${this.formatMoney(d.total)} de ${d.client}? Se registrará como ingreso en Caja.`)) return;
 
         this.db.deudores[idx].cobrado   = true;
         this.db.deudores[idx].cobradoEl = new Date().toISOString();
@@ -2936,7 +2976,7 @@ ${tc}`,
     },
 
     async deleteDeudor(id) {
-        if (!confirm('¿Eliminar este deudor? El stock no será restaurado.')) return;
+        if (!await Engine.confirm('Eliminar deudor', '¿Eliminar este deudor del historial? El stock no será restaurado.')) return;
         this.db.deudores = (this.db.deudores||[]).filter(d => d.id !== id);
         await this.save();
         this.renderDeudores();
@@ -2947,11 +2987,11 @@ ${tc}`,
     // ══════════════════════════════
 
     async cerrarCaja() {
-        if (!this.cajaAbierta) return alert('La caja ya está cerrada.');
+        if (!this.cajaAbierta) return Engine.toast('La caja ya está cerrada.','info');
         const { ingresos, egresos, balance } = this.getCajaHoy();
         const now = new Date();
         const confirmMsg = `¿Cerrar caja ahora?\n\nResumen del día:\n• Ingresos:  ${this.formatMoney(ingresos)}\n• Egresos:   ${this.formatMoney(egresos)}\n• Balance:   ${this.formatMoney(balance)}\n\nHora de cierre: ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}`;
-        if (!confirm(confirmMsg)) return;
+        if (!await Engine.confirm('Cerrar Caja', confirmMsg, 'CERRAR CAJA')) return;
 
         // Registrar cierre
         const cierre = {
@@ -2981,7 +3021,7 @@ ${tc}`,
     async abrirCaja() {
         if (this.cajaAbierta) return;
         const now = new Date();
-        if (!confirm(`¿Abrir caja a las ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}?`)) return;
+        if (!await Engine.confirm('Abrir Caja', `¿Abrir caja a las ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}?`, 'ABRIR CAJA')) return;
 
         // Guardar hora de apertura en el último cierre para referencia
         if (this.db.cierres && this.db.cierres.length > 0) {
@@ -3119,7 +3159,7 @@ ${tc}`,
     },
 
     async deleteAbono(orderId, abonoIdx) {
-        if (!confirm('¿Eliminar este abono? No se revertirá el movimiento de caja.')) return;
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? El movimiento de caja registrado no se revertirá.')) return;
         const idx = this.db.orders.findIndex(o=>o.id===orderId);
         if (idx===-1) return;
         this.db.orders[idx].abonos.splice(abonoIdx, 1);
@@ -3151,8 +3191,8 @@ ${tc}`,
         const notas   = document.getElementById('lib-notas').value.trim();
         const fechaEntrega = document.getElementById('lib-fecha-entrega').value;
 
-        if (!client||!model||!imei||!carrier) return alert('Completa: cliente, modelo, IMEI y compañía.');
-        if (anticipo > price && price > 0) return alert('El anticipo no puede superar el precio.');
+        if (!client||!model||!imei||!carrier) return Engine.toast('Completa: cliente, modelo, IMEI y compañía.','error');
+        if (anticipo > price && price > 0) return Engine.toast('El anticipo no puede superar el precio.','error');
 
         if (!this.db.liberaciones) this.db.liberaciones = [];
         const now = new Date();
@@ -3231,7 +3271,7 @@ ${tc}`,
     },
 
     async deleteLib(id) {
-        if (!confirm('¿Eliminar esta liberación?')) return;
+        if (!await Engine.confirm('Eliminar liberación', '¿Eliminar esta liberación? Esta acción no se puede deshacer.')) return;
         this.db.liberaciones = (this.db.liberaciones||[]).filter(l=>l.id!==id);
         await this.save();
     },
@@ -3353,7 +3393,7 @@ ${tc}`,
         const monto  = parseFloat(document.getElementById('abono-monto').value)||0;
         const metodo = document.getElementById('abono-metodo').value;
         const nota   = document.getElementById('abono-nota').value.trim();
-        if (monto <= 0) return alert('Ingresa un monto válido.');
+        if (monto <= 0) return Engine.toast('Ingresa un monto válido.','error');
 
         const isLib = rawId.startsWith('__LIB__');
         const id    = isLib ? rawId.replace('__LIB__','') : rawId;
@@ -3364,7 +3404,7 @@ ${tc}`,
             const l = this.db.liberaciones[idx];
             const totalAbonado = (l.abonos||[]).reduce((s,a)=>s+a.monto,0);
             const saldo = l.price - totalAbonado;
-            if (monto > saldo + 0.01) return alert(`El abono supera el saldo (${this.formatMoney(saldo)}).`);
+            if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.liberaciones[idx].abonos) this.db.liberaciones[idx].abonos = [];
             this.db.liberaciones[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
             this.db.movimientos.unshift({ id:Date.now()+1, tipo:'ingreso', desc:`Abono Liberacion ${id} — ${l.client}${nota?' ('+nota+')':''}`, amount:monto, metodo, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
@@ -3376,7 +3416,7 @@ ${tc}`,
             const o = this.db.orders[idx];
             const totalAbonado = (o.abonos||[]).reduce((s,a)=>s+a.monto,0);
             const saldo = o.price - totalAbonado;
-            if (monto > saldo + 0.01) return alert(`El abono supera el saldo (${this.formatMoney(saldo)}).`);
+            if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.orders[idx].abonos) this.db.orders[idx].abonos = [];
             this.db.orders[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
             this.db.movimientos.unshift({ id:Date.now()+1, tipo:'ingreso', desc:`Abono ${id} — ${o.client}${nota?' ('+nota+')':''}`, amount:monto, metodo, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
@@ -3386,7 +3426,7 @@ ${tc}`,
     },
 
     async deleteAbonoLib(libId, idx) {
-        if (!confirm('¿Eliminar este abono?')) return;
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono del historial?')) return;
         const lIdx = (this.db.liberaciones||[]).findIndex(l=>l.id===libId);
         if (lIdx===-1) return;
         this.db.liberaciones[lIdx].abonos.splice(idx,1);
@@ -3497,12 +3537,37 @@ ${contacto}`
     copyLibWa() {
         const text = document.getElementById('lib-wa-preview').innerText;
         if (!text) return;
-        navigator.clipboard.writeText(text).then(()=>alert('Mensaje copiado!'));
+        navigator.clipboard.writeText(text).then(()=>Engine.toast('Mensaje copiado.','success'));
     },
 
     // ══════════════════════════════
     //  LAB UX HELPERS
     // ══════════════════════════════
+    //  CONFIRM & TOAST UX
+    // ══════════════════════════════
+
+    _confirmResolve: null,
+    _confirmReject() {
+        document.getElementById('modal-confirm').style.display = 'none';
+        if (Engine._confirmResolve) { Engine._confirmResolve(false); Engine._confirmResolve = null; }
+    },
+
+    confirm(title, msg, okLabel='CONFIRMAR', danger=true) {
+        return new Promise(resolve => {
+            Engine._confirmResolve = resolve;
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-msg').innerText   = msg;
+            document.getElementById('confirm-ok-label').innerText = okLabel;
+            const btn = document.getElementById('confirm-ok-btn');
+            btn.className = 'btn-main ' + (danger ? 'danger' : '');
+            btn.onclick = () => {
+                document.getElementById('modal-confirm').style.display = 'none';
+                resolve(true); Engine._confirmResolve = null;
+            };
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            document.getElementById('modal-confirm').style.display = 'flex';
+        });
+    },
 
     toast(msg, type='info', duration=3200) {
         const icons = { success:'check-circle', error:'alert-circle', info:'info' };
@@ -3607,6 +3672,8 @@ function go(v, el) {
     document.getElementById('v-'+v).classList.add('active');
     el.classList.add('active');
     if(v==='reportes') setTimeout(()=>Engine.renderReportes(),50);
+    if(v==='lab')      setTimeout(()=>Engine.renderLab(),20);
+    if(v==='lib')      setTimeout(()=>Engine.renderLib(),20);
     if(typeof lucide !== 'undefined') lucide.createIcons();
     // Cerrar sidebar en móvil al navegar
     if (window.innerWidth <= 768) closeSidebar();

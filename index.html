@@ -555,23 +555,23 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .rep-tab.active { background:#fff; color:#000; border-color:#fff; }
 .rep-kpi-extra { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
 /* Calendario */
-.cal-wrap { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:24px; margin-bottom:24px; }
-.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
-.cal-title { font-size:16px; font-weight:800; color:#fff; }
-.cal-nav { display:flex; gap:8px; }
-.cal-nav-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:transparent;
-    color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; font-size:14px; }
+.cal-wrap { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:16px 18px; margin-bottom:24px; max-width:400px; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.cal-title { font-size:13px; font-weight:800; color:#fff; }
+.cal-nav { display:flex; gap:6px; }
+.cal-nav-btn { width:26px; height:26px; border-radius:7px; border:1px solid var(--border); background:transparent;
+    color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; font-size:13px; }
 .cal-nav-btn:hover { background:rgba(255,255,255,.06); color:#fff; }
-.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-.cal-dow { text-align:center; font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;
-    letter-spacing:.5px; padding:6px 0; }
-.cal-day { aspect-ratio:1; border-radius:9px; display:flex; flex-direction:column; align-items:center;
-    justify-content:center; cursor:pointer; transition:.2s; position:relative; font-size:12px; font-weight:600;
-    color:var(--text-dim); background:transparent; border:1px solid transparent; min-height:36px; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+.cal-dow { text-align:center; font-size:9px; font-weight:700; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:.3px; padding:4px 0; }
+.cal-day { aspect-ratio:1; border-radius:6px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; cursor:pointer; transition:.15s; position:relative; font-size:11px; font-weight:600;
+    color:var(--text-dim); background:transparent; border:1px solid transparent; min-height:28px; max-height:34px; }
 .cal-day:hover { background:rgba(255,255,255,.05); color:#fff; }
 .cal-day.empty { cursor:default; pointer-events:none; }
 .cal-day.has-activity { color:#fff; font-weight:800; }
-.cal-day.has-activity::after { content:''; position:absolute; bottom:4px; width:5px; height:5px;
+.cal-day.has-activity::after { content:''; position:absolute; bottom:2px; width:4px; height:4px;
     border-radius:50%; background:var(--accent); }
 .cal-day.has-activity.has-income::after { background:var(--success); }
 .cal-day.today { border-color:rgba(79,70,229,.5); color:var(--accent); font-weight:800; }
@@ -1322,7 +1322,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="cal-title" id="cal-month-label">—</div>
             <div class="cal-nav">
                 <button class="cal-nav-btn" onclick="Engine.calNav(-1)">‹</button>
-                <button class="cal-nav-btn" onclick="Engine.calToday()" style="font-size:11px;width:auto;padding:0 10px">HOY</button>
+                <button class="cal-nav-btn" onclick="Engine.calToday()" style="font-size:9px;width:auto;padding:0 8px;letter-spacing:.5px;font-weight:800">HOY</button>
                 <button class="cal-nav-btn" onclick="Engine.calNav(1)">›</button>
             </div>
         </div>

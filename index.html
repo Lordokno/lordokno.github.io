@@ -97,6 +97,7 @@ tr:hover td{background:rgba(255,255,255,.01);}
 .badge-urgente,.badge-urgent{background:rgba(239,68,68,.1);color:#ef4444;animation:blink 1s infinite;}
 .badge-entregado{background:rgba(129,140,248,.12);color:#818cf8;}
 @keyframes blink{0%{opacity:1;}50%{opacity:.3;}100%{opacity:1;}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 tr.status-listo td{color:#10b981!important;}
 tr.status-pendiente td{color:#f59e0b!important;}
 tr.status-urgente td{color:#ef4444!important;font-weight:700;}
@@ -438,6 +439,95 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .field-relative { position:relative; }
 .next-status-hint { font-size:10px; font-weight:700; color:var(--text-dim); margin-left:5px; opacity:.6; }
 
+/* ── LOGIN ── */
+#login-screen {
+    position:fixed; inset:0; z-index:9999;
+    background:var(--bg);
+    background-image:radial-gradient(circle at 20% 30%,rgba(79,70,229,.15) 0%,transparent 50%),
+                     radial-gradient(circle at 80% 70%,rgba(6,182,212,.08) 0%,transparent 50%);
+    display:flex; align-items:center; justify-content:center;
+    animation:fadein .4s ease;
+}
+#login-screen.hidden { display:none; }
+.login-box {
+    background:rgba(18,18,26,.85);
+    backdrop-filter:blur(24px);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:48px 44px;
+    width:100%; max-width:420px;
+    box-shadow:0 32px 80px rgba(0,0,0,.5);
+}
+.login-logo {
+    display:flex; align-items:center; gap:14px;
+    margin-bottom:36px;
+}
+.login-logo-icon {
+    width:48px; height:48px;
+    background:linear-gradient(135deg,var(--accent),#7c3aed);
+    border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 24px var(--accent-glow);
+}
+.login-logo-name { font-size:22px; font-weight:800; color:#fff; letter-spacing:-.5px; }
+.login-logo-sub  { font-size:11px; color:var(--text-dim); font-weight:600; margin-top:2px; }
+.login-title { font-size:26px; font-weight:800; color:#fff; margin-bottom:6px; letter-spacing:-.5px; }
+.login-subtitle { font-size:13px; color:var(--text-dim); margin-bottom:32px; font-weight:500; }
+.login-field { margin-bottom:18px; }
+.login-field label { display:block; font-size:11px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.login-field input {
+    width:100%; padding:14px 18px;
+    background:rgba(0,0,0,.3); border:1px solid var(--border);
+    border-radius:13px; color:#fff;
+    font-family:var(--font); font-size:14px; font-weight:500;
+    transition:.3s; outline:none;
+}
+.login-field input:focus { border-color:var(--accent); background:rgba(0,0,0,.5); box-shadow:0 0 0 3px rgba(79,70,229,.15); }
+.login-btn {
+    width:100%; padding:15px;
+    background:linear-gradient(135deg,var(--accent),#7c3aed);
+    border:none; border-radius:13px;
+    color:#fff; font-family:var(--font);
+    font-size:14px; font-weight:800;
+    cursor:pointer; transition:.25s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    margin-top:8px;
+    box-shadow:0 8px 24px rgba(79,70,229,.3);
+}
+.login-btn:hover { transform:translateY(-1px); box-shadow:0 12px 28px rgba(79,70,229,.4); }
+.login-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+.login-error { color:#ef4444; font-size:12px; font-weight:600; margin-top:10px; text-align:center; min-height:18px; }
+.login-user-bar {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 14px;
+    background:rgba(79,70,229,.08);
+    border:1px solid rgba(79,70,229,.2);
+    border-radius:11px;
+    font-size:12px; color:var(--text-dim); font-weight:600;
+    margin-top:12px;
+}
+.login-user-bar strong { color:#fff; }
+/* Bloqueo de caja — overlay sobre main */
+#caja-lock-banner {
+    display:none;
+    position:sticky; top:0; z-index:100;
+    background:rgba(239,68,68,.1);
+    border-bottom:1px solid rgba(239,68,68,.3);
+    padding:10px 24px;
+    color:#fca5a5; font-size:13px; font-weight:700;
+    text-align:center; backdrop-filter:blur(8px);
+}
+#caja-lock-banner.visible { display:block; }
+/* Status dropdown en tabla lab */
+.status-select {
+    background:transparent; border:none; color:inherit;
+    font-family:var(--font); font-size:10px; font-weight:800;
+    text-transform:uppercase; letter-spacing:.5px;
+    cursor:pointer; padding:0; outline:none;
+    -webkit-appearance:none; appearance:none;
+}
+.status-select option { background:#1a1a2e; color:#fff; font-size:12px; font-weight:600; text-transform:uppercase; }
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -637,6 +727,41 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 </head>
 <body>
 
+<!-- ══ PANTALLA DE LOGIN ══ -->
+<div id="login-screen">
+    <div class="login-box">
+        <div class="login-logo">
+            <div class="login-logo-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L21 8V16L12 21L3 16V8L12 3Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div>
+                <div class="login-logo-name">NEXTCOM</div>
+                <div class="login-logo-sub">Multiservicios</div>
+            </div>
+        </div>
+        <div class="login-title">Bienvenido</div>
+        <div class="login-subtitle">Ingresa tus credenciales para continuar</div>
+        <div class="login-field">
+            <label>Correo Electrónico</label>
+            <input type="email" id="login-email" placeholder="usuario@nextcom.com" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+        </div>
+        <div class="login-field">
+            <label>Contraseña</label>
+            <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')Engine.doLogin()">
+        </div>
+        <button class="login-btn" id="login-btn" onclick="Engine.doLogin()">
+            <i data-lucide="log-in" size="16"></i>
+            INGRESAR
+        </button>
+        <div class="login-error" id="login-error"></div>
+    </div>
+</div>
+
+<!-- ══ BANNER CAJA CERRADA ══ -->
+<div id="caja-lock-banner">
+    🔒 La caja está cerrada — No se pueden registrar operaciones. <span style="cursor:pointer;text-decoration:underline;margin-left:8px" onclick="go('caja',document.querySelector('.nav-item[onclick*=\'caja\']'))">Ir a Caja →</span>
+</div>
+
 <aside id="sidebar">
     <div class="brand">
         <div class="brand-icon"><i data-lucide="shield-check" color="white" size="18"></i></div>
@@ -675,6 +800,12 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <p id="clock" style="font-size:13px;font-weight:700;color:#fff;font-family:var(--mono);"></p>
         <p id="date-display" style="font-size:10px;color:var(--text-dim);font-weight:700;margin-top:3px;"></p>
         <p id="sync-status" style="font-size:10px;font-weight:700;margin-top:8px;color:#64748b;letter-spacing:.5px;">Iniciando...</p>
+        <div id="sidebar-user" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <p id="sidebar-user-email" style="font-size:10px;color:var(--text-dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p>
+            <button onclick="Engine.doLogout()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,.3)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">
+                <i data-lucide="log-out" size="12"></i> CERRAR SESIÓN
+            </button>
+        </div>
     </div>
 </aside>
 
@@ -854,7 +985,6 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <th class="sortable-th" onclick="Engine.sortLab('client')">Cliente <span class="sort-arrow" id="sort-client">↕</span></th>
                 <th>Dispositivo</th>
                 <th class="sortable-th" onclick="Engine.sortLab('price')">Presupuesto <span class="sort-arrow" id="sort-price">↕</span></th>
-                <th>Abonado</th>
                 <th>Garantía</th>
                 <th class="sortable-th" onclick="Engine.sortLab('status')">Estado <span class="sort-arrow" id="sort-status">↕</span></th>
                 <th class="sortable-th" onclick="Engine.sortLab('date')">Ingreso <span class="sort-arrow" id="sort-date">↕</span></th>
@@ -1420,9 +1550,10 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- MÓDULO FIREBASE: solo inicializa y expone helpers en window.__fb -->
 <script type="module">
-import { initializeApp }                          from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAnalytics }                           from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
-import { getFirestore, doc, setDoc, onSnapshot }  from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { initializeApp }                                                    from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAnalytics }                                                     from "https://www.gstatic.com/firebasejs/12.10.0/firebase-analytics.js";
+import { getFirestore, doc, setDoc, onSnapshot }                           from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
 const app    = initializeApp({
     apiKey:            "AIzaSyCPdvXiBKQxFmxNJdqov1CSbNe16WWIXm8",
@@ -1436,11 +1567,15 @@ const app    = initializeApp({
 getAnalytics(app);
 const db_fs  = getFirestore(app);
 const DB_DOC = doc(db_fs, 'nextcom', 'maindb');
+const auth   = getAuth(app);
 
 // Exponer al scope global para que el script normal lo use
 window.__fb = {
     save:       (data) => setDoc(DB_DOC, data),
-    subscribe:  (cb, errCb) => onSnapshot(DB_DOC, cb, errCb)
+    subscribe:  (cb, errCb) => onSnapshot(DB_DOC, cb, errCb),
+    login:      (email, pass) => signInWithEmailAndPassword(auth, email, pass),
+    logout:     () => signOut(auth),
+    onAuth:     (cb) => onAuthStateChanged(auth, cb)
 };
 
 // Avisar al Engine que Firebase ya está listo
@@ -1503,11 +1638,36 @@ const Engine = {
             );
         };
 
-        // Si Firebase ya cargó, usarlo directo; si no, esperar el evento
+        const initAuth = () => {
+            window.__fb.onAuth((user) => {
+                const loginScreen = document.getElementById('login-screen');
+                const sidebarUser = document.getElementById('sidebar-user');
+                const emailEl     = document.getElementById('sidebar-user-email');
+
+                if (user) {
+                    // Autenticado: ocultar login, mostrar app
+                    if (loginScreen) loginScreen.classList.add('hidden');
+                    if (sidebarUser) sidebarUser.style.display = 'block';
+                    if (emailEl)     emailEl.innerText = user.email;
+                    // Solo iniciar listener de datos si es la primera vez
+                    if (!Engine._listening) {
+                        Engine._listening = true;
+                        startListening();
+                    }
+                } else {
+                    // No autenticado: mostrar login
+                    if (loginScreen) loginScreen.classList.remove('hidden');
+                    if (sidebarUser) sidebarUser.style.display = 'none';
+                    setStatus('Sin sesión', '#64748b');
+                }
+            });
+        };
+
+        // Esperar Firebase si aún no está listo
         if (window.__fb) {
-            startListening();
+            initAuth();
         } else {
-            window.addEventListener('firebase-ready', startListening, { once: true });
+            window.addEventListener('firebase-ready', initAuth, { once: true });
         }
 
         setInterval(() => {
@@ -1615,6 +1775,7 @@ const Engine = {
 
     // ── LABORATORIO ──
     async processOrder() {
+        if (!this._cajaGuard('Registrar orden')) return;
         const saveHint = document.getElementById('lab-saving-hint');
         if (saveHint) saveHint.style.display = 'inline';
         const data = {
@@ -1710,7 +1871,22 @@ const Engine = {
         Engine.toast(`${o.id} → ${statusLabels[o.status]||o.status}`, statusTypes[o.status]||'info', 2000);
     },
 
+    async setOrderStatus(id, newStatus) {
+        if (!this._cajaGuard('Cambiar estado')) return;
+        const o = this.db.orders.find(x=>x.id===id);
+        if (!o || o.status === newStatus) return;
+        o.status = newStatus;
+        if (newStatus==='LISTO' && o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart=new Date().toISOString();
+        if (newStatus==='PENDIENTE') o.warrantyStart=null;
+        if (newStatus==='ENTREGADO' && !o.deliveredAt) o.deliveredAt=new Date().toISOString();
+        await this.save();
+        const labels = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo para entregar',ENTREGADO:'Entregado'};
+        const types  = {PENDIENTE:'info',URGENTE:'error',LISTO:'success',ENTREGADO:'info'};
+        Engine.toast(`${o.id} → ${labels[newStatus]}`, types[newStatus]||'info', 2000);
+    },
+
     async deleteItem(type,id) {
+        if (!this._cajaGuard('Eliminar registro')) return;
         if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
         if (type==='lab') this.db.orders=this.db.orders.filter(o=>o.id!==id);
         else this.db.stock=this.db.stock.filter(s=>s.id!==id);
@@ -1742,6 +1918,7 @@ const Engine = {
 
     // ── INVENTARIO ──
     async processInv() {
+        if (!this._cajaGuard('Modificar inventario')) return;
         const data = {
             name: document.getElementById('i-item').value.trim(),
             qty: parseInt(document.getElementById('i-qty').value)||0,
@@ -1775,6 +1952,7 @@ const Engine = {
 
     // ── CLIENTES ──
     async addClientManual() {
+        if (!this._cajaGuard('Agregar cliente')) return;
         const name=document.getElementById('c-name').value.trim(), phone=document.getElementById('c-phone').value.trim();
         if (!name||!phone) return Engine.toast('Completa nombre y teléfono.','error');
         const newClient={name,phone,lastSeen:new Date().toLocaleDateString('es-ES')};
@@ -2362,25 +2540,13 @@ ${tc}`,
             else if (!x.warrantyStart) wCell=`<span style="color:var(--text-dim);font-size:11px">⏳ ${x.warrantyDays}d</span>`;
             else { const color=this.getWarrantyBarColor(wi.statusKey); const label=wi.statusKey==='expired'?'VENCIDA':`${wi.daysRemaining}d`; wCell=`<div class="days-cell"><span style="color:${color};font-weight:700;font-size:12px">${label}</span><div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%;background:${color}"></div></div></div>`; }
 
-            const abonos = x.abonos || [];
-            const totalAbonado = abonos.reduce((s,a)=>s+a.monto,0);
-            const isEntregado = x.status==='ENTREGADO';
-            const saldo = isEntregado ? 0 : Math.max(0, x.price - totalAbonado);
-            const pct = isEntregado ? 100 : (x.price>0 ? Math.min(100,(totalAbonado/x.price)*100) : 0);
-            const pagoEstado = (saldo===0||isEntregado) ? 'pagado' : totalAbonado>0 ? 'parcial' : 'pendiente';
-            const pagoLabel  = (saldo===0||isEntregado) ? 'Pagado' : totalAbonado>0 ? 'Parcial' : 'Pendiente';
-            // Abonado cell: amount + status badge + mini progress bar
-            const abonadoCell = `<div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--success)">${isEntregado?this.formatMoney(x.price):this.formatMoney(totalAbonado)}</span>
-                    <span class="anticipo-badge ${pagoEstado}">${pagoLabel}</span>
-                </div>
-                <div class="saldo-bar-wrap"><div class="saldo-bar-fill" style="width:${pct}%;background:${pct===100?'var(--success)':'#f59e0b'}"></div></div>
-            </div>`;
 
             const dateStr = x.createdAt ? new Date(x.createdAt).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '—';
-            const hint = nextStatusLabel[x.status] || '';
             const hasDetail = x.fail && x.fail.length > 0;
+
+            // Status colors for select styling
+            const statusColors = {URGENTE:'#ef4444',PENDIENTE:'#f59e0b',LISTO:'#10b981',ENTREGADO:'#818cf8'};
+            const selColor = statusColors[x.status] || '#64748b';
 
             return `<tr class="status-${sc}" id="row-${x.id}">
                 <td style="font-family:var(--mono);font-weight:700;font-size:12px">
@@ -2389,11 +2555,17 @@ ${tc}`,
                 <td style="font-weight:700">${x.client}<div style="font-size:11px;color:var(--text-dim);font-weight:500;font-family:var(--mono)">${x.phone||''}</div></td>
                 <td>${x.model}</td>
                 <td style="font-weight:800">${this.formatMoney(x.price)}</td>
-                <td>${abonadoCell}</td>
                 <td>${wCell}</td>
                 <td>
-                    <span onclick="Engine.toggleStatusLab('${x.id}')" style="cursor:pointer" class="badge badge-${sc}" title="${hint}">${x.status}</span>
-                    <div class="next-status-hint">${hint}</div>
+                    <div style="background:${selColor}18;border:1px solid ${selColor}44;border-radius:8px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px">
+                        <span style="width:6px;height:6px;border-radius:50%;background:${selColor};flex-shrink:0${x.status==='URGENTE'?';animation:blink 1s infinite':''}"></span>
+                        <select class="status-select" style="color:${selColor}" onchange="Engine.setOrderStatus('${x.id}',this.value)">
+                            <option value="PENDIENTE"${x.status==='PENDIENTE'?' selected':''}>PENDIENTE</option>
+                            <option value="URGENTE"${x.status==='URGENTE'?' selected':''}>URGENTE</option>
+                            <option value="LISTO"${x.status==='LISTO'?' selected':''}>LISTO</option>
+                            <option value="ENTREGADO"${x.status==='ENTREGADO'?' selected':''}>ENTREGADO</option>
+                        </select>
+                    </div>
                 </td>
                 <td style="color:var(--text-dim);font-size:12px;white-space:nowrap">${dateStr}</td>
                 <td><div style="display:flex;gap:4px">
@@ -2404,7 +2576,7 @@ ${tc}`,
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deleteItem('lab','${x.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>
-            ${hasDetail ? `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content"><strong>Diagnóstico:</strong> ${x.fail}${x.pin?` &nbsp;·&nbsp; <strong>PIN:</strong> ${x.pin}`:''}</div></td></tr>` : ''}`;
+            ${hasDetail ? `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="8"><div class="expand-content"><strong>Diagnóstico:</strong> ${x.fail}${x.pin?` &nbsp;·&nbsp; <strong>PIN:</strong> ${x.pin}`:''}</div></td></tr>` : ''}`;
         }).join('');
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
@@ -2609,6 +2781,7 @@ ${tc}`,
     },
 
     async posCheckout() {
+        if (!this._cajaGuard('Cobrar venta')) return;
         if (this.cart.length === 0) return;
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
         const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
@@ -2827,6 +3000,7 @@ ${tc}`,
     // ══════════════════════════════
 
     posCreditCheckout() {
+        if (!this._cajaGuard('Venta al crédito')) return;
         if (this.cart.length === 0) return;
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
         const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
@@ -2852,6 +3026,7 @@ ${tc}`,
     },
 
     async confirmarCredito() {
+        if (!this._cajaGuard('Registrar crédito')) return;
         const client = document.getElementById('credito-client').value.trim();
         const phone  = document.getElementById('credito-phone').value.trim();
         const fecha  = document.getElementById('credito-fecha').value;
@@ -2981,6 +3156,7 @@ ${tc}`,
     },
 
     async cobrarDeudor(id) {
+        if (!this._cajaGuard('Cobrar deudor')) return;
         const idx = (this.db.deudores||[]).findIndex(d => d.id === id);
         if (idx === -1) return;
         const d = this.db.deudores[idx];
@@ -3069,6 +3245,7 @@ ${tc}`,
         const btnAbrir = document.getElementById('btn-abrir-caja');
         const btnCerrar= document.getElementById('btn-cerrar-caja');
         const panel    = document.querySelector('#v-caja .smart-panel');
+        const lockBanner = document.getElementById('caja-lock-banner');
         if (!banner) return;
 
         const now = new Date();
@@ -3078,10 +3255,10 @@ ${tc}`,
             sub.innerText    = `Desde el ${now.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'})} — registra tus movimientos del día.`;
             if (btnAbrir)  btnAbrir.style.display  = 'none';
             if (btnCerrar) btnCerrar.style.display = '';
-            if (panel) panel.style.opacity = '1'; if (panel) panel.style.pointerEvents = '';
+            if (panel) { panel.style.opacity = '1'; panel.style.pointerEvents = ''; }
+            if (lockBanner) lockBanner.classList.remove('visible');
         } else {
             banner.className = 'caja-estado-banner cerrada';
-            // Last cierre info
             const ultimo = this.db.cierres && this.db.cierres[0];
             title.innerText = 'Caja Cerrada';
             sub.innerText   = ultimo
@@ -3089,7 +3266,8 @@ ${tc}`,
                 : 'La caja está cerrada. Abre para registrar movimientos.';
             if (btnAbrir)  btnAbrir.style.display  = '';
             if (btnCerrar) btnCerrar.style.display = 'none';
-            if (panel) panel.style.opacity = '.45'; if (panel) panel.style.pointerEvents = 'none';
+            if (panel) { panel.style.opacity = '.45'; panel.style.pointerEvents = 'none'; }
+            if (lockBanner) lockBanner.classList.add('visible');
         }
     },
 
@@ -3209,6 +3387,7 @@ ${tc}`,
     },
 
     async processLib() {
+        if (!this._cajaGuard('Registrar liberación')) return;
         const client  = document.getElementById('lib-client').value.trim();
         const phone   = document.getElementById('lib-phone').value.trim();
         const model   = document.getElementById('lib-model').value.trim();
@@ -3424,6 +3603,7 @@ ${tc}`,
     },
 
     async guardarAbono() {
+        if (!this._cajaGuard('Registrar abono')) return;
         const rawId  = document.getElementById('abono-order-id').value;
         const monto  = parseFloat(document.getElementById('abono-monto').value)||0;
         const metodo = document.getElementById('abono-metodo').value;
@@ -3585,6 +3765,49 @@ ${contacto}`
     _confirmReject() {
         document.getElementById('modal-confirm').style.display = 'none';
         if (Engine._confirmResolve) { Engine._confirmResolve(false); Engine._confirmResolve = null; }
+    },
+
+    // ── AUTH ──
+    _listening: false,
+
+    async doLogin() {
+        const email = document.getElementById('login-email')?.value.trim();
+        const pass  = document.getElementById('login-pass')?.value;
+        const errEl = document.getElementById('login-error');
+        const btn   = document.getElementById('login-btn');
+        if (!email || !pass) { if(errEl) errEl.innerText='Ingresa correo y contraseña.'; return; }
+        if (btn) { btn.disabled=true; btn.innerHTML='<i data-lucide="loader" size="16" style="animation:spin 1s linear infinite"></i> Ingresando...'; if(typeof lucide!=='undefined') lucide.createIcons(); }
+        try {
+            await window.__fb.login(email, pass);
+            if (errEl) errEl.innerText = '';
+        } catch(e) {
+            const msgs = {
+                'auth/invalid-credential':   'Correo o contraseña incorrectos.',
+                'auth/user-not-found':        'Usuario no encontrado.',
+                'auth/wrong-password':        'Contraseña incorrecta.',
+                'auth/too-many-requests':     'Demasiados intentos. Espera unos minutos.',
+                'auth/invalid-email':         'Formato de correo inválido.',
+                'auth/network-request-failed':'Sin conexión a internet.'
+            };
+            if (errEl) errEl.innerText = msgs[e.code] || `Error: ${e.code}`;
+        } finally {
+            if (btn) { btn.disabled=false; btn.innerHTML='<i data-lucide="log-in" size="16"></i> INGRESAR'; if(typeof lucide!=='undefined') lucide.createIcons(); }
+        }
+    },
+
+    async doLogout() {
+        if (!await Engine.confirm('Cerrar Sesión', '¿Deseas cerrar tu sesión en NEXTCOM?', 'CERRAR SESIÓN', false)) return;
+        await window.__fb.logout();
+        Engine._listening = false;
+        Engine.toast('Sesión cerrada.', 'info');
+    },
+
+    _cajaGuard(operacion='Esta operación') {
+        if (!this.cajaAbierta) {
+            Engine.toast(`${operacion} requiere la caja abierta.`, 'error');
+            return false;
+        }
+        return true;
     },
 
     confirm(title, msg, okLabel='CONFIRMAR', danger=true) {

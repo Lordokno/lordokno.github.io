@@ -547,6 +547,55 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 }
 .status-select option { background:#1a1a2e; color:#fff; font-size:12px; font-weight:600; text-transform:uppercase; }
 
+/* REPORTES */
+.rep-period-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+.rep-tab { padding:9px 20px; border-radius:11px; border:1px solid var(--border); background:transparent;
+    color:var(--text-dim); font-size:12px; font-weight:700; cursor:pointer; transition:.2s; text-transform:uppercase; letter-spacing:.5px; }
+.rep-tab:hover { color:#fff; border-color:rgba(255,255,255,.15); }
+.rep-tab.active { background:#fff; color:#000; border-color:#fff; }
+.rep-kpi-extra { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+/* Calendario */
+.cal-wrap { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:24px; margin-bottom:24px; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.cal-title { font-size:16px; font-weight:800; color:#fff; }
+.cal-nav { display:flex; gap:8px; }
+.cal-nav-btn { width:32px; height:32px; border-radius:9px; border:1px solid var(--border); background:transparent;
+    color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; font-size:14px; }
+.cal-nav-btn:hover { background:rgba(255,255,255,.06); color:#fff; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-dow { text-align:center; font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:.5px; padding:6px 0; }
+.cal-day { aspect-ratio:1; border-radius:9px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; cursor:pointer; transition:.2s; position:relative; font-size:12px; font-weight:600;
+    color:var(--text-dim); background:transparent; border:1px solid transparent; min-height:36px; }
+.cal-day:hover { background:rgba(255,255,255,.05); color:#fff; }
+.cal-day.empty { cursor:default; pointer-events:none; }
+.cal-day.has-activity { color:#fff; font-weight:800; }
+.cal-day.has-activity::after { content:''; position:absolute; bottom:4px; width:5px; height:5px;
+    border-radius:50%; background:var(--accent); }
+.cal-day.has-activity.has-income::after { background:var(--success); }
+.cal-day.today { border-color:rgba(79,70,229,.5); color:var(--accent); font-weight:800; }
+.cal-day.selected { background:var(--accent); color:#fff; border-color:var(--accent); }
+.cal-day.selected::after { background:#fff; }
+.cal-day.other-month { opacity:.25; }
+/* Day detail panel */
+.day-detail { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx);
+    padding:24px; margin-bottom:24px; animation:slideFade .3s ease; }
+.day-detail-title { font-size:16px; font-weight:800; color:#fff; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.day-section { margin-bottom:18px; }
+.day-section-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px;
+    color:var(--text-dim); margin-bottom:8px; }
+.day-row { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px;
+    background:rgba(255,255,255,.02); border:1px solid var(--border); margin-bottom:6px; font-size:13px; }
+.day-row-label { flex:1; color:var(--text-dim); }
+.day-row-val { font-weight:700; font-family:var(--mono); color:#fff; }
+/* Period summary */
+.period-summary { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:24px; margin-bottom:24px; }
+.period-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.pkpi { background:rgba(0,0,0,.2); border-radius:12px; padding:16px; }
+.pkpi-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); margin-bottom:6px; }
+.pkpi-value { font-size:24px; font-weight:800; font-family:var(--mono); }
+
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -1214,17 +1263,44 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= REPORTES ======= -->
 <section id="v-reportes" class="view">
-    <div class="view-title"><h1>Reportes & Analítica</h1><p>Estadísticas de rendimiento del taller.</p></div>
-    <!-- KPIs -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="view-title"><h1>Reportes & Analítica</h1><p>Estadísticas completas del taller.</p></div>
+
+    <!-- Tabs de período -->
+    <div class="rep-period-tabs">
+        <button class="rep-tab active" onclick="Engine.setRepPeriod('all',this)">General</button>
+        <button class="rep-tab" onclick="Engine.setRepPeriod('week',this)">Esta Semana</button>
+        <button class="rep-tab" onclick="Engine.setRepPeriod('month',this)">Este Mes</button>
+        <button class="rep-tab" onclick="Engine.setRepPeriod('year',this)">Este Año</button>
+    </div>
+
+    <!-- KPIs principales -->
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
         <div class="stat-card"><div class="label">Total Órdenes <i data-lucide="clipboard-list" class="stat-icon" style="color:var(--accent)"></i></div><div class="value" id="r-total">0</div></div>
         <div class="stat-card"><div class="label" style="color:var(--success)">Completadas <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div><div class="value" id="r-done" style="color:var(--success)">0</div></div>
         <div class="stat-card"><div class="label" style="color:var(--cash)">Ticket Promedio <i data-lucide="trending-up" class="stat-icon" style="color:var(--cash)"></i></div><div class="value" id="r-avg" style="color:var(--cash)">$0</div></div>
         <div class="stat-card"><div class="label" style="color:var(--warranty)">Total Clientes <i data-lucide="users" class="stat-icon" style="color:var(--warranty)"></i></div><div class="value" id="r-clients" style="color:var(--warranty)">0</div></div>
     </div>
+
+    <!-- KPIs secundarios -->
+    <div class="rep-kpi-extra">
+        <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+            <div class="label" style="color:var(--success)">Ingresos del Período <i data-lucide="arrow-down-circle" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="r-ingresos" style="color:var(--success)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(239,68,68,.2)">
+            <div class="label" style="color:var(--danger)">Egresos del Período <i data-lucide="arrow-up-circle" class="stat-icon" style="color:var(--danger)"></i></div>
+            <div class="value" id="r-egresos" style="color:var(--danger)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
+            <div class="label" style="color:#818cf8">Balance Neto <i data-lucide="scale" class="stat-icon" style="color:#818cf8"></i></div>
+            <div class="value" id="r-balance" style="color:#818cf8">$0</div>
+        </div>
+    </div>
+
+    <!-- Gráficas -->
     <div class="charts-grid">
         <div class="chart-box">
-            <div class="chart-title">Ingresos vs Egresos — Últimos 7 días</div>
+            <div class="chart-title" id="chart-caja-title">Ingresos vs Egresos</div>
             <div class="chart-container"><canvas id="chart-caja"></canvas></div>
         </div>
         <div class="chart-box">
@@ -1239,7 +1315,34 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
     </div>
 
-    <!-- Historial de Cierres de Caja -->
+    <!-- Calendario de actividad -->
+    <div class="section-divider">Calendario de Actividad</div>
+    <div class="cal-wrap">
+        <div class="cal-header">
+            <div class="cal-title" id="cal-month-label">—</div>
+            <div class="cal-nav">
+                <button class="cal-nav-btn" onclick="Engine.calNav(-1)">‹</button>
+                <button class="cal-nav-btn" onclick="Engine.calToday()" style="font-size:11px;width:auto;padding:0 10px">HOY</button>
+                <button class="cal-nav-btn" onclick="Engine.calNav(1)">›</button>
+            </div>
+        </div>
+        <div class="cal-grid">
+            <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div><div class="cal-dow">Mar</div>
+            <div class="cal-dow">Mié</div><div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div>
+        </div>
+        <div class="cal-grid" id="cal-days"></div>
+    </div>
+
+    <!-- Detalle del día seleccionado -->
+    <div class="day-detail" id="day-detail" style="display:none">
+        <div class="day-detail-title">
+            <i data-lucide="calendar" size="18" style="color:var(--accent)"></i>
+            <span id="day-detail-title">—</span>
+        </div>
+        <div id="day-detail-content"></div>
+    </div>
+
+    <!-- Cierres de caja -->
     <div class="section-divider">Historial de Cierres de Caja</div>
     <div id="cierres-list" style="margin-bottom:32px">
         <div style="color:var(--text-dim);font-size:13px;padding:20px 0">Sin cierres registrados aún.</div>
@@ -2707,44 +2810,282 @@ ${tc}`,
         sel.value=cur;
     },
 
+    setRepPeriod(period, btn) {
+        this._repPeriod = period;
+        document.querySelectorAll('.rep-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        this.renderReportes();
+    },
+
+    _getPeriodDates() {
+        const now = new Date();
+        if (this._repPeriod === 'week') {
+            const d = new Date(now); d.setDate(d.getDate() - d.getDay());
+            const start = d.toISOString().split('T')[0];
+            const end = this.today();
+            return { start, end, label: 'Esta Semana', days: 7 };
+        } else if (this._repPeriod === 'month') {
+            const start = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+            return { start, end: this.today(), label: 'Este Mes', days: now.getDate() };
+        } else if (this._repPeriod === 'year') {
+            const start = `${now.getFullYear()}-01-01`;
+            return { start, end: this.today(), label: String(now.getFullYear()), days: 365 };
+        }
+        return { start: null, end: null, label: 'General', days: null };
+    },
+
     renderReportes() {
-        const o=this.db.orders;
-        document.getElementById('r-total').innerText=o.length;
-        document.getElementById('r-done').innerText=o.filter(x=>x.status==='LISTO'||x.status==='ENTREGADO').length;
-        const avg=o.length>0?o.reduce((a,b)=>a+b.price,0)/o.length:0;
-        document.getElementById('r-avg').innerText=this.formatMoney(avg);
-        document.getElementById('r-clients').innerText=this.db.clients.length;
+        const pd = this._getPeriodDates();
 
-        // Chart: Caja últimos 7 días
-        const days=7; const labels=[],ingressData=[],egressData=[];
-        for(let i=days-1;i>=0;i--){
-            const d=new Date(); d.setDate(d.getDate()-i);
-            const key=d.toISOString().split('T')[0];
-            labels.push(d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'}));
-            const movs=this.db.movimientos.filter(m=>m.date===key);
-            ingressData.push(movs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0));
-            egressData.push(movs.filter(m=>m.tipo==='egreso').reduce((a,b)=>a+b.amount,0));
+        // Filter orders by period
+        const allOrders = this.db.orders;
+        const o = pd.start ? allOrders.filter(x => {
+            const d = (x.createdAt||'').split('T')[0];
+            return d >= pd.start && d <= pd.end;
+        }) : allOrders;
+
+        // Filter movimientos by period
+        const allMovs = this.db.movimientos || [];
+        const movs = pd.start ? allMovs.filter(m => m.date >= pd.start && m.date <= pd.end) : allMovs;
+        const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);
+        const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((a,b)=>a+b.amount,0);
+        const balance  = ingresos - egresos;
+
+        // KPIs
+        const elR = id => document.getElementById(id);
+        if(elR('r-total'))    elR('r-total').innerText    = o.length;
+        if(elR('r-done'))     elR('r-done').innerText     = o.filter(x=>x.status==='LISTO'||x.status==='ENTREGADO').length;
+        const avg = o.length>0 ? o.reduce((a,b)=>a+b.price,0)/o.length : 0;
+        if(elR('r-avg'))      elR('r-avg').innerText      = this.formatMoney(avg);
+        if(elR('r-clients'))  elR('r-clients').innerText  = this.db.clients.length;
+        if(elR('r-ingresos')) elR('r-ingresos').innerText = this.formatMoney(ingresos);
+        if(elR('r-egresos'))  elR('r-egresos').innerText  = this.formatMoney(egresos);
+        const balEl = elR('r-balance');
+        if(balEl){ balEl.innerText = this.formatMoney(balance); balEl.style.color = balance>=0?'#818cf8':'var(--danger)'; }
+
+        // Chart: Ingresos vs Egresos (adaptado al período)
+        let chartDays = pd.days || 30;
+        if (chartDays > 365) chartDays = 12; // yearly = months
+        const chartLabels=[], chartIn=[], chartOut=[];
+        const isYear = this._repPeriod==='year';
+
+        if (isYear) {
+            for(let m=0;m<12;m++){
+                const yr=new Date().getFullYear();
+                const key=`${yr}-${String(m+1).padStart(2,'0')}`;
+                chartLabels.push(new Date(yr,m,1).toLocaleDateString('es-ES',{month:'short'}));
+                const mm=allMovs.filter(mv=>mv.date.startsWith(key));
+                chartIn.push(mm.filter(mv=>mv.tipo==='ingreso').reduce((a,b)=>a+b.amount,0));
+                chartOut.push(mm.filter(mv=>mv.tipo==='egreso').reduce((a,b)=>a+b.amount,0));
+            }
+        } else {
+            const days = this._repPeriod==='week'?7:this._repPeriod==='month'?new Date().getDate():30;
+            for(let i=days-1;i>=0;i--){
+                const d=new Date(); d.setDate(d.getDate()-i);
+                const key=d.toISOString().split('T')[0];
+                chartLabels.push(d.toLocaleDateString('es-ES',{weekday:'short',day:'numeric'}));
+                const dm=allMovs.filter(mv=>mv.date===key);
+                chartIn.push(dm.filter(mv=>mv.tipo==='ingreso').reduce((a,b)=>a+b.amount,0));
+                chartOut.push(dm.filter(mv=>mv.tipo==='egreso').reduce((a,b)=>a+b.amount,0));
+            }
         }
+
+        const titleEl = elR('chart-caja-title');
+        if(titleEl) titleEl.innerText = `Ingresos vs Egresos — ${pd.label}`;
+
         if (this.charts.caja) this.charts.caja.destroy();
-        const ctxCaja=document.getElementById('chart-caja');
-        if(ctxCaja){
-            this.charts.caja=new Chart(ctxCaja,{type:'bar',data:{labels,datasets:[{label:'Ingresos',data:ingressData,backgroundColor:'rgba(16,185,129,.6)',borderColor:'#10b981',borderWidth:2,borderRadius:8},{label:'Egresos',data:egressData,backgroundColor:'rgba(239,68,68,.4)',borderColor:'#ef4444',borderWidth:2,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{family:"'Plus Jakarta Sans'",size:11}}}},scales:{x:{ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#64748b',callback:v=>'$'+v},grid:{color:'rgba(255,255,255,.04)'}}}}}); 
-        }
+        const ctxCaja=elR('chart-caja');
+        if(ctxCaja) this.charts.caja=new Chart(ctxCaja,{type:'bar',data:{labels:chartLabels,datasets:[{label:'Ingresos',data:chartIn,backgroundColor:'rgba(16,185,129,.6)',borderColor:'#10b981',borderWidth:2,borderRadius:8},{label:'Egresos',data:chartOut,backgroundColor:'rgba(239,68,68,.4)',borderColor:'#ef4444',borderWidth:2,borderRadius:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{family:"'Plus Jakarta Sans'",size:11}}}},scales:{x:{ticks:{color:'#64748b',maxTicksLimit:12},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#64748b',callback:v=>'$'+v},grid:{color:'rgba(255,255,255,.04)'}}}}});
 
-        // Top dispositivos
+        // Top dispositivos (todos los tiempos)
         const devCount={};
-        o.forEach(x=>{ const k=x.model.split(' ').slice(0,2).join(' '); devCount[k]=(devCount[k]||0)+1; });
+        allOrders.forEach(x=>{ const k=x.model.split(' ').slice(0,2).join(' '); devCount[k]=(devCount[k]||0)+1; });
         const sorted=Object.entries(devCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
         const maxVal=sorted[0]?sorted[0][1]:1;
-        const topEl=document.getElementById('top-devices');
+        const topEl=elR('top-devices');
         if(topEl) topEl.innerHTML=sorted.length===0?`<div style="color:var(--text-dim);font-size:13px;padding:20px 0">Sin datos aún</div>`:sorted.map(([name,cnt],i)=>`<div class="top-item"><span class="top-rank">${i+1}</span><span style="font-size:13px;font-weight:600;flex:2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span><div class="top-bar-wrap"><div class="top-bar-fill" style="width:${(cnt/maxVal)*100}%"></div></div><span class="top-count">${cnt}</span></div>`).join('');
 
-        // Chart: Estado
-        const statuses={PENDIENTE:o.filter(x=>x.status==='PENDIENTE').length,URGENTE:o.filter(x=>x.status==='URGENTE').length,LISTO:o.filter(x=>x.status==='LISTO').length,ENTREGADO:o.filter(x=>x.status==='ENTREGADO').length};
-        if(this.charts.status) this.charts.status.destroy();
-        const ctxS=document.getElementById('chart-status');
+        // Chart: Estado (todos los tiempos)
+        const statuses={PENDIENTE:allOrders.filter(x=>x.status==='PENDIENTE').length,URGENTE:allOrders.filter(x=>x.status==='URGENTE').length,LISTO:allOrders.filter(x=>x.status==='LISTO').length,ENTREGADO:allOrders.filter(x=>x.status==='ENTREGADO').length};
+        if (this.charts.status) this.charts.status.destroy();
+        const ctxS=elR('chart-status');
         if(ctxS) this.charts.status=new Chart(ctxS,{type:'doughnut',data:{labels:['Pendiente','Urgente','Listo','Entregado'],datasets:[{data:Object.values(statuses),backgroundColor:['rgba(245,158,11,.7)','rgba(239,68,68,.7)','rgba(16,185,129,.7)','rgba(129,140,248,.7)'],borderColor:['#f59e0b','#ef4444','#10b981','#818cf8'],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{family:"'Plus Jakarta Sans'",size:11}}}},cutout:'65%'}});
+
+        this.renderCalendar();
         this.renderCierres();
+    },
+
+    // ── CALENDARIO ──
+    renderCalendar() {
+        const yr = this._calYear, mo = this._calMonth;
+        const monthLabel = new Date(yr, mo, 1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
+        const el = document.getElementById('cal-month-label');
+        if (el) el.innerText = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+
+        // Build activity map: date → { hasMovs, hasOrders, hasVentas, totalIngresos }
+        const actMap = {};
+        const markDay = (date, type, amount=0) => {
+            if (!actMap[date]) actMap[date] = { count:0, ingresos:0, hasMovs:false, hasOrders:false, hasVentas:false };
+            actMap[date].count++;
+            actMap[date].ingresos += amount;
+            actMap[date][type] = true;
+        };
+        (this.db.movimientos||[]).forEach(m => markDay(m.date, 'hasMovs', m.tipo==='ingreso'?m.amount:0));
+        (this.db.orders||[]).forEach(o => { if(o.createdAt) markDay(o.createdAt.split('T')[0], 'hasOrders'); });
+        (this.db.ventas||[]).forEach(v => markDay(v.date, 'hasVentas', v.total));
+        (this.db.liberaciones||[]).forEach(l => { if(l.createdAt) markDay(l.createdAt.split('T')[0], 'hasOrders'); });
+
+        const today = this.today();
+        const firstDay = new Date(yr, mo, 1).getDay();
+        const daysInMonth = new Date(yr, mo+1, 0).getDate();
+
+        let html = '';
+        // Empty cells before first day
+        for(let i=0; i<firstDay; i++) html += `<div class="cal-day empty"></div>`;
+        // Day cells
+        for(let d=1; d<=daysInMonth; d++) {
+            const dateStr = `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const act = actMap[dateStr];
+            const isToday = dateStr === today;
+            const isSelected = dateStr === this._calSelectedDay;
+            let cls = 'cal-day';
+            if (act) { cls += ' has-activity'; if(act.ingresos>0) cls += ' has-income'; }
+            if (isToday) cls += ' today';
+            if (isSelected) cls += ' selected';
+            const title = act ? `${act.count} actividad(es)` : '';
+            html += `<div class="${cls}" onclick="Engine.calSelectDay('${dateStr}')" title="${title}">${d}</div>`;
+        }
+
+        const grid = document.getElementById('cal-days');
+        if (grid) grid.innerHTML = html;
+    },
+
+    calNav(dir) {
+        this._calMonth += dir;
+        if (this._calMonth > 11) { this._calMonth = 0; this._calYear++; }
+        if (this._calMonth < 0)  { this._calMonth = 11; this._calYear--; }
+        this.renderCalendar();
+    },
+
+    calToday() {
+        this._calYear = new Date().getFullYear();
+        this._calMonth = new Date().getMonth();
+        this.renderCalendar();
+        this.calSelectDay(this.today());
+    },
+
+    calSelectDay(dateStr) {
+        this._calSelectedDay = dateStr;
+        this.renderCalendar();
+        this.renderDayDetail(dateStr);
+    },
+
+    renderDayDetail(dateStr) {
+        const panel = document.getElementById('day-detail');
+        const content = document.getElementById('day-detail-content');
+        const titleEl = document.getElementById('day-detail-title');
+        if (!panel || !content) return;
+
+        const fecha = new Date(dateStr+'T00:00:00');
+        const label = fecha.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        if (titleEl) titleEl.innerText = label.charAt(0).toUpperCase() + label.slice(1);
+
+        const movs    = (this.db.movimientos||[]).filter(m=>m.date===dateStr);
+        const orders  = (this.db.orders||[]).filter(o=>(o.createdAt||'').startsWith(dateStr));
+        const ventas  = (this.db.ventas||[]).filter(v=>v.date===dateStr);
+        const libs    = (this.db.liberaciones||[]).filter(l=>(l.createdAt||'').startsWith(dateStr));
+        const entregados = (this.db.orders||[]).filter(o=>o.status==='ENTREGADO'&&(o.deliveredAt||'').startsWith(dateStr));
+
+        const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);
+        const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((a,b)=>a+b.amount,0);
+
+        let html = '';
+
+        // Resumen del día
+        html += `<div class="day-section">
+            <div class="day-section-label">Resumen del día</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:4px">
+                <div class="pkpi"><div class="pkpi-label">Ingresos</div><div class="pkpi-value" style="color:var(--success)">${this.formatMoney(ingresos)}</div></div>
+                <div class="pkpi"><div class="pkpi-label">Egresos</div><div class="pkpi-value" style="color:var(--danger)">${this.formatMoney(egresos)}</div></div>
+                <div class="pkpi"><div class="pkpi-label">Balance</div><div class="pkpi-value" style="color:${ingresos-egresos>=0?'#818cf8':'var(--danger)'}">${this.formatMoney(ingresos-egresos)}</div></div>
+                <div class="pkpi"><div class="pkpi-label">Actividades</div><div class="pkpi-value" style="color:var(--accent)">${movs.length+orders.length+ventas.length}</div></div>
+            </div>
+        </div>`;
+
+        // Movimientos de caja
+        if (movs.length > 0) {
+            html += `<div class="day-section"><div class="day-section-label">Movimientos de Caja (${movs.length})</div>`;
+            movs.forEach(m => {
+                html += `<div class="day-row">
+                    <span style="font-size:11px;color:var(--text-dim);font-family:var(--mono);min-width:40px">${m.time}</span>
+                    <span class="badge" style="background:${m.tipo==='ingreso'?'rgba(16,185,129,.1)':'rgba(239,68,68,.1)'};color:${m.tipo==='ingreso'?'#10b981':'#ef4444'};font-size:9px">${m.tipo==='ingreso'?'IN':'OUT'}</span>
+                    <span class="day-row-label">${m.desc}</span>
+                    <span class="day-row-val" style="color:${m.tipo==='ingreso'?'var(--success)':'var(--danger)'}">${m.tipo==='ingreso'?'+':'-'}${this.formatMoney(m.amount)}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Órdenes ingresadas
+        if (orders.length > 0) {
+            html += `<div class="day-section"><div class="day-section-label">Órdenes Ingresadas (${orders.length})</div>`;
+            orders.forEach(o => {
+                html += `<div class="day-row">
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">${o.id}</span>
+                    <span class="day-row-label">${o.client} — ${o.model}</span>
+                    <span class="day-row-val">${this.formatMoney(o.price)}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Equipos entregados
+        if (entregados.length > 0) {
+            html += `<div class="day-section"><div class="day-section-label">Equipos Entregados (${entregados.length})</div>`;
+            entregados.forEach(o => {
+                html += `<div class="day-row">
+                    <span style="font-family:var(--mono);font-size:11px;color:#818cf8">${o.id}</span>
+                    <span class="day-row-label">${o.client} — ${o.model}</span>
+                    <span class="anticipo-badge pagado">Pagado</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Ventas POS
+        if (ventas.length > 0) {
+            html += `<div class="day-section"><div class="day-section-label">Ventas POS (${ventas.length})</div>`;
+            ventas.forEach(v => {
+                html += `<div class="day-row">
+                    <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">${v.id}</span>
+                    <span class="day-row-label">${v.client} — ${v.items.map(i=>i.name).join(', ').slice(0,40)}</span>
+                    <span class="day-row-val" style="color:var(--success)">${this.formatMoney(v.total)}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        // Liberaciones
+        if (libs.length > 0) {
+            html += `<div class="day-section"><div class="day-section-label">Liberaciones Registradas (${libs.length})</div>`;
+            libs.forEach(l => {
+                html += `<div class="day-row">
+                    <span style="font-family:var(--mono);font-size:11px;color:#818cf8">${l.id}</span>
+                    <span class="day-row-label">${l.client} — ${l.model} (${l.carrier})</span>
+                    <span class="day-row-val">${this.formatMoney(l.price)}</span>
+                </div>`;
+            });
+            html += `</div>`;
+        }
+
+        if (!movs.length && !orders.length && !ventas.length && !libs.length) {
+            html = `<p style="color:var(--text-dim);font-size:13px;padding:8px 0">Sin actividad registrada en este día.</p>`;
+        }
+
+        content.innerHTML = html;
+        panel.style.display = 'block';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        panel.scrollIntoView({behavior:'smooth', block:'nearest'});
     },
 
     // ══════════════════════════════
@@ -3854,6 +4195,10 @@ ${contacto}`
 
     // ── AUTH ──
     _listening: false,
+    _repPeriod: 'all',
+    _calYear: new Date().getFullYear(),
+    _calMonth: new Date().getMonth(),
+    _calSelectedDay: null,
 
     async doLogin() {
         const email = document.getElementById('login-email')?.value.trim();

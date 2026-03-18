@@ -490,7 +490,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     margin-top:12px;
 }
 .login-user-bar strong { color:#fff; }
-/* Bloqueo de caja — overlay sobre main */
+
 
 
 /* Status dropdown en tabla lab */
@@ -781,10 +781,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </div>
 
-<!-- ══ BANNER CAJA CERRADA ══ -->
-<div id="caja-lock-banner">
-    🔒 La caja está cerrada — No se pueden registrar operaciones. <span style="cursor:pointer;text-decoration:underline;margin-left:8px" onclick="go('caja',document.querySelector('.nav-item[onclick*=\'caja\']'))">Ir a Caja →</span>
-</div>
+
 
 <aside id="sidebar">
     <div class="brand">
@@ -1638,7 +1635,6 @@ function setStatus(msg, color='#64748b') {
 // =============================================
 const Engine = {
     db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] },
-    cajaAbierta: true,
     libFilter: 'all',
     editState: { lab:null, inv:null, lib:null },
     warrantyFilter: 'all',
@@ -1666,7 +1662,6 @@ const Engine = {
                             liberaciones: data.liberaciones || []
                         };
                         // Restaurar estado de caja
-                        this.cajaAbierta = data.cajaAbierta !== false;
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
                     }
                     this.refresh();
@@ -1813,7 +1808,6 @@ const Engine = {
 
     // ── LABORATORIO ──
     async processOrder() {
-        if (!this._cajaGuard('Registrar orden')) return;
         const saveHint = document.getElementById('lab-saving-hint');
         if (saveHint) saveHint.style.display = 'inline';
         const data = {
@@ -1937,7 +1931,6 @@ const Engine = {
     },
 
     async setOrderStatus(id, newStatus) {
-        if (!this._cajaGuard('Cambiar estado')) return;
         const o = this.db.orders.find(x=>x.id===id);
         if (!o || o.status === newStatus) return;
         o.status = newStatus;
@@ -1964,7 +1957,6 @@ const Engine = {
     },
 
     async deleteItem(type,id) {
-        if (!this._cajaGuard('Eliminar registro')) return;
         if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
         if (type==='lab') this.db.orders=this.db.orders.filter(o=>o.id!==id);
         else this.db.stock=this.db.stock.filter(s=>s.id!==id);
@@ -1996,7 +1988,6 @@ const Engine = {
 
     // ── INVENTARIO ──
     async processInv() {
-        if (!this._cajaGuard('Modificar inventario')) return;
         const data = {
             name: document.getElementById('i-item').value.trim(),
             qty: parseInt(document.getElementById('i-qty').value)||0,
@@ -2030,7 +2021,6 @@ const Engine = {
 
     // ── CLIENTES ──
     async addClientManual() {
-        if (!this._cajaGuard('Agregar cliente')) return;
         const name=document.getElementById('c-name').value.trim(), phone=document.getElementById('c-phone').value.trim();
         if (!name||!phone) return Engine.toast('Completa nombre y teléfono.','error');
         const newClient={name,phone,lastSeen:new Date().toLocaleDateString('es-ES')};
@@ -3098,7 +3088,6 @@ ${tc}`,
     },
 
     async posCheckout() {
-        if (!this._cajaGuard('Cobrar venta')) return;
         if (this.cart.length === 0) return;
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
         const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
@@ -3317,7 +3306,6 @@ ${tc}`,
     // ══════════════════════════════
 
     posCreditCheckout() {
-        if (!this._cajaGuard('Venta al crédito')) return;
         if (this.cart.length === 0) return;
         const total = this.cart.reduce((sum, c) => sum + c.qty * c.salePrice, 0);
         const clientName = document.getElementById('pos-client-name')?.value.trim() || '';
@@ -3343,7 +3331,6 @@ ${tc}`,
     },
 
     async confirmarCredito() {
-        if (!this._cajaGuard('Registrar crédito')) return;
         const client = document.getElementById('credito-client').value.trim();
         const phone  = document.getElementById('credito-phone').value.trim();
         const fecha  = document.getElementById('credito-fecha').value;
@@ -3484,7 +3471,6 @@ ${tc}`,
     },
 
     async cobrarDeudor(id) {
-        if (!this._cajaGuard('Cobrar deudor')) return;
         const idx = (this.db.deudores||[]).findIndex(d => d.id === id);
         if (idx === -1) return;
         const d = this.db.deudores[idx];
@@ -3659,7 +3645,6 @@ ${tc}`,
     },
 
     async processLib() {
-        if (!this._cajaGuard('Registrar liberación')) return;
         const client  = document.getElementById('lib-client').value.trim();
         const phone   = document.getElementById('lib-phone').value.trim();
         const model   = document.getElementById('lib-model').value.trim();
@@ -3879,7 +3864,6 @@ ${tc}`,
     },
 
     async guardarAbono() {
-        if (!this._cajaGuard('Registrar abono')) return;
         const rawId  = document.getElementById('abono-order-id').value;
         const monto  = parseFloat(document.getElementById('abono-monto').value)||0;
         const metodo = document.getElementById('abono-metodo').value;
@@ -4080,14 +4064,6 @@ ${contacto}`
         await window.__fb.logout();
         Engine._listening = false;
         Engine.toast('Sesión cerrada.', 'info');
-    },
-
-    _cajaGuard(operacion='Esta operación') {
-        if (!this.cajaAbierta) {
-            Engine.toast(`${operacion} requiere la caja abierta.`, 'error');
-            return false;
-        }
-        return true;
     },
 
     confirm(title, msg, okLabel='CONFIRMAR', danger=true) {

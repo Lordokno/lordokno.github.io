@@ -2495,14 +2495,15 @@ ${tc}`,
         const ctxDash = document.getElementById('chart-dash-ingresos');
         if(ctxDash) this.charts.dashIngresos = new Chart(ctxDash,{type:'bar',data:{labels:dashLabels,datasets:[{label:'Ingresos',data:dashIn,backgroundColor:'rgba(16,185,129,.55)',borderColor:'#10b981',borderWidth:1.5,borderRadius:5},{label:'Egresos',data:dashOut,backgroundColor:'rgba(239,68,68,.35)',borderColor:'#ef4444',borderWidth:1.5,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#64748b',font:{family:"'Plus Jakarta Sans'",size:10}}}},scales:{x:{ticks:{color:'#64748b',font:{size:10},maxTicksLimit:7},grid:{color:'rgba(255,255,255,.03)'}},y:{ticks:{color:'#64748b',callback:v=>'$'+v,font:{size:10}},grid:{color:'rgba(255,255,255,.03)'}}}}});
 
-        const dashRows=sorted.map(x=>{
+        const dashRowsArr=sorted.map(x=>{
             const sc=x.status.toLowerCase();
             const wi=this.getWarrantyInfo(x);
             let wCell='—';
             if (x.warrantyDays>0 && wi) { const color=this.getWarrantyBarColor(wi.statusKey); wCell=`<span style="color:${color};font-size:12px;font-weight:700">${wi.statusKey==='expired'?'VENCIDA':wi.daysRemaining+'d'}</span>`; }
             else if (x.warrantyDays>0) wCell=`<span style="color:var(--text-dim);font-size:11px">${x.warrantyDays}d (pendiente)</span>`;
             return `<tr class="status-${sc}"><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${x.id}</td><td style="font-weight:700">${x.client}</td><td>${x.model}</td><td><span class="badge badge-${sc}">${x.status}</span></td><td>${wCell}</td></tr>`;
-        }).join('');
+        });
+        document.getElementById('dash-table').innerHTML = this.paginate('dash-table', dashRowsArr, 8).join('');
 
         // ── LIBERACIONES en dashboard ──
         const libs = this.db.liberaciones || [];
@@ -2532,7 +2533,7 @@ ${tc}`,
             } else {
                 const statusLabel = {recibido:'RECIBIDO','en-proceso':'EN PROCESO',listo:'LISTO',entregado:'ENTREGADO'};
                 const statusColor = {recibido:'#818cf8','en-proceso':'#f59e0b',listo:'#10b981',entregado:'#64748b'};
-                libTableBody.innerHTML = libSorted.slice(0,6).map(l => {
+                const libDashRows = libSorted.map(l => {
                     const fe = l.fechaEntrega ? new Date(l.fechaEntrega+'T00:00:00') : null;
                     let diasCell = '—';
                     if (fe) {
@@ -2553,7 +2554,8 @@ ${tc}`,
                         <td>${diasCell}</td>
                         <td><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;background:${statusColor[l.status]}18;color:${statusColor[l.status]}">${statusLabel[l.status]||l.status}</span></td>
                     </tr>`;
-                }).join('');
+                });
+                libTableBody.innerHTML = this.paginate('dash-lib-table', libDashRows, 6).join('');
             }
         }
     },
@@ -2688,8 +2690,9 @@ ${tc}`,
         const clientRows=this.db.clients.map((c,i)=>{
             const orders=this.db.orders.filter(o=>o.client.toLowerCase()===c.name.toLowerCase());
             return `<tr><td style="font-weight:700">${c.name}</td><td style="color:var(--success);font-family:var(--mono);font-weight:700">${c.phone}</td><td style="color:var(--text-dim)">${c.lastSeen}</td><td><span style="color:var(--text-dim);font-size:12px">${orders.length} reparación${orders.length!==1?'es':''}</span> <span onclick="Engine.showHistorial('${c.name.replace(/'/g,"\\'")}')" style="cursor:pointer;color:var(--accent);font-size:11px;font-weight:700;margin-left:6px">VER ›</span></td><td><div class="action-icon wa" onclick="window.open('https://wa.me/${c.phone.replace(/[^0-9]/g,'')}','_blank')"><i data-lucide="message-circle" size="13"></i></div><div class="action-icon del" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="13"></i></div></td></tr>`;
-        }).join('');
-        lucide.createIcons();
+        });
+        document.getElementById('clients-list').innerHTML = this.paginate('clients-list', clientRows, 10).join('');
+        if(typeof lucide!=='undefined') lucide.createIcons();
     },
 
     renderWarranty() {
@@ -2705,13 +2708,16 @@ ${tc}`,
         if (this.warrantyFilter==='active') filtered=all.filter(w=>w.wInfo.statusKey==='active');
         if (this.warrantyFilter==='expiring') filtered=all.filter(w=>w.wInfo.statusKey==='expiring');
         if (this.warrantyFilter==='expired') filtered=all.filter(w=>w.wInfo.statusKey==='expired');
-        document.getElementById('warranty-table').innerHTML=filtered.length===0
-            ? `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-dim)">Sin garantías en este filtro</td></tr>`
-            : filtered.map(w=>{
+        if (filtered.length===0) {
+            document.getElementById('warranty-table').innerHTML=`<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-dim)">Sin garantías en este filtro</td></tr>`;
+        } else {
+            const warRows = filtered.map(w=>{
                 const wi=w.wInfo, color=this.getWarrantyBarColor(wi.statusKey);
                 const tl=wi.statusKey==='expired'?`<span style="color:var(--danger);font-weight:800">VENCIDA</span>`:`<div class="days-cell"><span style="color:${color};font-weight:700;font-size:12px">${wi.daysRemaining} días</span><div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%;background:${color}"></div></div></div>`;
                 return `<tr><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${w.id}</td><td style="font-weight:700">${w.client}</td><td>${w.model}</td><td style="color:var(--text-dim);font-size:12px">${wi.start}</td><td style="color:var(--text-dim);font-size:12px">${wi.end}</td><td>${tl}</td><td><span class="wbadge wbadge-${wi.statusKey}">${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}</span></td></tr>`;
-            }).join('');
+            });
+            document.getElementById('warranty-table').innerHTML = this.paginate('warranty-table', warRows, 10).join('');
+        }
         lucide.createIcons();
     },
 
@@ -3184,7 +3190,7 @@ ${tc}`,
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text-dim)">Sin ventas registradas para esta fecha.</td></tr>`;
             return;
         }
-        tbody.innerHTML = filtered.map(v => {
+        const posRows = filtered.map(v => {
             const itemsSummary = v.items.map(i => `${i.name} x${i.qty}`).join(', ');
             return `<tr>
                 <td style="font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px">${v.id}</td>
@@ -3198,7 +3204,8 @@ ${tc}`,
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deletePosVenta('${v.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>`;
-        }).join('');
+        });
+        tbody.innerHTML = this.paginate('pos-hist-tbody', posRows, 10).join('');
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
@@ -3859,6 +3866,29 @@ ${tc}`,
                 </div>
             </div>`;
         }).join('');
+
+        // ── Historial de liberaciones entregadas ──
+        const libHistEl = document.getElementById('lib-hist-tbody');
+        if (libHistEl) {
+            const entregadas = libs.filter(l => l.status === 'entregado');
+            if (entregadas.length === 0) {
+                libHistEl.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-dim)">Sin liberaciones entregadas aún.</td></tr>`;
+                const pgLibHist = document.getElementById('pg-lib-hist');
+                if (pgLibHist) pgLibHist.style.display = 'none';
+            } else {
+                const libHistRows = entregadas.map(l => `<tr>
+                    <td style="font-family:var(--mono);color:#818cf8;font-weight:700;font-size:12px">${l.id}</td>
+                    <td style="font-weight:700">${l.client}</td>
+                    <td>${l.model}</td>
+                    <td style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">${l.imei}</td>
+                    <td style="font-size:12px;color:var(--text-dim)">${l.carrier}</td>
+                    <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(l.price)}</td>
+                    <td style="font-size:12px;color:var(--text-dim)">${l.deliveredAt ? new Date(l.deliveredAt).toLocaleDateString('es-ES') : '—'}</td>
+                </tr>`);
+                libHistEl.innerHTML = this.paginate('lib-hist-tbody', libHistRows, 10).join('');
+            }
+        }
+
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
@@ -4103,7 +4133,7 @@ ${contacto}`
             'dash-table':'renderDash', 'dash-lib-table':'renderDash',
             'lab-table':'renderLab', 'lib-hist-tbody':'renderLib',
             'inv-list':'renderInv', 'clients-list':'renderClients',
-            'warranty-table':'renderWarranties', 'pos-hist-tbody':'renderPosHistory',
+            'warranty-table':'renderWarranty', 'pos-hist-tbody':'renderPosHistory',
             'deudores-cobrados-list':'renderDeudores'
         };
         const fn = renderMap[tbodyId];

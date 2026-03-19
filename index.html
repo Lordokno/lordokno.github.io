@@ -560,15 +560,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .page-btn.active { background:#fff; color:#000; border-color:#fff; }
 .page-btn:disabled { opacity:.3; cursor:not-allowed; }
 .page-info { font-size:11px; color:var(--text-dim); font-weight:600; margin-left:auto; }
-/* ── DELETE ALL BUTTON ── */
-#btn-delete-all {
-    position:fixed; bottom:24px; left:24px; z-index:900;
-    width:40px; height:40px; border-radius:12px;
-    background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.2);
-    color:rgba(239,68,68,.5); cursor:pointer; display:flex; align-items:center; justify-content:center;
-    transition:.25s; backdrop-filter:blur(8px);
-}
-#btn-delete-all:hover { background:rgba(239,68,68,.15); color:#ef4444; border-color:rgba(239,68,68,.4); transform:scale(1.05); }
+
 
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
@@ -1593,11 +1585,6 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
     </div>
 </div>
-
-<!-- BORRAR TODOS LOS DATOS -->
-<button id="btn-delete-all" onclick="Engine.deleteAllData()" title="Borrar todos los datos">
-    <i data-lucide="trash" size="16"></i>
-</button>
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
@@ -4123,25 +4110,6 @@ ${contacto}`
         if (fn && typeof this[fn] === 'function') this[fn]();
     },
 
-    // ── DELETE ALL DATA ──
-    async deleteAllData() {
-        const first = await this.confirm(
-            '⚠️ Borrar Todos los Datos',
-            'Esta acción eliminará PERMANENTEMENTE todas las órdenes, clientes, inventario, liberaciones, deudores y movimientos. No se puede deshacer.',
-            'CONTINUAR', true
-        );
-        if (!first) return;
-        const second = await this.confirm(
-            '¿Estás completamente seguro?',
-            'Escribe "BORRAR" en el campo de contraseña del login para confirmar — o simplemente confirma aquí para proceder.',
-            'SÍ, BORRAR TODO', true
-        );
-        if (!second) return;
-        this.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
-        await this.save();
-        this.refresh();
-        Engine.toast('Todos los datos han sido eliminados.', 'info', 5000);
-    },
 
     _confirmResolve: null,
     _confirmReject() {

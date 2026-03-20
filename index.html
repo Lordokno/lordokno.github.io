@@ -1675,6 +1675,32 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </section>
 
+<!-- MODAL COBRAR DEUDOR -->
+<div id="modal-cobrar-deudor" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:380px;width:100%">
+        <h2 style="margin-bottom:4px">Registrar Cobro</h2>
+        <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px">Confirma el método con que pagó el cliente.</p>
+        <input type="hidden" id="cobrar-deudor-id">
+        <div style="background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);border-radius:14px;padding:14px 18px;margin-bottom:18px">
+            <div style="font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Monto a cobrar</div>
+            <div id="cobrar-deudor-monto" style="font-size:26px;font-weight:800;color:var(--success);font-family:var(--mono)">$0.00</div>
+            <div id="cobrar-deudor-client" style="font-size:12px;color:var(--text-dim);margin-top:3px;font-weight:600"></div>
+        </div>
+        <div class="field" style="margin-bottom:20px">
+            <label>Método de Pago</label>
+            <select id="cobrar-deudor-metodo">
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta">Tarjeta</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-main success" onclick="Engine.confirmarCobro()"><i data-lucide="check-circle" size="15"></i>CONFIRMAR COBRO</button>
+            <button class="btn-main ghost" onclick="document.getElementById('modal-cobrar-deudor').style.display='none'">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL CONFIRMACION CUSTOM -->
 <div id="modal-confirm" class="modal-overlay" style="display:none">
     <div class="modal" style="max-width:380px;width:100%;text-align:center">
@@ -2026,7 +2052,7 @@ const Engine = {
             this.db.orders[idx]=newData;
         } else {
             const newOrder = {
-                id:'TK-'+Date.now().toString().slice(-4), ...data,
+                id:'TK-'+Date.now().toString().slice(-6), ...data,
                 status:'PENDIENTE', warrantyStart:null,
                 abonos: data.anticipo > 0 ? [{
                     id: Date.now(), monto: data.anticipo, metodo: data.anticipoMetodo,
@@ -2122,13 +2148,14 @@ const Engine = {
             // Garantía activa desde hoy
             if (o.warrantyDays>0) o.warrantyStart = now.toISOString();
             if (!o.deliveredAt) o.deliveredAt = now.toISOString();
-            // Registrar PRECIO TOTAL como un único ingreso (todo el dinero junto al entregar)
-            if (o.price > 0) {
-                this.db.movimientos.unshift({
-                    id: Date.now(), tipo:'ingreso',
+            // FIX #1: Solo registrar SALDO PENDIENTE como ingreso (evita duplicar anticipos ya cobrados)
+            const totalAbonado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
+            const saldoAlEntregar = Math.max(0, o.price - totalAbonado);
+            if (saldoAlEntregar > 0) {
+                this.registrarMovimiento({
+                    tipo:'ingreso',
                     desc: `Entrega ${o.id} — ${o.client} (${o.model})`,
-                    amount: o.price, metodo: 'Efectivo',
-                    date: this.today(), time: timeStr
+                    amount: saldoAlEntregar, time: timeStr
                 });
             }
             // Cerrar deudor vinculado
@@ -2164,8 +2191,17 @@ const Engine = {
 
     async deleteItem(type,id) {
         if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
-        if (type==='lab') this.db.orders=this.db.orders.filter(o=>o.id!==id);
-        else this.db.stock=this.db.stock.filter(s=>s.id!==id);
+        if (type==='lab') {
+            // FIX #5: Limpiar movimientos y deudores vinculados al eliminar una orden
+            const order = this.db.orders.find(o=>o.id===id);
+            if (order) {
+                this.db.movimientos = (this.db.movimientos||[]).filter(m=>!m.desc.includes(id));
+                this.db.deudores    = (this.db.deudores||[]).filter(d=>d.ticketRef !== id);
+            }
+            this.db.orders = this.db.orders.filter(o=>o.id!==id);
+        } else {
+            this.db.stock = this.db.stock.filter(s=>s.id!==id);
+        }
         await this.save();
     },
 
@@ -2274,7 +2310,19 @@ const Engine = {
 
     // ── CAJA ──
 
-
+    // FIX #6: Función centralizada para registrar movimientos de caja
+    registrarMovimiento({ tipo, desc, amount, metodo = 'Efectivo', date = null, time = null }) {
+        const now = new Date();
+        this.db.movimientos.unshift({
+            id:     Date.now(),
+            tipo,
+            desc,
+            amount: parseFloat(amount) || 0,
+            metodo,
+            date:   date  || this.today(),
+            time:   time  || now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+        });
+    },
 
     // ── GARANTÍAS ──
     filterWarranty(type,btn) {
@@ -3947,43 +3995,55 @@ ${tc}`,
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
-    async cobrarDeudor(id) {
-        const idx = (this.db.deudores||[]).findIndex(d => d.id === id);
+    cobrarDeudor(id) {
+        const d = (this.db.deudores||[]).find(x => x.id === id);
+        if (!d) return;
+        // FIX #4: Mostrar modal con selector de método de pago antes de confirmar
+        document.getElementById('cobrar-deudor-id').value    = id;
+        document.getElementById('cobrar-deudor-monto').innerText  = this.formatMoney(d.total);
+        document.getElementById('cobrar-deudor-client').innerText = `${d.client} — ${d.phone}`;
+        document.getElementById('cobrar-deudor-metodo').value = 'Efectivo';
+        document.getElementById('modal-cobrar-deudor').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    async confirmarCobro() {
+        const id     = document.getElementById('cobrar-deudor-id').value;
+        const metodo = document.getElementById('cobrar-deudor-metodo').value;
+        const idx    = (this.db.deudores||[]).findIndex(d => d.id === id);
         if (idx === -1) return;
         const d = this.db.deudores[idx];
-        if (!await Engine.confirm('Marcar como cobrado', `¿Registrar cobro de ${this.formatMoney(d.total)} de ${d.client}? Se registrará como ingreso en Caja.`)) return;
+
+        document.getElementById('modal-cobrar-deudor').style.display = 'none';
 
         this.db.deudores[idx].cobrado   = true;
         this.db.deudores[idx].cobradoEl = new Date().toISOString();
 
-        // Si viene de un ticket de lab, sincronizar el abono en la orden
-        // El ingreso real se registra solo cuando se marca ENTREGADO
+        // Si viene de un ticket de lab, agregar abono con método correcto
         if (d.ticketRef) {
             const orderIdx = this.db.orders.findIndex(o => o.id === d.ticketRef);
             if (orderIdx !== -1) {
                 if (!this.db.orders[orderIdx].abonos) this.db.orders[orderIdx].abonos = [];
                 this.db.orders[orderIdx].abonos.push({
-                    id: Date.now(), monto: d.total, metodo: 'Efectivo',
-                    nota: 'Cobro anticipado desde Deudores',
+                    id: Date.now(), monto: d.total, metodo,
+                    nota: 'Cobro desde Deudores',
                     date: this.today(),
                     time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
                 });
             }
-            // No registrar ingreso en movimientos — se registra al marcar ENTREGADO
+            // El ingreso en caja se registra al marcar ENTREGADO
         } else {
-            // Deudor de POS (no de lab) — sí registrar ingreso inmediatamente
-            this.db.movimientos.unshift({
-                id: Date.now(), tipo: 'ingreso',
+            // Deudor de POS — registrar ingreso inmediatamente con método correcto
+            this.registrarMovimiento({
+                tipo: 'ingreso',
                 desc: `Cobro crédito — ${d.client}`,
-                amount: d.total, metodo: 'Efectivo',
-                date: this.today(),
-                time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                amount: d.total, metodo
             });
         }
 
         await this.save();
         this.renderDeudores();
-        Engine.toast(`Cobro registrado — ${d.client}`, 'success');
+        Engine.toast(`Cobro registrado — ${d.client} (${metodo})`, 'success');
     },
 
     async deleteDeudor(id) {
@@ -4102,7 +4162,7 @@ ${tc}`,
     },
 
     async deleteAbono(orderId, abonoIdx) {
-        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? El movimiento de caja registrado no se revertirá.')) return;
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? El saldo pendiente del ticket se actualizará automáticamente.')) return;
         const idx = this.db.orders.findIndex(o=>o.id===orderId);
         if (idx===-1) return;
         this.db.orders[idx].abonos.splice(abonoIdx, 1);

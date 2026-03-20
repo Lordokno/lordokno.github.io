@@ -1782,6 +1782,8 @@ const Engine = {
         const startListening = () => {
             window.__fb.subscribe(
                 (snap) => {
+                    // Ignorar el snapshot durante restauración de backup
+                    if (Engine._restoringBackup) return;
                     if (snap.exists()) {
                         const data = snap.data();
                         this.db = {
@@ -1868,6 +1870,30 @@ const Engine = {
                 liberaciones: this.db.liberaciones,
                 updatedAt:    new Date().toISOString()
             });
+        } catch(e) {
+            console.error('Error al guardar:', e);
+            setStatus('⚠ Error al guardar', '#ef4444');
+        }
+    },
+
+    // Guardado inmediato sin debounce — para operaciones críticas como restore
+    async saveNow() {
+        if (!window.__fb) return;
+        clearTimeout(this._saveTimer);
+        setStatus('Guardando...', '#f59e0b');
+        try {
+            await window.__fb.save({
+                orders:       this.db.orders,
+                stock:        this.db.stock,
+                clients:      this.db.clients,
+                movimientos:  this.db.movimientos,
+                ventas:       this.db.ventas,
+                deudores:     this.db.deudores,
+                cierres:      this.db.cierres,
+                liberaciones: this.db.liberaciones,
+                updatedAt:    new Date().toISOString()
+            });
+            setStatus('● Sincronizado', '#10b981');
         } catch(e) {
             console.error('Error al guardar:', e);
             setStatus('⚠ Error al guardar', '#ef4444');
@@ -4637,6 +4663,7 @@ ${contacto}`
             'RESTAURAR', true
         );
         if (!ok) return;
+
         const d = backup.data;
         this.db = {
             orders:       d.orders       || [],
@@ -4649,11 +4676,18 @@ ${contacto}`
             liberaciones: d.liberaciones || [],
         };
         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
-        await this.save();
+
+        // Usar saveNow() para escritura inmediata sin debounce
+        // Activar flag para que el siguiente snapshot no sobreescriba los datos restaurados
+        Engine._restoringBackup = true;
+        await this.saveNow();
+        // Dar tiempo a que Firestore confirme y el onSnapshot rebote
+        setTimeout(() => { Engine._restoringBackup = false; }, 3000);
+
         this.refresh();
         document.getElementById('modal-backup').style.display = 'none';
         Engine._pendingBackup = null;
-        Engine.toast(`Backup restaurado — ${this.db.orders.length} órdenes, ${this.db.clients.length} clientes.`, 'success', 5000);
+        Engine.toast(`✓ Backup restaurado — ${this.db.orders.length} órdenes, ${this.db.clients.length} clientes.`, 'success', 5000);
     },
 
     async resetDatabase() {

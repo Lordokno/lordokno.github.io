@@ -2063,8 +2063,15 @@ const Engine = {
             };
             this.db.orders.unshift(newOrder);
 
-            // El anticipo se registra como ingreso solo cuando se marca ENTREGADO.
-            // Aquí solo se guarda en abonos del ticket y en capital pendiente.
+            // Registrar anticipo inmediatamente en caja si existe
+            if (data.anticipo > 0) {
+                this.registrarMovimiento({
+                    tipo: 'ingreso',
+                    desc: `Anticipo ${newOrder.id} — ${data.client} (${data.model})`,
+                    amount: data.anticipo,
+                    metodo: data.anticipoMetodo
+                });
+            }
 
             // Auto-crear deudor si hay saldo pendiente (lo que falta cobrar)
             const saldoPendiente = data.price - data.anticipo;
@@ -2167,10 +2174,16 @@ const Engine = {
             });
 
         } else if (newStatus === 'FALLIDO') {
-            // Eliminar TODOS los movimientos relacionados con esta orden
-            this.db.movimientos = (this.db.movimientos||[]).filter(m =>
-                !m.desc.includes(o.id)
-            );
+            // Si hay anticipo cobrado, registrar egreso (devolución) en caja
+            const totalAnticipado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
+            if (totalAnticipado > 0) {
+                this.registrarMovimiento({
+                    tipo: 'egreso',
+                    desc: `Devolución anticipo ${o.id} — ${o.client} (${o.model}) [FALLIDO]`,
+                    amount: totalAnticipado,
+                    time: timeStr
+                });
+            }
             // Eliminar deudores vinculados
             this.db.deudores = (this.db.deudores||[]).filter(d => d.ticketRef !== o.id);
             // Limpiar garantía y entrega
@@ -4162,10 +4175,31 @@ ${tc}`,
     },
 
     async deleteAbono(orderId, abonoIdx) {
-        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? El saldo pendiente del ticket se actualizará automáticamente.')) return;
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? Se registrará un egreso en caja por el monto revertido.')) return;
         const idx = this.db.orders.findIndex(o=>o.id===orderId);
         if (idx===-1) return;
+        const abono = this.db.orders[idx].abonos[abonoIdx];
+        // Revertir en caja: registrar egreso por el monto del abono eliminado
+        if (abono && abono.monto > 0) {
+            const o = this.db.orders[idx];
+            this.registrarMovimiento({
+                tipo: 'egreso',
+                desc: `Reversión abono ${orderId} — ${o.client} (${o.model})`,
+                amount: abono.monto,
+                metodo: abono.metodo || 'Efectivo'
+            });
+        }
         this.db.orders[idx].abonos.splice(abonoIdx, 1);
+        // Restaurar deudor si corresponde
+        const o = this.db.orders[idx];
+        const totalAbonado = o.abonos.reduce((s,a)=>s+a.monto,0);
+        const nuevoSaldo = Math.max(0, o.price - totalAbonado);
+        if (nuevoSaldo > 0) {
+            const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===orderId && !d.cobrado);
+            if (deudIdx > -1) {
+                this.db.deudores[deudIdx].total = nuevoSaldo;
+            }
+        }
         await this.save();
         this.abrirAbono(orderId);
     },
@@ -4456,7 +4490,12 @@ ${tc}`,
             if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.orders[idx].abonos) this.db.orders[idx].abonos = [];
             this.db.orders[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
-            // El abono se guarda en la orden — el ingreso se registra solo al ENTREGAR
+            // Registrar abono inmediatamente en caja
+            this.registrarMovimiento({
+                tipo: 'ingreso',
+                desc: `Abono ${id} — ${o.client} (${o.model})${nota?' — '+nota:''}`,
+                amount: monto, metodo
+            });
             // Actualizar deudor vinculado: reducir saldo o eliminar si queda en cero
             const totalAbonado2 = this.db.orders[idx].abonos.reduce((s,a)=>s+a.monto,0);
             const nuevoSaldo = Math.max(0, o.price - totalAbonado2);

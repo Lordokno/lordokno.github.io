@@ -1314,6 +1314,60 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <button class="btn-main ghost" onclick="Engine.copyWaMsg()"><i data-lucide="copy" size="16"></i>COPIAR MENSAJE</button>
         </div>
     </div>
+    <!-- Enviar Ticket PDF por WhatsApp -->
+    <div class="section-divider">Enviar Ticket PDF por WhatsApp</div>
+    <div class="wa-card">
+        <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:14px;">Seleccionar Ticket</p>
+        <div class="wa-select-row">
+            <div class="field" style="flex:1;min-width:200px">
+                <label>Orden / Ticket</label>
+                <select id="wa-pdf-order" onchange="Engine.updateWaPdfPreview()">
+                    <option value="">— Selecciona un ticket —</option>
+                </select>
+            </div>
+            <div class="field" style="flex:1;min-width:160px">
+                <label>Tipo de documento</label>
+                <select id="wa-pdf-type" onchange="Engine.updateWaPdfPreview()">
+                    <option value="ticket">🧾 Ticket de Reparación</option>
+                    <option value="garantia">📋 Certificado de Garantía</option>
+                </select>
+            </div>
+        </div>
+        <!-- Preview info del ticket seleccionado -->
+        <div id="wa-pdf-info" style="display:none;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                <div>
+                    <div style="font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Ticket</div>
+                    <div id="wa-pdf-id" style="font-family:var(--mono);font-weight:800;color:var(--accent);font-size:14px"></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Cliente</div>
+                    <div id="wa-pdf-client" style="font-weight:700;color:#fff;font-size:13px"></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">WhatsApp</div>
+                    <div id="wa-pdf-phone" style="font-family:var(--mono);color:var(--success);font-size:13px"></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Equipo</div>
+                    <div id="wa-pdf-model" style="font-size:13px;color:var(--text-dim)"></div>
+                </div>
+            </div>
+        </div>
+        <div id="wa-pdf-msg-wrap" style="display:none;margin-bottom:16px">
+            <label style="font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px">Mensaje a enviar junto al PDF</label>
+            <textarea id="wa-pdf-msg" rows="3" style="width:100%;resize:vertical;font-size:13px"></textarea>
+        </div>
+        <div id="wa-pdf-btn-row" style="display:none" class="btn-row">
+            <button class="btn-main success" onclick="Engine.sendPdfWhatsApp()">
+                <i data-lucide="send" size="16"></i>DESCARGAR PDF Y ABRIR WHATSAPP
+            </button>
+        </div>
+        <p id="wa-pdf-hint" style="font-size:11px;color:var(--text-dim);margin-top:10px;line-height:1.6;display:none">
+            💡 Se descargará el PDF en tu dispositivo. Luego podrás adjuntarlo en la conversación de WhatsApp que se abrirá automáticamente.
+        </p>
+    </div>
+
     <!-- Templates rápidos -->
     <div class="section-divider">Mensajes Rápidos Personalizados</div>
     <div class="wa-card">
@@ -1631,16 +1685,39 @@ const app    = initializeApp({
 });
 getAnalytics(app);
 const db_fs  = getFirestore(app);
-const DB_DOC = doc(db_fs, 'nextcom', 'maindb');
 const auth   = getAuth(app);
 
-// Exponer al scope global para que el script normal lo use
+// Documento por usuario — cambia con cada login
+let DB_DOC      = null;
+let _unsubscribe = null;
+
 window.__fb = {
-    save:       (data) => setDoc(DB_DOC, data),
-    subscribe:  (cb, errCb) => onSnapshot(DB_DOC, cb, errCb),
-    login:      (email, pass) => signInWithEmailAndPassword(auth, email, pass),
-    logout:     () => signOut(auth),
-    onAuth:     (cb) => onAuthStateChanged(auth, cb)
+    save: (data) => {
+        if (!DB_DOC) return Promise.resolve();
+        return setDoc(DB_DOC, data);
+    },
+    subscribe: (cb, errCb) => {
+        // Guardamos los callbacks; se activarán cuando onAuth detecte un usuario
+        window.__fb._cb    = cb;
+        window.__fb._errCb = errCb;
+    },
+    login:  (email, pass) => signInWithEmailAndPassword(auth, email, pass),
+    logout: () => signOut(auth),
+    onAuth: (cb) => onAuthStateChanged(auth, (user) => {
+        // Cancelar listener anterior al cambiar de usuario
+        if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+        if (user) {
+            // Cada usuario tiene su propio documento: users/{uid}
+            DB_DOC = doc(db_fs, 'users', user.uid);
+            // Arrancar listener de Firestore para este usuario
+            if (window.__fb._cb) {
+                _unsubscribe = onSnapshot(DB_DOC, window.__fb._cb, window.__fb._errCb || (() => {}));
+            }
+        } else {
+            DB_DOC = null;
+        }
+        cb(user);
+    })
 };
 
 // Avisar al Engine que Firebase ya está listo
@@ -1713,15 +1790,17 @@ const Engine = {
                     if (loginScreen) loginScreen.classList.add('hidden');
                     if (sidebarUser) sidebarUser.style.display = 'block';
                     if (emailEl)     emailEl.innerText = user.email;
-                    // Solo iniciar listener de datos si es la primera vez
-                    if (!Engine._listening) {
-                        Engine._listening = true;
-                        startListening();
-                    }
+                    // Resetear DB en memoria para este usuario (datos limpios hasta que Firestore responda)
+                    Engine.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
+                    Engine._pages = {};
+                    Engine.refresh();
+                    // Arrancar (o re-arrancar) listener — el nuevo onAuth ya canceló el anterior
+                    startListening();
                 } else {
-                    // No autenticado: mostrar login
+                    // No autenticado: mostrar login, limpiar UI
                     if (loginScreen) loginScreen.classList.remove('hidden');
                     if (sidebarUser) sidebarUser.style.display = 'none';
+                    Engine.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
                     setStatus('Sin sesión', '#64748b');
                 }
             });
@@ -2854,9 +2933,83 @@ ${tc}`,
 
     renderWaOrders() {
         const sel=document.getElementById('wa-order-select');
+        const sel2=document.getElementById('wa-pdf-order');
         const cur=sel.value;
-        sel.innerHTML='<option value="">— Selecciona un ticket —</option>'+this.db.orders.map(o=>`<option value="${o.id}">${o.id} — ${o.client} — ${o.model}</option>`).join('');
+        const cur2=sel2?sel2.value:'';
+        const opts='<option value="">— Selecciona un ticket —</option>'+this.db.orders.map(o=>`<option value="${o.id}">${o.id} — ${o.client} — ${o.model}</option>`).join('');
+        sel.innerHTML=opts;
         sel.value=cur;
+        if(sel2){ sel2.innerHTML=opts; sel2.value=cur2; }
+    },
+
+    updateWaPdfPreview() {
+        const id   = document.getElementById('wa-pdf-order')?.value;
+        const type = document.getElementById('wa-pdf-type')?.value || 'ticket';
+        const info = document.getElementById('wa-pdf-info');
+        const wrap = document.getElementById('wa-pdf-msg-wrap');
+        const btnRow = document.getElementById('wa-pdf-btn-row');
+        const hint = document.getElementById('wa-pdf-hint');
+
+        if (!id) {
+            if(info)   info.style.display   = 'none';
+            if(wrap)   wrap.style.display   = 'none';
+            if(btnRow) btnRow.style.display = 'none';
+            if(hint)   hint.style.display   = 'none';
+            return;
+        }
+        const o = this.db.orders.find(x => x.id === id);
+        if (!o) return;
+
+        // Show info panel
+        document.getElementById('wa-pdf-id').innerText    = o.id;
+        document.getElementById('wa-pdf-client').innerText = o.client;
+        document.getElementById('wa-pdf-phone').innerText  = o.phone || '—';
+        document.getElementById('wa-pdf-model').innerText  = o.model;
+        if(info)   info.style.display   = 'block';
+        if(wrap)   wrap.style.display   = 'block';
+        if(btnRow) btnRow.style.display = 'flex';
+        if(hint)   hint.style.display   = 'block';
+
+        // Set default message
+        const msgEl = document.getElementById('wa-pdf-msg');
+        if (msgEl) {
+            if (type === 'ticket') {
+                msgEl.value = `Hola ${o.client}, adjunto le enviamos el ticket de servicio *${o.id}* por la reparación de su *${o.model}*.\n\nCualquier consulta estamos a sus órdenes.\n— NEXTCOM Multiservicios`;
+            } else {
+                const wi = this.getWarrantyInfo(o);
+                const vence = wi ? ` Vence: ${wi.end}.` : '';
+                msgEl.value = `Hola ${o.client}, adjunto le enviamos su certificado de garantía por el servicio realizado en su *${o.model}* (Ticket ${o.id}).${vence}\n\nConserve este documento.\n— NEXTCOM Multiservicios`;
+            }
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    sendPdfWhatsApp() {
+        const id   = document.getElementById('wa-pdf-order')?.value;
+        const type = document.getElementById('wa-pdf-type')?.value || 'ticket';
+        const msg  = document.getElementById('wa-pdf-msg')?.value || '';
+        if (!id) return Engine.toast('Selecciona un ticket primero.', 'error');
+
+        const o = this.db.orders.find(x => x.id === id);
+        if (!o) return;
+
+        const phone = (o.phone || '').replace(/[^0-9]/g, '');
+        if (!phone) return Engine.toast('Este ticket no tiene número de WhatsApp registrado.', 'error');
+
+        // 1. Generate and download the PDF
+        if (type === 'ticket') {
+            this.downloadTicketPDF(id);
+        } else {
+            this.downloadWarrantyPDF(id);
+        }
+
+        // 2. Small delay then open WhatsApp with the message
+        setTimeout(() => {
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }, 600);
+
+        Engine.toast('PDF descargado. Adjúntalo en la conversación de WhatsApp.', 'success', 5000);
     },
 
     setRepPeriod(period, btn) {
@@ -4278,7 +4431,6 @@ ${contacto}`
     },
 
     // ── AUTH ──
-    _listening: false,
     _repPeriod: 'all',
     _calYear: new Date().getFullYear(),
     _calMonth: new Date().getMonth(),
@@ -4312,7 +4464,6 @@ ${contacto}`
     async doLogout() {
         if (!await Engine.confirm('Cerrar Sesión', '¿Deseas cerrar tu sesión en NEXTCOM?', 'CERRAR SESIÓN', false)) return;
         await window.__fb.logout();
-        Engine._listening = false;
         Engine.toast('Sesión cerrada.', 'info');
     },
 

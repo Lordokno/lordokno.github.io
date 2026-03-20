@@ -846,6 +846,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <button onclick="Engine.doLogout()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,.3)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">
                 <i data-lucide="log-out" size="12"></i> CERRAR SESIÓN
             </button>
+            <button onclick="Engine.openBackup()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid rgba(79,70,229,.25);background:rgba(79,70,229,.06);color:#818cf8;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='var(--accent)';this.style.background='rgba(79,70,229,.12)'" onmouseout="this.style.color='#818cf8';this.style.background='rgba(79,70,229,.06)'">
+                <i data-lucide="database" size="11"></i> BACKUP / RESTAURAR
+            </button>
             <button onclick="Engine.resetDatabase()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:rgba(239,68,68,.5);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='#ef4444';this.style.background='rgba(239,68,68,.1)';this.style.borderColor='rgba(239,68,68,.4)'" onmouseout="this.style.color='rgba(239,68,68,.5)';this.style.background='rgba(239,68,68,.05)';this.style.borderColor='rgba(239,68,68,.2)'">
                 <i data-lucide="trash-2" size="11"></i> RESETEAR BASE DE DATOS
             </button>
@@ -1651,6 +1654,51 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="modal-actions" style="justify-content:center">
             <button id="confirm-ok-btn" class="btn-main danger"><i data-lucide="check" size="15"></i><span id="confirm-ok-label">CONFIRMAR</span></button>
             <button class="btn-main ghost" onclick="Engine._confirmReject()">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL BACKUP -->
+<div id="modal-backup" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:520px;width:100%">
+        <h2 style="margin-bottom:6px;font-size:18px;display:flex;align-items:center;gap:10px">
+            <i data-lucide="database" size="20" style="color:var(--accent)"></i> Backup &amp; Restaurar
+        </h2>
+        <p style="color:var(--text-dim);font-size:13px;margin-bottom:24px">Guarda una copia local de todos tus datos o restaura desde un backup anterior.</p>
+
+        <!-- EXPORTAR -->
+        <div style="background:rgba(79,70,229,.06);border:1px solid rgba(79,70,229,.2);border-radius:14px;padding:18px;margin-bottom:16px">
+            <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:8px">
+                <i data-lucide="download" size="13"></i> Exportar Backup
+            </div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px">Descarga un archivo <code style="background:rgba(255,255,255,.07);padding:1px 5px;border-radius:4px">.json</code> con todas las órdenes, clientes, inventario, liberaciones, deudores y movimientos.</p>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+                <div id="backup-stats" style="font-size:11px;color:var(--text-dim);flex:1"></div>
+            </div>
+            <button class="btn-main" onclick="Engine.exportBackup()" style="width:100%">
+                <i data-lucide="download" size="15"></i> DESCARGAR BACKUP
+            </button>
+        </div>
+
+        <!-- IMPORTAR -->
+        <div style="background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:18px;margin-bottom:24px">
+            <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--edit);margin-bottom:8px">
+                <i data-lucide="upload" size="13"></i> Restaurar Backup
+            </div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px">⚠️ Restaurar <strong>reemplazará todos los datos actuales</strong> con los del archivo seleccionado.</p>
+            <label style="display:block;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.15);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:.2s;font-size:12px;color:var(--text-dim)" id="backup-drop-zone" for="backup-file-input" onmouseover="this.style.borderColor='rgba(79,70,229,.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,.15)'">
+                <i data-lucide="upload-cloud" size="20" style="display:block;margin:0 auto 8px;color:var(--text-dim)"></i>
+                <span id="backup-file-name">Seleccionar archivo .json de backup</span>
+                <input type="file" id="backup-file-input" accept=".json" style="display:none" onchange="Engine.onBackupFileSelect(this)">
+            </label>
+            <div id="backup-preview" style="display:none;margin-top:12px;font-size:12px;color:var(--text-dim);background:rgba(255,255,255,.03);border-radius:10px;padding:12px"></div>
+            <button class="btn-main" id="btn-restore-backup" onclick="Engine.importBackup()" style="width:100%;margin-top:12px;display:none;background:var(--edit);color:#fff">
+                <i data-lucide="upload" size="15"></i> RESTAURAR ESTE BACKUP
+            </button>
+        </div>
+
+        <div class="modal-actions" style="justify-content:flex-end">
+            <button class="btn-main ghost" onclick="document.getElementById('modal-backup').style.display='none'">CERRAR</button>
         </div>
     </div>
 </div>
@@ -4474,6 +4522,138 @@ ${contacto}`
         await window.__fb.logout();
         Engine._listening = false;
         Engine.toast('Sesión cerrada.', 'info');
+    },
+
+    // ══════════════════════════════
+    //  BACKUP & RESTORE
+    // ══════════════════════════════
+
+    openBackup() {
+        // Update stats
+        const s = this.db;
+        const el = document.getElementById('backup-stats');
+        if (el) el.innerHTML = [
+            `<span style="margin-right:12px">📋 ${s.orders?.length||0} órdenes</span>`,
+            `<span style="margin-right:12px">👥 ${s.clients?.length||0} clientes</span>`,
+            `<span style="margin-right:12px">📦 ${s.stock?.length||0} productos</span>`,
+            `<span style="margin-right:12px">📡 ${s.liberaciones?.length||0} liberaciones</span>`,
+            `<span style="margin-right:12px">💰 ${s.movimientos?.length||0} movimientos</span>`,
+            `<span>💳 ${s.deudores?.length||0} deudores</span>`,
+        ].join('');
+        // Reset restore area
+        const fn = document.getElementById('backup-file-name');
+        if (fn) fn.textContent = 'Seleccionar archivo .json de backup';
+        const prev = document.getElementById('backup-preview');
+        if (prev) prev.style.display = 'none';
+        const btn = document.getElementById('btn-restore-backup');
+        if (btn) btn.style.display = 'none';
+        Engine._pendingBackup = null;
+        document.getElementById('modal-backup').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    exportBackup() {
+        const backup = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            exportedBy: document.getElementById('sidebar-user-email')?.innerText || 'unknown',
+            data: {
+                orders:       this.db.orders       || [],
+                stock:        this.db.stock        || [],
+                clients:      this.db.clients      || [],
+                movimientos:  this.db.movimientos  || [],
+                ventas:       this.db.ventas       || [],
+                deudores:     this.db.deudores     || [],
+                cierres:      this.db.cierres      || [],
+                liberaciones: this.db.liberaciones || [],
+            }
+        };
+        const json = JSON.stringify(backup, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const date = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+        a.href     = url;
+        a.download = `nextcom-backup-${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        Engine.toast(`Backup exportado — ${backup.data.orders.length} órdenes guardadas.`, 'success', 4000);
+    },
+
+    onBackupFileSelect(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const fn = document.getElementById('backup-file-name');
+        if (fn) fn.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const backup = JSON.parse(e.target.result);
+                if (!backup.data || typeof backup.data !== 'object') throw new Error('Formato inválido');
+                const d = backup.data;
+                Engine._pendingBackup = backup;
+                const prev = document.getElementById('backup-preview');
+                if (prev) {
+                    prev.style.display = 'block';
+                    const exportDate = backup.exportedAt
+                        ? new Date(backup.exportedAt).toLocaleString('es-ES')
+                        : 'Desconocida';
+                    prev.innerHTML = `
+                        <div style="font-weight:700;color:#fff;margin-bottom:8px">✓ Archivo válido</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                            <span>📋 ${d.orders?.length||0} órdenes</span>
+                            <span>👥 ${d.clients?.length||0} clientes</span>
+                            <span>📦 ${d.stock?.length||0} productos</span>
+                            <span>📡 ${d.liberaciones?.length||0} liberaciones</span>
+                            <span>💰 ${d.movimientos?.length||0} movimientos</span>
+                            <span>💳 ${d.deudores?.length||0} deudores</span>
+                        </div>
+                        <div style="margin-top:8px;font-size:11px;color:var(--text-dim)">Exportado: ${exportDate}</div>
+                    `;
+                }
+                const btn = document.getElementById('btn-restore-backup');
+                if (btn) btn.style.display = 'block';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } catch(err) {
+                Engine._pendingBackup = null;
+                const prev = document.getElementById('backup-preview');
+                if (prev) {
+                    prev.style.display = 'block';
+                    prev.innerHTML = `<span style="color:var(--danger)">✗ Archivo inválido: ${err.message}</span>`;
+                }
+                const btn = document.getElementById('btn-restore-backup');
+                if (btn) btn.style.display = 'none';
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    async importBackup() {
+        const backup = Engine._pendingBackup;
+        if (!backup) return Engine.toast('Selecciona un archivo de backup primero.', 'error');
+        const ok = await Engine.confirm(
+            'Restaurar Backup',
+            `¿Restaurar el backup del ${backup.exportedAt ? new Date(backup.exportedAt).toLocaleString('es-ES') : 'archivo seleccionado'}? Todos los datos actuales serán reemplazados.`,
+            'RESTAURAR', true
+        );
+        if (!ok) return;
+        const d = backup.data;
+        this.db = {
+            orders:       d.orders       || [],
+            stock:        d.stock        || [],
+            clients:      d.clients      || [],
+            movimientos:  d.movimientos  || [],
+            ventas:       d.ventas       || [],
+            deudores:     d.deudores     || [],
+            cierres:      d.cierres      || [],
+            liberaciones: d.liberaciones || [],
+        };
+        this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
+        await this.save();
+        this.refresh();
+        document.getElementById('modal-backup').style.display = 'none';
+        Engine._pendingBackup = null;
+        Engine.toast(`Backup restaurado — ${this.db.orders.length} órdenes, ${this.db.clients.length} clientes.`, 'success', 5000);
     },
 
     async resetDatabase() {

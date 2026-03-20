@@ -906,6 +906,23 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="value" id="st-cash" style="color:var(--success)">$0</div>
         </div>
     </div>
+    <!-- Fila 3: anticipos retenidos -->
+    <div class="stats-grid-3" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
+        <div class="stat-card" style="border-color:rgba(245,158,11,.3)">
+            <div class="label" style="color:var(--edit)">Anticipos Retenidos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="st-anticipos" style="color:var(--edit)">$0</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;font-weight:600">Pasan a ingresos al entregar</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.15)">
+            <div class="label" style="color:var(--text-dim)">Órdenes con Anticipo <i data-lucide="receipt" class="stat-icon" style="color:var(--text-dim)"></i></div>
+            <div class="value" id="st-anticipos-count">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(16,185,129,.15)">
+            <div class="label" style="color:var(--text-dim)">Ingresos Confirmados Hoy <i data-lucide="check-circle-2" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="st-ingresos-confirmados" style="color:var(--success)">$0</div>
+            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;font-weight:600">Solo órdenes entregadas</div>
+        </div>
+    </div>
     <!-- Banner equipos listos -->
     <div class="ready-banner" id="ready-banner">
         <div class="ready-banner-icon"><i data-lucide="package-check" size="24" style="color:var(--success)"></i></div>
@@ -1850,7 +1867,8 @@ const Engine = {
                             ventas:       data.ventas       || [],
                             deudores:     data.deudores     || [],
                             cierres:      data.cierres      || [],
-                            liberaciones: data.liberaciones || []
+                            liberaciones: data.liberaciones || [],
+                            anticipos:    data.anticipos    || []
                         };
                         // Restaurar estado de caja
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
@@ -1924,6 +1942,7 @@ const Engine = {
                 deudores:     this.db.deudores,
                 cierres:      this.db.cierres,
                 liberaciones: this.db.liberaciones,
+                anticipos:    this.db.anticipos || [],
                 updatedAt:    new Date().toISOString()
             });
         } catch(e) {
@@ -1947,6 +1966,7 @@ const Engine = {
                 deudores:     this.db.deudores,
                 cierres:      this.db.cierres,
                 liberaciones: this.db.liberaciones,
+                anticipos:    this.db.anticipos || [],
                 updatedAt:    new Date().toISOString()
             });
             setStatus('● Sincronizado', '#10b981');
@@ -2063,13 +2083,18 @@ const Engine = {
             };
             this.db.orders.unshift(newOrder);
 
-            // Registrar anticipo inmediatamente en caja si existe
+            // Guardar anticipo en bolsa temporal (no en ingresos reales hasta ENTREGADO)
             if (data.anticipo > 0) {
-                this.registrarMovimiento({
-                    tipo: 'ingreso',
-                    desc: `Anticipo ${newOrder.id} — ${data.client} (${data.model})`,
-                    amount: data.anticipo,
-                    metodo: data.anticipoMetodo
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now(),
+                    ticketRef: newOrder.id,
+                    client: data.client,
+                    model: data.model,
+                    monto: data.anticipo,
+                    metodo: data.anticipoMetodo,
+                    date: this.today(),
+                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
                 });
             }
 
@@ -2155,13 +2180,27 @@ const Engine = {
             // Garantía activa desde hoy
             if (o.warrantyDays>0) o.warrantyStart = now.toISOString();
             if (!o.deliveredAt) o.deliveredAt = now.toISOString();
-            // FIX #1: Solo registrar SALDO PENDIENTE como ingreso (evita duplicar anticipos ya cobrados)
+            // Al entregar: mover anticipos retenidos a ingresos reales + registrar saldo final
             const totalAbonado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
+            // 1. Convertir cada anticipo retenido en ingreso real
+            if (this.db.anticipos) {
+                const anticRetenidos = this.db.anticipos.filter(a => a.ticketRef === o.id);
+                anticRetenidos.forEach(a => {
+                    this.registrarMovimiento({
+                        tipo: 'ingreso',
+                        desc: `Anticipo entregado ${o.id} — ${o.client} (${o.model})`,
+                        amount: a.monto, metodo: a.metodo || 'Efectivo', time: timeStr
+                    });
+                });
+                // Limpiar anticipos de este ticket
+                this.db.anticipos = this.db.anticipos.filter(a => a.ticketRef !== o.id);
+            }
+            // 2. Registrar saldo restante al momento de entregar
             const saldoAlEntregar = Math.max(0, o.price - totalAbonado);
             if (saldoAlEntregar > 0) {
                 this.registrarMovimiento({
-                    tipo:'ingreso',
-                    desc: `Entrega ${o.id} — ${o.client} (${o.model})`,
+                    tipo: 'ingreso',
+                    desc: `Saldo entrega ${o.id} — ${o.client} (${o.model})`,
                     amount: saldoAlEntregar, time: timeStr
                 });
             }
@@ -2174,15 +2213,9 @@ const Engine = {
             });
 
         } else if (newStatus === 'FALLIDO') {
-            // Si hay anticipo cobrado, registrar egreso (devolución) en caja
-            const totalAnticipado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
-            if (totalAnticipado > 0) {
-                this.registrarMovimiento({
-                    tipo: 'egreso',
-                    desc: `Devolución anticipo ${o.id} — ${o.client} (${o.model}) [FALLIDO]`,
-                    amount: totalAnticipado,
-                    time: timeStr
-                });
+            // Limpiar anticipos retenidos sin tocar caja (el dinero nunca fue ingreso real)
+            if (this.db.anticipos) {
+                this.db.anticipos = this.db.anticipos.filter(a => a.ticketRef !== o.id);
             }
             // Eliminar deudores vinculados
             this.db.deudores = (this.db.deudores||[]).filter(d => d.ticketRef !== o.id);
@@ -2205,9 +2238,10 @@ const Engine = {
     async deleteItem(type,id) {
         if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
         if (type==='lab') {
-            // FIX #5: Limpiar movimientos y deudores vinculados al eliminar una orden
+            // Limpiar anticipos retenidos, movimientos y deudores vinculados
             const order = this.db.orders.find(o=>o.id===id);
             if (order) {
+                if (this.db.anticipos) this.db.anticipos = this.db.anticipos.filter(a=>a.ticketRef !== id);
                 this.db.movimientos = (this.db.movimientos||[]).filter(m=>!m.desc.includes(id));
                 this.db.deudores    = (this.db.deudores||[]).filter(d=>d.ticketRef !== id);
             }
@@ -2817,8 +2851,8 @@ ${tc}`,
         document.getElementById('st-urgent').innerText=o.filter(x=>x.status==='URGENTE').length;
         document.getElementById('st-process').innerText=o.filter(x=>x.status==='PENDIENTE').length;
         document.getElementById('st-delivered').innerText=o.filter(x=>x.status==='ENTREGADO').length;
-        // Capital pendiente = saldo real de órdenes no entregadas
-        const capitalPendiente = o.filter(x=>x.status!=='ENTREGADO').reduce((sum,x)=>{
+        // Capital pendiente = saldo real de órdenes activas (excluye ENTREGADO y FALLIDO)
+        const capitalPendiente = o.filter(x=>x.status!=='ENTREGADO' && x.status!=='FALLIDO').reduce((sum,x)=>{
             const totalAbonado = (x.abonos||[]).reduce((a,b)=>a+b.monto,0);
             return sum + Math.max(0, x.price - totalAbonado);
         },0);
@@ -2829,6 +2863,22 @@ ${tc}`,
         const ingHoy=hoyMovs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);
         const ingHoyEl=document.getElementById('st-ingresos-hoy');
         if(ingHoyEl) ingHoyEl.innerText=this.formatMoney(ingHoy);
+
+        // Anticipos retenidos (bolsa temporal — aún no son ingresos reales)
+        const anticiposActivos = (this.db.anticipos||[]).filter(a => {
+            const order = this.db.orders.find(x=>x.id===a.ticketRef);
+            return order && order.status !== 'ENTREGADO' && order.status !== 'FALLIDO';
+        });
+        const totalAnticipado = anticiposActivos.reduce((s,a)=>s+a.monto, 0);
+        const elAntic = document.getElementById('st-anticipos');
+        const elAnticCount = document.getElementById('st-anticipos-count');
+        if (elAntic) elAntic.innerText = this.formatMoney(totalAnticipado);
+        if (elAnticCount) elAnticCount.innerText = [...new Set(anticiposActivos.map(a=>a.ticketRef))].length;
+
+        // Ingresos confirmados hoy = movimientos de ingreso del día (solo entregados)
+        const ingConfirmadosHoy = hoyMovs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);
+        const elIngConf = document.getElementById('st-ingresos-confirmados');
+        if (elIngConf) elIngConf.innerText = this.formatMoney(ingConfirmadosHoy);
 
         // Banner equipos listos (solo LISTO, no ENTREGADO)
         const listos = o.filter(x=>x.status==='LISTO');
@@ -4175,22 +4225,24 @@ ${tc}`,
     },
 
     async deleteAbono(orderId, abonoIdx) {
-        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? Se registrará un egreso en caja por el monto revertido.')) return;
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? Se quitará de los anticipos retenidos.')) return;
         const idx = this.db.orders.findIndex(o=>o.id===orderId);
         if (idx===-1) return;
         const abono = this.db.orders[idx].abonos[abonoIdx];
-        // Revertir en caja: registrar egreso por el monto del abono eliminado
+        // Quitar de la bolsa de anticipos (no afecta caja real)
         if (abono && abono.monto > 0) {
-            const o = this.db.orders[idx];
-            this.registrarMovimiento({
-                tipo: 'egreso',
-                desc: `Reversión abono ${orderId} — ${o.client} (${o.model})`,
-                amount: abono.monto,
-                metodo: abono.metodo || 'Efectivo'
-            });
+            if (this.db.anticipos) {
+                // Eliminar el anticipo más reciente del mismo ticket y monto
+                const antiIdx = [...this.db.anticipos].reverse()
+                    .findIndex(a => a.ticketRef === orderId && Math.abs(a.monto - abono.monto) < 0.01);
+                if (antiIdx > -1) {
+                    const realIdx = this.db.anticipos.length - 1 - antiIdx;
+                    this.db.anticipos.splice(realIdx, 1);
+                }
+            }
         }
         this.db.orders[idx].abonos.splice(abonoIdx, 1);
-        // Restaurar deudor si corresponde
+        // Restaurar saldo en deudor si corresponde
         const o = this.db.orders[idx];
         const totalAbonado = o.abonos.reduce((s,a)=>s+a.monto,0);
         const nuevoSaldo = Math.max(0, o.price - totalAbonado);
@@ -4490,11 +4542,18 @@ ${tc}`,
             if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.orders[idx].abonos) this.db.orders[idx].abonos = [];
             this.db.orders[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
-            // Registrar abono inmediatamente en caja
-            this.registrarMovimiento({
-                tipo: 'ingreso',
-                desc: `Abono ${id} — ${o.client} (${o.model})${nota?' — '+nota:''}`,
-                amount: monto, metodo
+            // Guardar abono en bolsa temporal (no en ingresos hasta ENTREGADO)
+            if (!this.db.anticipos) this.db.anticipos = [];
+            this.db.anticipos.push({
+                id: Date.now()+1,
+                ticketRef: id,
+                client: o.client,
+                model: o.model,
+                monto,
+                metodo,
+                nota,
+                date: this.today(),
+                time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
             });
             // Actualizar deudor vinculado: reducir saldo o eliminar si queda en cero
             const totalAbonado2 = this.db.orders[idx].abonos.reduce((s,a)=>s+a.monto,0);
@@ -4902,7 +4961,7 @@ ${contacto}`
             'SÍ, BORRAR TODO', true
         );
         if (!second) return;
-        this.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
+        this.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[], anticipos:[] };
         await this.save();
         this.refresh();
         Engine.toast('Base de datos reseteada. El sistema está en blanco.', 'info', 5000);

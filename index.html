@@ -845,6 +845,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <button onclick="Engine.doLogout()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,.3)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border)'">
                 <i data-lucide="log-out" size="12"></i> CERRAR SESIÓN
             </button>
+            <button onclick="Engine.resetDatabase()" style="margin-top:6px;width:100%;padding:7px;border-radius:9px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:rgba(239,68,68,.5);font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s" onmouseover="this.style.color='#ef4444';this.style.background='rgba(239,68,68,.1)';this.style.borderColor='rgba(239,68,68,.4)'" onmouseout="this.style.color='rgba(239,68,68,.5)';this.style.background='rgba(239,68,68,.05)';this.style.borderColor='rgba(239,68,68,.2)'">
+                <i data-lucide="trash-2" size="11"></i> RESETEAR BASE DE DATOS
+            </button>
         </div>
     </div>
 </aside>
@@ -1686,38 +1689,14 @@ const app    = initializeApp({
 getAnalytics(app);
 const db_fs  = getFirestore(app);
 const auth   = getAuth(app);
-
-// Documento por usuario — cambia con cada login
-let DB_DOC      = null;
-let _unsubscribe = null;
+const DB_DOC = doc(db_fs, 'nextcom', 'maindb');
 
 window.__fb = {
-    save: (data) => {
-        if (!DB_DOC) return Promise.resolve();
-        return setDoc(DB_DOC, data);
-    },
-    subscribe: (cb, errCb) => {
-        // Guardamos los callbacks; se activarán cuando onAuth detecte un usuario
-        window.__fb._cb    = cb;
-        window.__fb._errCb = errCb;
-    },
-    login:  (email, pass) => signInWithEmailAndPassword(auth, email, pass),
-    logout: () => signOut(auth),
-    onAuth: (cb) => onAuthStateChanged(auth, (user) => {
-        // Cancelar listener anterior al cambiar de usuario
-        if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
-        if (user) {
-            // Cada usuario tiene su propio documento: users/{uid}
-            DB_DOC = doc(db_fs, 'users', user.uid);
-            // Arrancar listener de Firestore para este usuario
-            if (window.__fb._cb) {
-                _unsubscribe = onSnapshot(DB_DOC, window.__fb._cb, window.__fb._errCb || (() => {}));
-            }
-        } else {
-            DB_DOC = null;
-        }
-        cb(user);
-    })
+    save:      (data)       => setDoc(DB_DOC, data),
+    subscribe: (cb, errCb)  => onSnapshot(DB_DOC, cb, errCb),
+    login:     (email, pass)=> signInWithEmailAndPassword(auth, email, pass),
+    logout:    ()           => signOut(auth),
+    onAuth:    (cb)         => onAuthStateChanged(auth, cb)
 };
 
 // Avisar al Engine que Firebase ya está listo
@@ -1786,21 +1765,16 @@ const Engine = {
                 const emailEl     = document.getElementById('sidebar-user-email');
 
                 if (user) {
-                    // Autenticado: ocultar login, mostrar app
                     if (loginScreen) loginScreen.classList.add('hidden');
                     if (sidebarUser) sidebarUser.style.display = 'block';
                     if (emailEl)     emailEl.innerText = user.email;
-                    // Resetear DB en memoria para este usuario (datos limpios hasta que Firestore responda)
-                    Engine.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
-                    Engine._pages = {};
-                    Engine.refresh();
-                    // Arrancar (o re-arrancar) listener — el nuevo onAuth ya canceló el anterior
-                    startListening();
+                    if (!Engine._listening) {
+                        Engine._listening = true;
+                        startListening();
+                    }
                 } else {
-                    // No autenticado: mostrar login, limpiar UI
                     if (loginScreen) loginScreen.classList.remove('hidden');
                     if (sidebarUser) sidebarUser.style.display = 'none';
-                    Engine.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
                     setStatus('Sin sesión', '#64748b');
                 }
             });
@@ -4431,6 +4405,7 @@ ${contacto}`
     },
 
     // ── AUTH ──
+    _listening: false,
     _repPeriod: 'all',
     _calYear: new Date().getFullYear(),
     _calMonth: new Date().getMonth(),
@@ -4464,7 +4439,27 @@ ${contacto}`
     async doLogout() {
         if (!await Engine.confirm('Cerrar Sesión', '¿Deseas cerrar tu sesión en NEXTCOM?', 'CERRAR SESIÓN', false)) return;
         await window.__fb.logout();
+        Engine._listening = false;
         Engine.toast('Sesión cerrada.', 'info');
+    },
+
+    async resetDatabase() {
+        const first = await Engine.confirm(
+            '⚠️ Resetear Base de Datos',
+            'Esta acción eliminará PERMANENTEMENTE todas las órdenes, clientes, inventario, liberaciones, deudores, ventas y movimientos. Esta acción NO se puede deshacer.',
+            'CONTINUAR', true
+        );
+        if (!first) return;
+        const second = await Engine.confirm(
+            '¿Estás completamente seguro?',
+            'Se borrarán TODOS los datos del sistema. Confirma solo si estás seguro de que deseas comenzar desde cero.',
+            'SÍ, BORRAR TODO', true
+        );
+        if (!second) return;
+        this.db = { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] };
+        await this.save();
+        this.refresh();
+        Engine.toast('Base de datos reseteada. El sistema está en blanco.', 'info', 5000);
     },
 
     confirm(title, msg, okLabel='CONFIRMAR', danger=true) {

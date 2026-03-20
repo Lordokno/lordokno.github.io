@@ -2001,72 +2001,48 @@ const Engine = {
     async setOrderStatus(id, newStatus) {
         const o = this.db.orders.find(x=>x.id===id);
         if (!o || o.status === newStatus) return;
-        const prevStatus = o.status;
         o.status = newStatus;
         const now = new Date();
         const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-        const abonos = o.abonos || [];
-        const totalAbonado = abonos.reduce((s,a)=>s+a.monto,0);
-        const saldo = Math.max(0, o.price - totalAbonado);
 
         if (newStatus === 'LISTO') {
-            // Garantía NO activa aún. Solo notificar.
+            // Solo marcamos listo — sin cambios financieros, sin garantía aún
             o.warrantyStart = null;
 
         } else if (newStatus === 'ENTREGADO') {
-            // Activar garantía al entregar
-            if (o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart = now.toISOString();
+            // Garantía activa desde hoy
+            if (o.warrantyDays>0) o.warrantyStart = now.toISOString();
             if (!o.deliveredAt) o.deliveredAt = now.toISOString();
-
-            // Registrar el anticipo ya recibido como ingreso (si no se registró antes)
-            if (!o._anticipoRegistrado && totalAbonado > 0) {
+            // Registrar PRECIO TOTAL como un único ingreso (todo el dinero junto al entregar)
+            if (o.price > 0) {
                 this.db.movimientos.unshift({
                     id: Date.now(), tipo:'ingreso',
-                    desc: `Anticipo ${o.id} — ${o.client}`,
-                    amount: totalAbonado, metodo: 'Efectivo',
+                    desc: `Entrega ${o.id} — ${o.client} (${o.model})`,
+                    amount: o.price, metodo: 'Efectivo',
                     date: this.today(), time: timeStr
                 });
-                o._anticipoRegistrado = true;
             }
-
-            // Registrar el saldo restante como ingreso (pago al entregar)
-            if (saldo > 0) {
-                this.db.movimientos.unshift({
-                    id: Date.now()+1, tipo:'ingreso',
-                    desc: `Pago entrega ${o.id} — ${o.client}`,
-                    amount: saldo, metodo: 'Efectivo',
-                    date: this.today(), time: timeStr
-                });
-                // Marcar deudor vinculado como cobrado
-                const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===o.id && !d.cobrado);
-                if (deudIdx > -1) {
-                    this.db.deudores[deudIdx].cobrado   = true;
-                    this.db.deudores[deudIdx].cobradoEl = now.toISOString();
+            // Cerrar deudor vinculado
+            (this.db.deudores||[]).forEach(d => {
+                if (d.ticketRef === o.id && !d.cobrado) {
+                    d.cobrado = true;
+                    d.cobradoEl = now.toISOString();
                 }
-            }
+            });
 
         } else if (newStatus === 'FALLIDO') {
-            // Cancelar: devolver anticipo, eliminar deuda, limpiar garantía
+            // Eliminar TODOS los movimientos relacionados con esta orden
+            this.db.movimientos = (this.db.movimientos||[]).filter(m =>
+                !m.desc.includes(o.id)
+            );
+            // Eliminar deudores vinculados
+            this.db.deudores = (this.db.deudores||[]).filter(d => d.ticketRef !== o.id);
+            // Limpiar garantía y entrega
             o.warrantyStart = null;
             o.deliveredAt   = null;
-            o._anticipoRegistrado = false;
 
-            // Registrar devolución del anticipo como egreso
-            if (totalAbonado > 0) {
-                this.db.movimientos.unshift({
-                    id: Date.now(), tipo:'egreso',
-                    desc: `Devolución anticipo ${o.id} — ${o.client}`,
-                    amount: totalAbonado, metodo: 'Efectivo',
-                    date: this.today(), time: timeStr
-                });
-            }
-            // Cancelar deudor vinculado
-            if (this.db.deudores) {
-                this.db.deudores = this.db.deudores.filter(d => d.ticketRef !== o.id);
-            }
-
-        } else if (newStatus === 'PENDIENTE' || newStatus === 'URGENTE') {
-            // Volver atrás: limpiar garantía y entrega
+        } else {
+            // PENDIENTE / URGENTE — reset
             o.warrantyStart = null;
             o.deliveredAt   = null;
         }
@@ -3806,28 +3782,30 @@ ${tc}`,
         this.db.deudores[idx].cobrado   = true;
         this.db.deudores[idx].cobradoEl = new Date().toISOString();
 
-        // Si el deudor viene de un ticket de lab, registrar el abono en la orden también
+        // Si viene de un ticket de lab, sincronizar el abono en la orden
+        // El ingreso real se registra solo cuando se marca ENTREGADO
         if (d.ticketRef) {
             const orderIdx = this.db.orders.findIndex(o => o.id === d.ticketRef);
             if (orderIdx !== -1) {
                 if (!this.db.orders[orderIdx].abonos) this.db.orders[orderIdx].abonos = [];
                 this.db.orders[orderIdx].abonos.push({
                     id: Date.now(), monto: d.total, metodo: 'Efectivo',
-                    nota: 'Cobro desde Deudores',
+                    nota: 'Cobro anticipado desde Deudores',
                     date: this.today(),
                     time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
                 });
             }
+            // No registrar ingreso en movimientos — se registra al marcar ENTREGADO
+        } else {
+            // Deudor de POS (no de lab) — sí registrar ingreso inmediatamente
+            this.db.movimientos.unshift({
+                id: Date.now(), tipo: 'ingreso',
+                desc: `Cobro crédito — ${d.client}`,
+                amount: d.total, metodo: 'Efectivo',
+                date: this.today(),
+                time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+            });
         }
-
-        // Registrar ingreso en caja al cobrar
-        this.db.movimientos.unshift({
-            id: Date.now(), tipo: 'ingreso',
-            desc: `Cobro ${d.ticketRef ? d.ticketRef+' — ' : ''}${d.client}`,
-            amount: d.total, metodo: 'Efectivo',
-            date: this.today(),
-            time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
-        });
 
         await this.save();
         this.renderDeudores();
@@ -4244,7 +4222,20 @@ ${tc}`,
             if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.orders[idx].abonos) this.db.orders[idx].abonos = [];
             this.db.orders[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
-            this.db.movimientos.unshift({ id:Date.now()+1, tipo:'ingreso', desc:`Abono ${id} — ${o.client}${nota?' ('+nota+')':''}`, amount:monto, metodo, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
+            // El abono se guarda en la orden — el ingreso se registra solo al ENTREGAR
+            // Actualizar deudor vinculado: reducir saldo o eliminar si queda en cero
+            const totalAbonado2 = this.db.orders[idx].abonos.reduce((s,a)=>s+a.monto,0);
+            const nuevoSaldo = Math.max(0, o.price - totalAbonado2);
+            const deudIdx2 = (this.db.deudores||[]).findIndex(d=>d.ticketRef===id && !d.cobrado);
+            if (deudIdx2 > -1) {
+                if (nuevoSaldo <= 0) {
+                    // Saldo saldado — eliminar deudor
+                    this.db.deudores.splice(deudIdx2, 1);
+                } else {
+                    // Reducir saldo del deudor
+                    this.db.deudores[deudIdx2].total = nuevoSaldo;
+                }
+            }
             await this.save();
             this.abrirAbono(id);
         }

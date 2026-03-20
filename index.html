@@ -96,6 +96,7 @@ tr:hover td{background:rgba(255,255,255,.01);}
 .badge-pendiente,.badge-pending{background:rgba(245,158,11,.1);color:#f59e0b;}
 .badge-urgente,.badge-urgent{background:rgba(239,68,68,.1);color:#ef4444;animation:blink 1s infinite;}
 .badge-entregado{background:rgba(129,140,248,.12);color:#818cf8;}
+.badge-fallido{background:rgba(107,114,128,.1);color:#6b7280;}
 @keyframes blink{0%{opacity:1;}50%{opacity:.3;}100%{opacity:1;}}
 @keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 tr.status-listo td{color:#10b981!important;}
@@ -1018,6 +1019,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <button class="lab-tab" onclick="Engine.setLabFilter('PENDIENTE',this)"><span style="color:#f59e0b">●</span> Pendiente <span class="tab-count" id="tc-pendiente">0</span></button>
             <button class="lab-tab" onclick="Engine.setLabFilter('LISTO',this)"><span style="color:#10b981">●</span> Listo <span class="tab-count" id="tc-listo">0</span></button>
             <button class="lab-tab" onclick="Engine.setLabFilter('ENTREGADO',this)"><span style="color:#818cf8">●</span> Entregado <span class="tab-count" id="tc-entregado">0</span></button>
+            <button class="lab-tab" onclick="Engine.setLabFilter('FALLIDO',this)"><span style="color:#6b7280">●</span> Fallido <span class="tab-count" id="tc-fallido">0</span></button>
         </div>
     </div>
 
@@ -1930,18 +1932,10 @@ const Engine = {
             };
             this.db.orders.unshift(newOrder);
 
-            // Registrar anticipo en caja
-            if (data.anticipo > 0) {
-                this.db.movimientos.unshift({
-                    id: Date.now()+1, tipo:'ingreso',
-                    desc:`Anticipo ${newOrder.id} — ${data.client}`,
-                    amount: data.anticipo, metodo: data.anticipoMetodo,
-                    date: this.today(),
-                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
-                });
-            }
+            // El anticipo se registra como ingreso solo cuando se marca ENTREGADO.
+            // Aquí solo se guarda en abonos del ticket y en capital pendiente.
 
-            // Auto-crear deudor si hay saldo pendiente
+            // Auto-crear deudor si hay saldo pendiente (lo que falta cobrar)
             const saldoPendiente = data.price - data.anticipo;
             if (saldoPendiente > 0 && data.price > 0) {
                 const fechaPago = document.getElementById('l-fecha-pago')?.value || (() => {
@@ -1998,43 +1992,89 @@ const Engine = {
 
     async toggleStatusLab(id) {
         const o = this.db.orders.find(x=>x.id===id);
-        if (o.status==='PENDIENTE') o.status='URGENTE';
-        else if (o.status==='URGENTE') o.status='LISTO';
-        else if (o.status==='LISTO') o.status='ENTREGADO';
-        else o.status='PENDIENTE';
-        if ((o.status==='LISTO'||o.status==='ENTREGADO') && o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart=new Date().toISOString();
-        if (o.status==='PENDIENTE') o.warrantyStart=null;
-        if (o.status==='ENTREGADO' && !o.deliveredAt) o.deliveredAt=new Date().toISOString();
-        await this.save();
-        const statusLabels = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo para entregar',ENTREGADO:'Entregado'};
-        const statusTypes  = {PENDIENTE:'info',URGENTE:'error',LISTO:'success',ENTREGADO:'info'};
-        Engine.toast(`${o.id} → ${statusLabels[o.status]||o.status}`, statusTypes[o.status]||'info', 2000);
+        if (!o) return;
+        const cycle = {PENDIENTE:'URGENTE',URGENTE:'LISTO',LISTO:'ENTREGADO',ENTREGADO:'PENDIENTE',FALLIDO:'PENDIENTE'};
+        const next = cycle[o.status] || 'PENDIENTE';
+        await this.setOrderStatus(id, next);
     },
 
     async setOrderStatus(id, newStatus) {
         const o = this.db.orders.find(x=>x.id===id);
         if (!o || o.status === newStatus) return;
+        const prevStatus = o.status;
         o.status = newStatus;
-        if ((newStatus==='LISTO'||newStatus==='ENTREGADO') && o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart=new Date().toISOString();
-        if (newStatus==='PENDIENTE') o.warrantyStart=null;
-        if (newStatus==='ENTREGADO' && !o.deliveredAt) {
-            o.deliveredAt=new Date().toISOString();
-            // Registrar ingreso automático al entregar
-            const saldoPendiente = Math.max(0, o.price - (o.abonos||[]).reduce((s,a)=>s+a.monto,0));
-            if (saldoPendiente > 0) {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const abonos = o.abonos || [];
+        const totalAbonado = abonos.reduce((s,a)=>s+a.monto,0);
+        const saldo = Math.max(0, o.price - totalAbonado);
+
+        if (newStatus === 'LISTO') {
+            // Garantía NO activa aún. Solo notificar.
+            o.warrantyStart = null;
+
+        } else if (newStatus === 'ENTREGADO') {
+            // Activar garantía al entregar
+            if (o.warrantyDays>0 && !o.warrantyStart) o.warrantyStart = now.toISOString();
+            if (!o.deliveredAt) o.deliveredAt = now.toISOString();
+
+            // Registrar el anticipo ya recibido como ingreso (si no se registró antes)
+            if (!o._anticipoRegistrado && totalAbonado > 0) {
                 this.db.movimientos.unshift({
                     id: Date.now(), tipo:'ingreso',
+                    desc: `Anticipo ${o.id} — ${o.client}`,
+                    amount: totalAbonado, metodo: 'Efectivo',
+                    date: this.today(), time: timeStr
+                });
+                o._anticipoRegistrado = true;
+            }
+
+            // Registrar el saldo restante como ingreso (pago al entregar)
+            if (saldo > 0) {
+                this.db.movimientos.unshift({
+                    id: Date.now()+1, tipo:'ingreso',
                     desc: `Pago entrega ${o.id} — ${o.client}`,
-                    amount: saldoPendiente, metodo: 'Efectivo',
-                    date: this.today(),
-                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                    amount: saldo, metodo: 'Efectivo',
+                    date: this.today(), time: timeStr
+                });
+                // Marcar deudor vinculado como cobrado
+                const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===o.id && !d.cobrado);
+                if (deudIdx > -1) {
+                    this.db.deudores[deudIdx].cobrado   = true;
+                    this.db.deudores[deudIdx].cobradoEl = now.toISOString();
+                }
+            }
+
+        } else if (newStatus === 'FALLIDO') {
+            // Cancelar: devolver anticipo, eliminar deuda, limpiar garantía
+            o.warrantyStart = null;
+            o.deliveredAt   = null;
+            o._anticipoRegistrado = false;
+
+            // Registrar devolución del anticipo como egreso
+            if (totalAbonado > 0) {
+                this.db.movimientos.unshift({
+                    id: Date.now(), tipo:'egreso',
+                    desc: `Devolución anticipo ${o.id} — ${o.client}`,
+                    amount: totalAbonado, metodo: 'Efectivo',
+                    date: this.today(), time: timeStr
                 });
             }
+            // Cancelar deudor vinculado
+            if (this.db.deudores) {
+                this.db.deudores = this.db.deudores.filter(d => d.ticketRef !== o.id);
+            }
+
+        } else if (newStatus === 'PENDIENTE' || newStatus === 'URGENTE') {
+            // Volver atrás: limpiar garantía y entrega
+            o.warrantyStart = null;
+            o.deliveredAt   = null;
         }
+
         await this.save();
-        const labels = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo para entregar',ENTREGADO:'Entregado'};
-        const types  = {PENDIENTE:'info',URGENTE:'error',LISTO:'success',ENTREGADO:'info'};
-        Engine.toast(`${o.id} → ${labels[newStatus]}`, types[newStatus]||'info', 2000);
+        const labels = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo para entregar',ENTREGADO:'Entregado',FALLIDO:'Fallido'};
+        const types  = {PENDIENTE:'info',URGENTE:'error',LISTO:'success',ENTREGADO:'info',FALLIDO:'info'};
+        Engine.toast(`${o.id} → ${labels[newStatus]}`, types[newStatus]||'info', 2500);
     },
 
     async deleteItem(type,id) {
@@ -2751,9 +2791,9 @@ ${tc}`,
 
         // Update tab counts
         const o = this.db.orders;
-        const counts = { all:o.length, URGENTE:0, PENDIENTE:0, LISTO:0, ENTREGADO:0 };
+        const counts = { all:o.length, URGENTE:0, PENDIENTE:0, LISTO:0, ENTREGADO:0, FALLIDO:0 };
         o.forEach(x => { if(counts[x.status]!==undefined) counts[x.status]++; });
-        ['all','urgente','pendiente','listo','entregado'].forEach(k => {
+        ['all','urgente','pendiente','listo','entregado','fallido'].forEach(k => {
             const el = document.getElementById('tc-'+k);
             if(el) el.innerText = counts[k==='all'?'all':k.toUpperCase()]||0;
         });
@@ -2811,8 +2851,9 @@ ${tc}`,
             const hasDetail = x.fail && x.fail.length > 0;
 
             // Status colors for select styling
-            const statusColors = {URGENTE:'#ef4444',PENDIENTE:'#f59e0b',LISTO:'#10b981',ENTREGADO:'#818cf8'};
+            const statusColors = {URGENTE:'#ef4444',PENDIENTE:'#f59e0b',LISTO:'#10b981',ENTREGADO:'#818cf8',FALLIDO:'#6b7280'};
             const selColor = statusColors[x.status] || '#64748b';
+            const isTerminal = x.status==='ENTREGADO' || x.status==='FALLIDO';
 
             return `<tr class="status-${sc}" id="row-${x.id}">
                 <td style="font-family:var(--mono);font-weight:700;font-size:12px">
@@ -2830,12 +2871,13 @@ ${tc}`,
                             <option value="URGENTE"${x.status==='URGENTE'?' selected':''}>URGENTE</option>
                             <option value="LISTO"${x.status==='LISTO'?' selected':''}>LISTO</option>
                             <option value="ENTREGADO"${x.status==='ENTREGADO'?' selected':''}>ENTREGADO</option>
+                            <option value="FALLIDO"${x.status==='FALLIDO'?' selected':''}>FALLIDO</option>
                         </select>
                     </div>
                 </td>
                 <td style="color:var(--text-dim);font-size:12px;white-space:nowrap">${dateStr}</td>
                 <td><div style="display:flex;gap:4px">
-                    ${x.status!=='ENTREGADO'?`
+                    ${!isTerminal?`
                     <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>
                     <div class="action-icon" title="Registrar Abono" style="color:var(--success)" onclick="Engine.abrirAbono('${x.id}')"><i data-lucide="banknote" size="13"></i></div>
                     <div class="action-icon wa" title="WhatsApp" onclick="Engine.quickWa('${x.id}')"><i data-lucide="message-circle" size="13"></i></div>`:''}

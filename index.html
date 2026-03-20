@@ -2410,22 +2410,19 @@ ${tc}`,
         y += 3;
 
         // ════════════════════════════════════════════
-        // FIRMAS
+        // AVISO DE GARANTÍA
         // ════════════════════════════════════════════
         hr(0.2, true);
-        y += 10;
-        doc.setDrawColor(...BK);
-        doc.setLineWidth(0.3);
-        doc.setLineDash([]);
-        doc.line(4,  y, 33, y);
-        doc.line(W-33, y, W-4, y);
         y += 4;
         doc.setFontSize(S_SMALL);
-        doc.setFont('helvetica','normal');
-        doc.setTextColor(...GR);
-        doc.text('Firma Cliente', 18.5, y, {align:'center'});
-        doc.text('Firma Tecnico', W-18.5, y, {align:'center'});
-        y += 8;
+        doc.setFont('helvetica','bold');
+        doc.setTextColor(...BK);
+        const avisoLines = doc.splitTextToSize(
+            'Al momento de recibir el equipo y presentar este ticket, queda activada y vigente la garantia del servicio realizado por NEXTCOM Multiservicios.',
+            W-8
+        );
+        doc.text(avisoLines, W/2, y, {align:'center'});
+        y += avisoLines.length * LH + 3;
 
         // ════════════════════════════════════════════
         // CIERRE

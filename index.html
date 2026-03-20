@@ -915,6 +915,30 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
         <div class="ready-banner-count" id="ready-count-big">0</div>
     </div>
+    <!-- Banner entregas prometidas vencidas -->
+    <div id="overdue-banner" style="display:none;background:linear-gradient(135deg,rgba(239,68,68,.1) 0%,rgba(245,158,11,.06) 100%);border:1px solid rgba(239,68,68,.3);border-radius:var(--rx);padding:16px 24px;margin-bottom:20px;align-items:center;gap:14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:var(--danger);border-radius:2px 0 0 2px"></div>
+        <div style="width:40px;height:40px;flex-shrink:0;background:rgba(239,68,68,.12);border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i data-lucide="clock-alert" size="20" style="color:var(--danger)"></i>
+        </div>
+        <div style="flex:1">
+            <div style="font-size:14px;font-weight:800;color:#fff" id="overdue-title">Entregas vencidas</div>
+            <p id="overdue-desc" style="font-size:12px;color:var(--text-dim);margin-top:2px;font-weight:500"></p>
+        </div>
+        <div onclick="go('lab',document.querySelector('.nav-item[onclick*=lab]'))" style="cursor:pointer;padding:8px 16px;border-radius:10px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:var(--danger);font-size:11px;font-weight:800;white-space:nowrap">VER LAB ›</div>
+    </div>
+    <!-- Banner garantías por vencer -->
+    <div id="warranty-alert-banner" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,.1) 0%,rgba(239,68,68,.07) 100%);border:1px solid rgba(245,158,11,.35);border-radius:var(--rx);padding:16px 24px;margin-bottom:20px;display:none;align-items:center;gap:14px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--edit),var(--danger));border-radius:2px 0 0 2px"></div>
+        <div style="width:40px;height:40px;flex-shrink:0;background:rgba(245,158,11,.15);border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i data-lucide="shield-alert" size="20" style="color:var(--edit)"></i>
+        </div>
+        <div style="flex:1">
+            <div style="font-size:14px;font-weight:800;color:#fff" id="warranty-alert-title">Garantías por vencer</div>
+            <p id="warranty-alert-desc" style="font-size:12px;color:var(--text-dim);margin-top:2px;font-weight:500"></p>
+        </div>
+        <div onclick="go('warranty',document.querySelector('.nav-item[onclick*=warranty]'))" style="cursor:pointer;padding:8px 16px;border-radius:10px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.3);color:var(--edit);font-size:11px;font-weight:800;white-space:nowrap">VER GARANTÍAS ›</div>
+    </div>
     <!-- Gráfica de ingresos del dashboard -->
     <div class="chart-box" style="margin-bottom:24px">
         <div class="chart-title">Ingresos vs Egresos — Últimos 14 días</div>
@@ -998,12 +1022,17 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <div id="anticipo-preview" style="font-size:13px;color:var(--text-dim);font-weight:600"></div>
             </div>
         </div>
-        <div class="input-row" style="grid-template-columns:3fr 1fr">
+        <div class="input-row" style="grid-template-columns:3fr 1fr 1fr">
             <div class="field"><label>Diagnóstico</label><textarea id="l-fail" rows="2" placeholder="Falla reportada por el cliente..."></textarea></div>
             <div class="field">
                 <label>Días de Garantía</label>
                 <select id="l-warranty"><option value="0">Sin garantía</option><option value="7">7 días</option><option value="15">15 días</option><option value="30" selected>30 días</option><option value="60">60 días</option><option value="90">90 días</option><option value="180">6 meses</option><option value="365">1 año</option></select>
                 <span class="warranty-input-hint">⏱ Activa al marcar LISTO</span>
+            </div>
+            <div class="field">
+                <label>Entrega Prometida</label>
+                <input type="date" id="l-fecha-prometida">
+                <span class="warranty-input-hint">📅 Opcional — alerta si vence</span>
             </div>
         </div>
         <div style="display:flex;gap:10px;margin-top:20px;align-items:center">
@@ -1036,6 +1065,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <th>Garantía</th>
                 <th class="sortable-th" onclick="Engine.sortLab('status')">Estado <span class="sort-arrow" id="sort-status">↕</span></th>
                 <th class="sortable-th" onclick="Engine.sortLab('date')">Ingreso <span class="sort-arrow" id="sort-date">↕</span></th>
+                <th>Entrega</th>
                 <th>Acciones</th>
             </tr></thead>
             <tbody id="lab-table"></tbody>
@@ -1977,6 +2007,7 @@ const Engine = {
             warrantyDays: parseInt(document.getElementById('l-warranty').value)||0,
             anticipo: parseFloat(document.getElementById('l-anticipo').value)||0,
             anticipoMetodo: document.getElementById('l-anticipo-metodo')?.value || 'Efectivo',
+            fechaPrometida: document.getElementById('l-fecha-prometida')?.value || '',
         };
         if (saveHint) saveHint.style.display = 'none';
         if (!data.client||!data.model) return Engine.toast('Completa cliente y modelo del equipo.','error');
@@ -2055,6 +2086,7 @@ const Engine = {
         document.getElementById('l-fail').value=o.fail||'';
         document.getElementById('l-warranty').value=o.warrantyDays||0;
         document.getElementById('l-anticipo').value=o.anticipo||0;
+        const fpEl = document.getElementById('l-fecha-prometida'); if(fpEl) fpEl.value=o.fechaPrometida||'';
         this.updateAnticipoBadge();
         document.getElementById('lab-panel').classList.add('editing');
         document.getElementById('txt-lab-btn').innerText='ACTUALIZAR TICKET';
@@ -2075,6 +2107,9 @@ const Engine = {
     async setOrderStatus(id, newStatus) {
         const o = this.db.orders.find(x=>x.id===id);
         if (!o || o.status === newStatus) return;
+        // Guardar historial de estado
+        if (!o.statusLog) o.statusLog = [];
+        o.statusLog.push({ from: o.status, to: newStatus, date: this.today(), time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
         o.status = newStatus;
         const now = new Date();
         const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
@@ -2138,7 +2173,7 @@ const Engine = {
         this.editState[type]=null;
         document.getElementById(type+'-panel').classList.remove('editing');
         if (type==='lab') {
-            ['l-name','l-phone','l-model','l-pin','l-price','l-fail','l-anticipo','l-fecha-pago'].forEach(i=>{ const el=document.getElementById(i); if(el) el.value=''; });
+            ['l-name','l-phone','l-model','l-pin','l-price','l-fail','l-anticipo','l-fecha-pago','l-fecha-prometida'].forEach(i=>{ const el=document.getElementById(i); if(el) el.value=''; });
             document.getElementById('anticipo-preview').innerText='';
             const ffEl = document.getElementById('lab-fecha-pago-field'); if(ffEl) ffEl.style.display='none';
             const amEl = document.getElementById('l-anticipo-metodo'); if(amEl) amEl.value='Efectivo';
@@ -2751,6 +2786,47 @@ ${tc}`,
             else rSub.innerText = listos.slice(0,3).map(x=>x.client).join(', ') + (n>3?` y ${n-3} más.`:'.');
         }
 
+        // ── Banner: garantías por vencer o vencidas ──
+        const warningWs = this.getWarrantiesWithInfo().filter(w => w.wInfo.statusKey !== 'active');
+        const wBanner = document.getElementById('warranty-alert-banner');
+        if (wBanner) {
+            if (warningWs.length > 0) {
+                const vencidas  = warningWs.filter(w => w.wInfo.statusKey === 'expired').length;
+                const porVencer = warningWs.filter(w => w.wInfo.statusKey === 'expiring').length;
+                const parts = [];
+                if (vencidas  > 0) parts.push(`${vencidas} vencida${vencidas>1?'s':''}`);
+                if (porVencer > 0) parts.push(`${porVencer} por vencer`);
+                document.getElementById('warranty-alert-title').innerText = `⚠ Garantías: ${parts.join(' · ')}`;
+                document.getElementById('warranty-alert-desc').innerText  = warningWs.slice(0,3).map(w=>`${w.client} — ${w.model}`).join('  ·  ') + (warningWs.length>3?` y ${warningWs.length-3} más`:'');
+                wBanner.style.display = 'flex';
+            } else {
+                wBanner.style.display = 'none';
+            }
+        }
+
+        // ── Banner: entregas prometidas vencidas o para hoy ──
+        const hoyDate = new Date(); hoyDate.setHours(0,0,0,0);
+        const overdueOrders = o.filter(x => {
+            if (!x.fechaPrometida || x.status === 'ENTREGADO' || x.status === 'FALLIDO') return false;
+            const fp = new Date(x.fechaPrometida + 'T00:00:00'); fp.setHours(0,0,0,0);
+            return fp <= hoyDate;
+        });
+        const oBanner = document.getElementById('overdue-banner');
+        if (oBanner) {
+            if (overdueOrders.length > 0) {
+                const venc  = overdueOrders.filter(x => { const fp=new Date(x.fechaPrometida+'T00:00:00'); fp.setHours(0,0,0,0); return fp < hoyDate; }).length;
+                const todayCount = overdueOrders.filter(x => { const fp=new Date(x.fechaPrometida+'T00:00:00'); fp.setHours(0,0,0,0); return fp.getTime()===hoyDate.getTime(); }).length;
+                const parts = [];
+                if (venc       > 0) parts.push(`${venc} vencida${venc>1?'s':''}`);
+                if (todayCount > 0) parts.push(`${todayCount} para hoy`);
+                document.getElementById('overdue-title').innerText = `📅 Entregas prometidas: ${parts.join(' · ')}`;
+                document.getElementById('overdue-desc').innerText  = overdueOrders.slice(0,3).map(x=>`${x.client} — ${x.model}`).join('  ·  ') + (overdueOrders.length>3?` y ${overdueOrders.length-3} más`:'');
+                oBanner.style.display = 'flex';
+            } else {
+                oBanner.style.display = 'none';
+            }
+        }
+
         const statusOrder = {URGENTE:0,PENDIENTE:1,LISTO:2,ENTREGADO:3};
         const sorted=[...o].sort((a,b)=>(statusOrder[a.status]??1)-(statusOrder[b.status]??1));
         // Dashboard income chart
@@ -2898,7 +2974,30 @@ ${tc}`,
 
 
             const dateStr = x.createdAt ? new Date(x.createdAt).toLocaleDateString('es-ES',{day:'numeric',month:'short'}) : '—';
-            const hasDetail = x.fail && x.fail.length > 0;
+
+            // Fecha prometida con alerta de color
+            let promCell = '';
+            if (x.fechaPrometida) {
+                const hoy = new Date(); hoy.setHours(0,0,0,0);
+                const fp = new Date(x.fechaPrometida + 'T00:00:00'); fp.setHours(0,0,0,0);
+                const diff = Math.ceil((fp - hoy) / (1000*60*60*24));
+                const isPending = x.status !== 'ENTREGADO' && x.status !== 'FALLIDO';
+                if (!isPending) {
+                    promCell = `<span style="color:var(--text-dim);font-size:11px">${fp.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;
+                } else if (diff < 0) {
+                    promCell = `<span style="color:var(--danger);font-weight:800;font-size:11px" title="Vencida hace ${Math.abs(diff)} día(s)">⚠ ${Math.abs(diff)}d atrás</span>`;
+                } else if (diff === 0) {
+                    promCell = `<span style="color:#f59e0b;font-weight:800;font-size:11px" title="Entrega prometida para hoy">📅 Hoy</span>`;
+                } else if (diff <= 2) {
+                    promCell = `<span style="color:#f59e0b;font-weight:700;font-size:11px" title="Entrega en ${diff} día(s)">📅 ${diff}d</span>`;
+                } else {
+                    promCell = `<span style="color:var(--text-dim);font-size:11px">${fp.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;
+                }
+            } else {
+                promCell = `<span style="color:var(--text-dim);opacity:.3;font-size:11px">—</span>`;
+            }
+
+            const hasDetail = (x.fail && x.fail.length > 0) || (x.statusLog && x.statusLog.length > 0);
 
             // Status colors for select styling
             const statusColors = {URGENTE:'#ef4444',PENDIENTE:'#f59e0b',LISTO:'#10b981',ENTREGADO:'#818cf8',FALLIDO:'#6b7280'};
@@ -2926,6 +3025,7 @@ ${tc}`,
                     </div>
                 </td>
                 <td style="color:var(--text-dim);font-size:12px;white-space:nowrap">${dateStr}</td>
+                <td style="white-space:nowrap">${promCell}</td>
                 <td><div style="display:flex;gap:4px">
                     ${!isTerminal?`
                     <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>
@@ -2935,7 +3035,7 @@ ${tc}`,
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deleteItem('lab','${x.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>
-            ${hasDetail ? `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="8"><div class="expand-content"><strong>Diagnóstico:</strong> ${x.fail}${x.pin?` &nbsp;·&nbsp; <strong>PIN:</strong> ${x.pin}`:''}</div></td></tr>` : ''}`;
+            ${hasDetail ? `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content"><strong>Diagnóstico:</strong> ${x.fail}${x.pin?` &nbsp;·&nbsp; <strong>PIN:</strong> ${x.pin}`:''}${x.statusLog&&x.statusLog.length>0?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Historial:</span>${x.statusLog.map(l=>`<span style="font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--text-dim)">${l.date} ${l.time} <strong style="color:#fff">${l.from}→${l.to}</strong></span>`).join('')}</div>`:''}</div></td></tr>` : (x.statusLog&&x.statusLog.length>0?`<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content">${x.pin?`<strong>PIN:</strong> ${x.pin} &nbsp;·&nbsp; `:''}<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Historial:</span>${x.statusLog.map(l=>`<span style="font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--text-dim)">${l.date} ${l.time} <strong style="color:#fff">${l.from}→${l.to}</strong></span>`).join('')}</div></div></td></tr>`:'')}`;
         });
         document.getElementById('lab-table').innerHTML = this.paginate('lab-table', labRows, 10).join('');
         if (typeof lucide !== 'undefined') lucide.createIcons();

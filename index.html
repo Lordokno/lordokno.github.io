@@ -1141,6 +1141,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="field"><label>Precio de Liberación</label><input type="number" id="lib-price" placeholder="0.00" min="0"></div>
             <div class="field"><label>Anticipo</label><input type="number" id="lib-anticipo" placeholder="0.00" min="0"></div>
             <div class="field">
+                <label>Método Anticipo</label>
+                <select id="lib-anticipo-metodo">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                </select>
+            </div>
+            <div class="field">
                 <label>Días estimados</label>
                 <select id="lib-dias" onchange="Engine.calcLibFechaEntrega()">
                     <option value="0">De inmediato</option>
@@ -1182,7 +1190,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     <!-- Historial de liberaciones entregadas -->
     <div class="section-divider" style="margin-top:8px">Historial de Liberaciones Entregadas</div>
     <div class="table-box">
-        <table><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>IMEI</th><th>Carrier</th><th>Precio</th><th>Entregado</th></tr></thead>
+        <table><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>IMEI</th><th>Precio</th><th>Entregado</th><th>Acciones</th></tr></thead>
         <tbody id="lib-hist-tbody"></tbody>
     </table>
     <div class="pagination" id="pg-lib-hist" style="display:none"></div>
@@ -1248,12 +1256,17 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 <section id="v-reportes" class="view">
     <div class="view-title"><h1>Reportes & Analítica</h1><p>Estadísticas completas del taller.</p></div>
 
-    <!-- Tabs de período -->
-    <div class="rep-period-tabs">
-        <button class="rep-tab active" onclick="Engine.setRepPeriod('all',this)">General</button>
-        <button class="rep-tab" onclick="Engine.setRepPeriod('week',this)">Esta Semana</button>
-        <button class="rep-tab" onclick="Engine.setRepPeriod('month',this)">Este Mes</button>
-        <button class="rep-tab" onclick="Engine.setRepPeriod('year',this)">Este Año</button>
+    <!-- Tabs de período + exportar -->
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="rep-period-tabs" style="margin-bottom:0;flex:1">
+            <button class="rep-tab active" onclick="Engine.setRepPeriod('all',this)">General</button>
+            <button class="rep-tab" onclick="Engine.setRepPeriod('week',this)">Esta Semana</button>
+            <button class="rep-tab" onclick="Engine.setRepPeriod('month',this)">Este Mes</button>
+            <button class="rep-tab" onclick="Engine.setRepPeriod('year',this)">Este Año</button>
+        </div>
+        <button class="btn-main ghost" onclick="Engine.exportReportePDF()" style="font-size:11px;padding:9px 16px;flex-shrink:0">
+            <i data-lucide="file-down" size="14"></i>Exportar Reporte PDF
+        </button>
     </div>
 
     <!-- KPIs principales -->
@@ -1362,12 +1375,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             </div>
             <div class="field" style="flex:1;min-width:160px"><label>Tipo de Mensaje</label>
                 <select id="wa-msg-type" onchange="Engine.updateWaPreview()">
-                    <option value="recibido">Equipo Recibido</option>
-                    <option value="diagnostico">Diagnostico Listo</option>
-                    <option value="listo">Equipo Listo para Retirar</option>
-                    <option value="entregado">Equipo Entregado</option>
-                    <option value="garantia">Info de Garantia</option>
-                    <option value="recordatorio">Recordatorio de Retiro</option>
+                    <option value="recibido">📥 Equipo Recibido</option>
+                    <option value="diagnostico">🔍 Diagnóstico Listo</option>
+                    <option value="listo">✅ Equipo Listo para Retirar</option>
+                    <option value="entregado">📦 Equipo Entregado</option>
+                    <option value="garantia">🛡️ Info de Garantía</option>
+                    <option value="recordatorio">⏰ Recordatorio de Retiro</option>
+                    <option value="fallido">❌ Equipo No Reparable</option>
+                    <option value="devolucion">💵 Devolución de Anticipo</option>
                 </select>
             </div>
         </div>
@@ -1521,9 +1536,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <div class="label" style="color:var(--accent)">Total Recaudado <i data-lucide="trending-up" class="stat-icon" style="color:var(--accent)"></i></div>
                 <div class="value" id="pos-hist-total" style="color:var(--accent)">$0.00</div>
             </div>
-            <div class="stat-card">
-                <div class="label" style="color:var(--warranty)">Por Método <i data-lucide="credit-card" class="stat-icon" style="color:var(--warranty)"></i></div>
-                <div id="pos-hist-metodos" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+            <div class="stat-card" style="border-color:rgba(6,182,212,.15)">
+                <div class="label" style="color:var(--warranty)">Desglose <i data-lucide="credit-card" class="stat-icon" style="color:var(--warranty)"></i></div>
+                <div id="pos-hist-metodos" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
             </div>
         </div>
 
@@ -1725,6 +1740,47 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="modal-actions">
             <button class="btn-main success" onclick="Engine.confirmarCobro()"><i data-lucide="check-circle" size="15"></i>CONFIRMAR COBRO</button>
             <button class="btn-main ghost" onclick="document.getElementById('modal-cobrar-deudor').style.display='none'">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ABONO PARCIAL DEUDOR -->
+<div id="modal-abono-deudor" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:400px;width:100%">
+        <h2 style="margin-bottom:4px">Abono Parcial</h2>
+        <p id="abono-deudor-info" style="color:var(--text-dim);font-size:13px;margin-bottom:16px"></p>
+        <input type="hidden" id="abono-deudor-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 14px">
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px">Deuda Total</div>
+                <div id="abono-deudor-total" style="font-size:18px;font-weight:800;font-family:var(--mono);color:var(--danger)">$0</div>
+            </div>
+            <div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 14px">
+                <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px">Saldo Tras Abono</div>
+                <div id="abono-deudor-resto" style="font-size:18px;font-weight:800;font-family:var(--mono);color:#f59e0b">$0</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div class="field">
+                <label>Monto del Abono</label>
+                <input type="number" id="abono-deudor-monto" placeholder="0.00" min="0" step="0.01" oninput="Engine.previewAbonoParcial()">
+            </div>
+            <div class="field">
+                <label>Método de Pago</label>
+                <select id="abono-deudor-metodo">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                </select>
+            </div>
+        </div>
+        <div class="field" style="margin-bottom:18px">
+            <label>Nota (opcional)</label>
+            <input type="text" id="abono-deudor-nota" placeholder="Ej: Abono de Q100...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-main success" onclick="Engine.guardarAbonoParcial()"><i data-lucide="check-circle" size="15"></i>REGISTRAR ABONO</button>
+            <button class="btn-main ghost" onclick="document.getElementById('modal-abono-deudor').style.display='none'">CANCELAR</button>
         </div>
     </div>
 </div>
@@ -2141,6 +2197,10 @@ const Engine = {
 
         await this.save();
         this.cancelEdit('lab');
+        // Scroll al top en móvil para ver el resultado en la tabla
+        if (window.innerWidth <= 768) {
+            document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
         Engine.toast(isEdit ? `Ticket actualizado — ${data.client}` : `Ticket registrado — ${data.client}`, 'success');
     },
 
@@ -2478,6 +2538,31 @@ Gracias por confiar en *${taller}*. Quedamos a sus ordenes para cualquier consul
 ${contacto}
 
 ${tc}`,
+
+            fallido:
+`Hola ${order.client},
+
+Le informamos que lamentablemente no fue posible reparar su equipo *${order.model}*.
+
+*Ticket:* ${order.id}
+*Diagnostico:* ${order.fail||'Ver detalles en tienda'}
+
+Le invitamos a pasar a retirar su equipo. Disculpe los inconvenientes.
+
+${contacto}`,
+
+            devolucion: (() => {
+                const totalAbonado = (order.abonos||[]).reduce((s,a)=>s+a.monto,0);
+                return totalAbonado > 0
+                    ? `Hola ${order.client},
+
+Le informamos que el anticipo de *${this.formatMoney(totalAbonado)}* correspondiente al equipo *${order.model}* (Ticket: ${order.id}) esta disponible para ser retirado en nuestra tienda.
+
+Pase cuando guste en horario de atencion.
+
+${contacto}`
+                    : `Este ticket no tiene anticipos registrados.`;
+            })(),
         };
         return msgs[type]||'';
     },
@@ -3304,6 +3389,169 @@ ${tc}`,
         Engine.toast('PDF descargado. Adjúntalo en la conversación de WhatsApp.', 'success', 5000);
     },
 
+    exportReportePDF() {
+        const { jsPDF } = window.jspdf;
+        const pd = this._getPeriodDates();
+        const allOrders = this.db.orders;
+        const allMovs   = this.db.movimientos || [];
+
+        const o = pd.start
+            ? allOrders.filter(x=>{ const d=(x.createdAt||'').split('T')[0]; return d>=pd.start&&d<=pd.end; })
+            : allOrders;
+        const oActivas = o.filter(x=>x.status!=='FALLIDO');
+        const movs = pd.start ? allMovs.filter(m=>m.date>=pd.start&&m.date<=pd.end) : allMovs;
+        const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);
+        const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((a,b)=>a+b.amount,0);
+        const balance  = ingresos - egresos;
+        const ventas   = (this.db.ventas||[]).filter(v=>!pd.start||(v.date>=pd.start&&v.date<=pd.end));
+        const deudActivos = (this.db.deudores||[]).filter(d=>!d.cobrado);
+        const generadoEl  = new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const generadoHora = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+
+        const doc = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        const W = doc.internal.pageSize.getWidth();
+        const H = doc.internal.pageSize.getHeight();
+        let y = 0;
+
+        const checkPage = (needed=20) => {
+            if (y + needed > H - 18) { doc.addPage(); y = 20; }
+        };
+
+        // ── HEADER ──
+        doc.setFillColor(15,15,25); doc.rect(0,0,W,28,'F');
+        doc.setFillColor(79,70,229); doc.rect(0,25,W,3,'F');
+        doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+        doc.text('NEXTCOM Multiservicios', 14, 12);
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(160,160,200);
+        doc.text(`Reporte ${pd.label}`, 14, 19);
+        doc.text(`Tel: 7512-0282  |  info@nextcom.com.gt`, W-14, 12, {align:'right'});
+        doc.text(`Generado: ${generadoEl} ${generadoHora}`, W-14, 19, {align:'right'});
+        y = 38;
+
+        // ── PERÍODO ──
+        if (pd.start) {
+            doc.setFillColor(235,237,255); doc.roundedRect(14,y,W-28,8,1,1,'F');
+            doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,120);
+            doc.text(`Período: ${pd.start}  →  ${pd.end}  (${pd.label})`, W/2, y+5.5, {align:'center'});
+            y += 14;
+        }
+
+        // ── KPIs ──
+        const kpis = [
+            { label:'Órdenes Activas', val: String(oActivas.length),          col:[79,70,229] },
+            { label:'Ingresos',        val: this.formatMoney(ingresos),        col:[16,185,129] },
+            { label:'Egresos',         val: this.formatMoney(egresos),         col:[239,68,68] },
+            { label:'Balance Neto',    val: this.formatMoney(balance),         col: balance>=0?[129,140,248]:[239,68,68] },
+            { label:'Ticket Promedio', val: this.formatMoney(oActivas.length>0?oActivas.reduce((a,b)=>a+b.price,0)/oActivas.length:0), col:[167,139,250] },
+            { label:'Total Adeudado',  val: this.formatMoney(deudActivos.reduce((s,d)=>s+d.total,0)), col:[245,158,11] },
+        ];
+        const kw = (W-28)/3 - 3;
+        kpis.forEach((k,i) => {
+            const col = i%3, row2 = Math.floor(i/3);
+            const kx = 14 + col*(kw+3), ky = y + row2*20;
+            doc.setFillColor(245,246,250); doc.roundedRect(kx, ky, kw, 16, 1,1,'F');
+            doc.setDrawColor(220,222,240); doc.setLineWidth(0.2); doc.roundedRect(kx, ky, kw, 16, 1,1,'S');
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,140);
+            doc.text(k.label, kx+5, ky+6);
+            doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(...k.col);
+            doc.text(k.val, kx+5, ky+13);
+        });
+        y += Math.ceil(kpis.length/3)*20 + 10;
+
+        // ── TABLA ÓRDENES ──
+        checkPage(30);
+        doc.setFillColor(15,15,25); doc.rect(14,y,W-28,8,'F');
+        doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+        doc.text('ÓRDENES DEL PERÍODO', 17, y+5.5);
+        y += 8;
+
+        // Cabecera columnas
+        doc.setFillColor(235,237,255);
+        doc.rect(14,y,W-28,7,'F');
+        doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,120);
+        const oCols = [[16,'TICKET'],[38,'CLIENTE'],[82,'DISPOSITIVO'],[130,'ESTADO'],[153,'PRESUP.'],[175,'GARANTÍA']];
+        oCols.forEach(([x,l]) => doc.text(l,x,y+4.8));
+        y += 7;
+
+        const statusLabel = {PENDIENTE:'Pendiente',URGENTE:'Urgente',LISTO:'Listo',ENTREGADO:'Entregado',FALLIDO:'Fallido'};
+        const statusCol   = {PENDIENTE:[245,158,11],URGENTE:[239,68,68],LISTO:[16,185,129],ENTREGADO:[129,140,248],FALLIDO:[107,114,128]};
+
+        oActivas.slice(0,60).forEach((ord,i) => {
+            checkPage(9);
+            if (i%2===0) { doc.setFillColor(250,250,255); doc.rect(14,y,W-28,7,'F'); }
+            doc.setDrawColor(220,222,240); doc.line(14,y+7,W-14,y+7);
+            doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(30,30,50);
+            doc.text(ord.id,                                      16, y+4.8);
+            doc.text(doc.splitTextToSize(ord.client,38)[0],       38, y+4.8);
+            doc.text(doc.splitTextToSize(ord.model,44)[0],        82, y+4.8);
+            doc.setFont('helvetica','bold');
+            doc.setTextColor(...(statusCol[ord.status]||[80,80,80]));
+            doc.text(statusLabel[ord.status]||ord.status,        130, y+4.8);
+            doc.setFont('helvetica','normal'); doc.setTextColor(16,140,80);
+            doc.text(this.formatMoney(ord.price),                153, y+4.8);
+            doc.setTextColor(100,100,140);
+            const wi = this.getWarrantyInfo(ord);
+            doc.text(wi ? `${wi.daysRemaining}d` : ord.warrantyDays>0?`${ord.warrantyDays}d`:'—', 175, y+4.8);
+            y += 7;
+        });
+        if (oActivas.length > 60) {
+            doc.setFontSize(6); doc.setTextColor(140,140,160);
+            doc.text(`... y ${oActivas.length-60} órdenes más. Usa el filtro de período para rangos más cortos.`, 14, y+5);
+            y += 10;
+        }
+        y += 6;
+
+        // ── TABLA MOVIMIENTOS DE CAJA ──
+        const movsToShow = movs.slice(0,40);
+        if (movsToShow.length > 0) {
+            checkPage(30);
+            doc.setFillColor(15,15,25); doc.rect(14,y,W-28,8,'F');
+            doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+            doc.text('MOVIMIENTOS DE CAJA', 17, y+5.5);
+            y += 8;
+
+            doc.setFillColor(235,237,255); doc.rect(14,y,W-28,7,'F');
+            doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(60,60,120);
+            const mCols = [[16,'FECHA'],[36,'HORA'],[52,'DESCRIPCIÓN'],[145,'MÉTODO'],[163,'MONTO']];
+            mCols.forEach(([x,l]) => doc.text(l,x,y+4.8));
+            y += 7;
+
+            movsToShow.forEach((m,i) => {
+                checkPage(9);
+                if (i%2===0) { doc.setFillColor(250,250,255); doc.rect(14,y,W-28,7,'F'); }
+                doc.setDrawColor(220,222,240); doc.line(14,y+7,W-14,y+7);
+                doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+                doc.setTextColor(100,100,140); doc.text(m.date||'—', 16, y+4.8);
+                doc.text(m.time||'—', 36, y+4.8);
+                doc.setTextColor(30,30,50);
+                doc.text(doc.splitTextToSize(m.desc||'—',88)[0], 52, y+4.8);
+                doc.text(m.metodo||'—', 145, y+4.8);
+                doc.setFont('helvetica','bold');
+                doc.setTextColor(m.tipo==='ingreso'?16:239, m.tipo==='ingreso'?140:68, m.tipo==='ingreso'?80:68);
+                doc.text((m.tipo==='ingreso'?'+':'-')+this.formatMoney(m.amount), 163, y+4.8);
+                y += 7;
+            });
+            if (movs.length > 40) {
+                doc.setFontSize(6); doc.setTextColor(140,140,160);
+                doc.text(`... y ${movs.length-40} movimientos más.`, 14, y+5); y += 10;
+            }
+            y += 6;
+        }
+
+        // ── FOOTER en todas las páginas ──
+        const totalPages = doc.getNumberOfPages();
+        for (let p=1; p<=totalPages; p++) {
+            doc.setPage(p);
+            doc.setFillColor(15,15,25); doc.rect(0,H-12,W,12,'F');
+            doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(160,160,200);
+            doc.text('NEXTCOM Multiservicios — Reporte generado automáticamente', W/2, H-5, {align:'center'});
+            doc.text(`Pág. ${p} / ${totalPages}`, W-14, H-5, {align:'right'});
+        }
+
+        doc.save(`Reporte-NEXTCOM-${pd.label.replace(/\s+/g,'-')}-${this.today()}.pdf`);
+        Engine.toast('Reporte PDF generado exitosamente.', 'success', 3000);
+    },
+
     setRepPeriod(period, btn) {
         this._repPeriod = period;
         document.querySelectorAll('.rep-tab').forEach(b=>b.classList.remove('active'));
@@ -3765,6 +4013,8 @@ ${tc}`,
         this.renderPosProducts();
         this.renderPosHistory();
         Engine.toast(`Venta ${ventaId} registrada — ${this.formatMoney(total)}`, 'success', 3000);
+        // Auto-generar ticket PDF de la venta
+        setTimeout(() => this.ticketVentaPDF(ventaId), 300);
     },
 
     // ── HISTORIAL DE VENTAS POS ──
@@ -3784,9 +4034,24 @@ ${tc}`,
         document.getElementById('pos-hist-count').innerText = countDia;
         document.getElementById('pos-hist-total').innerText = this.formatMoney(totalDia);
         const metEl = document.getElementById('pos-hist-metodos');
-        if (metEl) metEl.innerHTML = Object.entries(byMetodo).map(([m,t]) =>
-            `<span style="background:rgba(79,70,229,.12);color:#818cf8;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">${m}: ${this.formatMoney(t)}</span>`
-        ).join('') || `<span style="color:var(--text-dim);font-size:12px">Sin ventas este día</span>`;
+        const metColors = { 'Efectivo':'#10b981', 'Transferencia':'#818cf8', 'Tarjeta':'#06b6d4' };
+        if (metEl) {
+            if (Object.keys(byMetodo).length === 0) {
+                metEl.innerHTML = `<span style="color:var(--text-dim);font-size:11px">Sin ventas este día</span>`;
+            } else {
+                metEl.innerHTML = Object.entries(byMetodo).map(([m,t]) => {
+                    const pct = totalDia > 0 ? Math.round((t/totalDia)*100) : 0;
+                    const col = metColors[m] || 'var(--accent)';
+                    return `<div style="display:flex;align-items:center;gap:6px">
+                        <span style="font-size:10px;font-weight:700;color:var(--text-dim);width:90px;flex-shrink:0">${m}</span>
+                        <div style="flex:1;height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+                            <div style="width:${pct}%;height:100%;background:${col};border-radius:99px;transition:.4s"></div>
+                        </div>
+                        <span style="font-size:10px;font-weight:800;color:${col};font-family:var(--mono);white-space:nowrap">${this.formatMoney(t)}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
 
         const tbody = document.getElementById('pos-hist-tbody');
         if (!tbody) return;
@@ -3804,6 +4069,7 @@ ${tc}`,
                 <td><span class="badge" style="background:rgba(79,70,229,.1);color:#818cf8;font-size:10px">${v.metodo}</span></td>
                 <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(v.total)}</td>
                 <td><div style="display:flex;gap:5px">
+                    <div class="action-icon" title="Ticket PDF" style="color:var(--cash)" onclick="Engine.ticketVentaPDF('${v.id}')"><i data-lucide="receipt" size="13"></i></div>
                     <div class="action-icon edit" title="Editar" onclick="Engine.editPosVenta('${v.id}')"><i data-lucide="edit-2" size="13"></i></div>
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deletePosVenta('${v.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
@@ -3849,6 +4115,103 @@ ${tc}`,
         await this.save();
         this.renderPosHistory();
         this.renderPosProducts();
+    },
+
+    ticketVentaPDF(ventaId) {
+        const v = (this.db.ventas||[]).find(x=>x.id===ventaId);
+        if (!v) return;
+        const { jsPDF } = window.jspdf;
+
+        const W = 80;
+        const LH = 4.8;
+        const BK = [0,0,0]; const GR = [130,130,130];
+        // Estimamos altura dinámica
+        const H = 60 + v.items.length * 10 + 40;
+        const doc = new jsPDF({ unit:'mm', format:[W,H], orientation:'portrait' });
+
+        doc.setFillColor(255,255,255); doc.rect(0,0,W,H,'F');
+
+        let y = 8;
+        const ctr = (txt, size, bold=false, color=BK) => {
+            doc.setFontSize(size); doc.setFont('helvetica', bold?'bold':'normal');
+            doc.setTextColor(...color);
+            doc.splitTextToSize(txt, W-6).forEach(l => { doc.text(l, W/2, y, {align:'center'}); y += LH; });
+        };
+        const hr = (w=0.3) => { doc.setDrawColor(...BK); doc.setLineWidth(w); doc.line(4,y,W-4,y); };
+        const row = (left, right, bold=false, color=BK) => {
+            doc.setFontSize(7); doc.setFont('helvetica', bold?'bold':'normal'); doc.setTextColor(...color);
+            doc.text(String(left), 4, y);
+            doc.text(String(right), W-4, y, {align:'right'});
+            y += LH;
+        };
+
+        // Encabezado
+        ctr('NEXTCOM MULTISERVICIOS', 9, true);
+        ctr('Especialistas en Celulares', 6.5, false, GR);
+        ctr('Tel: 7512-0282', 6, false, GR);
+        y += 2;
+        hr(0.4); y += 3;
+
+        // Datos de venta
+        doc.setFontSize(7); doc.setFont('helvetica','bold'); doc.setTextColor(...BK);
+        doc.text(v.id, 4, y);
+        doc.setFont('helvetica','normal'); doc.setTextColor(...GR);
+        doc.text(`${v.date}  ${v.time}`, W-4, y, {align:'right'});
+        y += LH;
+        if (v.client && v.client !== 'Consumidor Final') {
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...BK);
+            doc.text(`Cliente: ${v.client}`, 4, y); y += LH;
+        }
+        y += 1; hr(0.2, true); y += 3;
+
+        // Items
+        doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...GR);
+        doc.text('PRODUCTO', 4, y);
+        doc.text('CANT', W/2, y, {align:'center'});
+        doc.text('TOTAL', W-4, y, {align:'right'});
+        y += LH;
+        hr(0.2); y += 2;
+
+        v.items.forEach(item => {
+            const subtotal = (item.qty * item.salePrice).toFixed(2);
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(...BK);
+            // Nombre puede ser largo — wrapeamos
+            const nameLines = doc.splitTextToSize(item.name, 42);
+            doc.text(nameLines[0], 4, y);
+            doc.text(String(item.qty), W/2, y, {align:'center'});
+            doc.text('$'+subtotal, W-4, y, {align:'right'});
+            y += LH;
+            if (nameLines.length > 1) {
+                doc.setFontSize(6); doc.setTextColor(...GR);
+                doc.text(nameLines[1], 4, y); y += LH - 1;
+            }
+            // Precio unitario si hay más de 1
+            if (item.qty > 1) {
+                doc.setFontSize(6); doc.setTextColor(...GR);
+                doc.text(`  $${item.salePrice.toFixed(2)} c/u`, 4, y); y += LH - 1;
+            }
+        });
+
+        y += 1; hr(0.3); y += 3;
+
+        // Total
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); doc.setTextColor(...BK);
+        doc.text('TOTAL', 4, y);
+        doc.text('$'+v.total.toFixed(2), W-4, y, {align:'right'});
+        y += LH + 1;
+
+        // Método de pago
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(...GR);
+        doc.text(`Pago: ${v.metodo}`, 4, y); y += LH;
+        y += 2; hr(0.3); y += 4;
+
+        // Pie
+        ctr('¡Gracias por su compra!', 7, true);
+        y += 1;
+        ctr('NEXTCOM  |  Tel: 7512-0282', 6, false, GR);
+        y += 4;
+
+        doc.save(`Ticket-Venta-${v.id}.pdf`);
     },
 
     exportPosCSV() {
@@ -4072,6 +4435,7 @@ ${tc}`,
                         <!-- Fila acciones -->
                         <div class="deudor-actions">
                             <button class="deudor-btn wa" onclick="window.open('https://wa.me/${phoneClean}?text=${waMsg}','_blank')"><i data-lucide="message-circle" size="12"></i>WhatsApp</button>
+                            <button class="deudor-btn" style="color:var(--accent);border-color:rgba(79,70,229,.25);background:rgba(79,70,229,.08)" onclick="Engine.abrirAbonoParcial('${d.id}')"><i data-lucide="banknote" size="12"></i>Abono</button>
                             <button class="deudor-btn cobrar" onclick="Engine.cobrarDeudor('${d.id}')"><i data-lucide="check-circle" size="12"></i>Cobrar</button>
                             <button class="deudor-btn del" onclick="Engine.deleteDeudor('${d.id}')"><i data-lucide="trash-2" size="12"></i></button>
                         </div>
@@ -4100,6 +4464,92 @@ ${tc}`,
             }
         }
         if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    abrirAbonoParcial(id) {
+        const d = (this.db.deudores||[]).find(x=>x.id===id);
+        if (!d) return;
+        document.getElementById('abono-deudor-id').value    = id;
+        document.getElementById('abono-deudor-info').innerText = `${d.client} — ${d.phone}`;
+        document.getElementById('abono-deudor-total').innerText = this.formatMoney(d.total);
+        document.getElementById('abono-deudor-resto').innerText = this.formatMoney(d.total);
+        document.getElementById('abono-deudor-monto').value  = '';
+        document.getElementById('abono-deudor-nota').value   = '';
+        document.getElementById('abono-deudor-metodo').value = 'Efectivo';
+        document.getElementById('modal-abono-deudor').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    previewAbonoParcial() {
+        const id    = document.getElementById('abono-deudor-id').value;
+        const monto = parseFloat(document.getElementById('abono-deudor-monto').value)||0;
+        const d     = (this.db.deudores||[]).find(x=>x.id===id);
+        if (!d) return;
+        const resto = Math.max(0, d.total - monto);
+        const el = document.getElementById('abono-deudor-resto');
+        if (el) {
+            el.innerText = this.formatMoney(resto);
+            el.style.color = resto === 0 ? 'var(--success)' : monto > d.total ? 'var(--danger)' : '#f59e0b';
+        }
+    },
+
+    async guardarAbonoParcial() {
+        const id     = document.getElementById('abono-deudor-id').value;
+        const monto  = parseFloat(document.getElementById('abono-deudor-monto').value)||0;
+        const metodo = document.getElementById('abono-deudor-metodo').value;
+        const nota   = document.getElementById('abono-deudor-nota').value.trim();
+        if (monto <= 0) return Engine.toast('Ingresa un monto válido.', 'error');
+
+        const idx = (this.db.deudores||[]).findIndex(x=>x.id===id);
+        if (idx === -1) return;
+        const d = this.db.deudores[idx];
+        if (monto > d.total + 0.01) return Engine.toast(`El abono ($${monto.toFixed(2)}) supera la deuda (${this.formatMoney(d.total)}).`, 'error');
+
+        const nuevoTotal = Math.max(0, d.total - monto);
+
+        // Registrar ingreso en caja si NO viene de un ticket de lab
+        if (!d.ticketRef || d.esLib) {
+            this.registrarMovimiento({
+                tipo: 'ingreso',
+                desc: `Abono parcial — ${d.client}${nota?' ('+nota+')':''}`,
+                amount: monto, metodo
+            });
+        } else {
+            // Viene de lab: agregar abono a la orden para que sume al total abonado
+            const orderIdx = this.db.orders.findIndex(o=>o.id===d.ticketRef);
+            if (orderIdx !== -1) {
+                if (!this.db.orders[orderIdx].abonos) this.db.orders[orderIdx].abonos = [];
+                this.db.orders[orderIdx].abonos.push({
+                    id: Date.now(), monto, metodo,
+                    nota: nota || 'Abono desde Deudores',
+                    date: this.today(),
+                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+                // También a bolsa de anticipos para que no sea ingreso real todavía
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now()+1, ticketRef: d.ticketRef, esLib: false,
+                    client: d.client, model: d.nota || '', monto, metodo, nota,
+                    date: this.today(), time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+            }
+        }
+
+        if (nuevoTotal <= 0) {
+            // Saldo completo — marcar como cobrado
+            this.db.deudores[idx].cobrado   = true;
+            this.db.deudores[idx].cobradoEl = new Date().toISOString();
+        } else {
+            this.db.deudores[idx].total = nuevoTotal;
+        }
+
+        document.getElementById('modal-abono-deudor').style.display = 'none';
+        await this.save();
+        this.renderDeudores();
+        Engine.toast(nuevoTotal <= 0
+            ? `Deuda saldada — ${d.client} ✓`
+            : `Abono registrado — Saldo restante: ${this.formatMoney(nuevoTotal)}`,
+            nuevoTotal <= 0 ? 'success' : 'info', 3500);
     },
 
     cobrarDeudor(id) {
@@ -4320,8 +4770,9 @@ ${tc}`,
         const imei    = document.getElementById('lib-imei').value.trim();
         const carrier = document.getElementById('lib-carrier').value;
         const price   = parseFloat(document.getElementById('lib-price').value)||0;
-        const anticipo= parseFloat(document.getElementById('lib-anticipo').value)||0;
-        const dias    = parseInt(document.getElementById('lib-dias').value)||5;
+        const anticipo        = parseFloat(document.getElementById('lib-anticipo').value)||0;
+        const anticipoMetodo  = document.getElementById('lib-anticipo-metodo')?.value || 'Efectivo';
+        const dias            = parseInt(document.getElementById('lib-dias').value)||5;
         const notas   = document.getElementById('lib-notas').value.trim();
         const fechaEntrega = document.getElementById('lib-fecha-entrega').value;
 
@@ -4346,7 +4797,7 @@ ${tc}`,
                 id: libId, client, phone, model, imei, carrier, price, dias, notas,
                 fechaEntrega: fechaEntrega || (() => { const d=new Date(); d.setDate(d.getDate()+dias); return d.toISOString().split('T')[0]; })(),
                 anticipo,
-                abonos: anticipo > 0 ? [{ id:Date.now(), monto:anticipo, metodo:'Efectivo', nota:'Anticipo inicial', date:this.today(), time:now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) }] : [],
+                abonos: anticipo > 0 ? [{ id:Date.now(), monto:anticipo, metodo:anticipoMetodo, nota:'Anticipo inicial', date:this.today(), time:now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) }] : [],
                 status: 'recibido',
                 createdAt: now.toISOString()
             };
@@ -4357,7 +4808,7 @@ ${tc}`,
                 if (!this.db.anticipos) this.db.anticipos = [];
                 this.db.anticipos.push({
                     id: Date.now()+1, ticketRef: libId, esLib: true,
-                    client, model, monto: anticipo, metodo: 'Efectivo',
+                    client, model, monto: anticipo, metodo: anticipoMetodo,
                     date: this.today(), time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
                 });
             }
@@ -4392,6 +4843,7 @@ ${tc}`,
     cancelLib() {
         this.editState.lib = null;
         ['lib-client','lib-phone','lib-model','lib-imei','lib-price','lib-anticipo','lib-notas','lib-fecha-entrega'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+        const libAntMetodo = document.getElementById('lib-anticipo-metodo'); if(libAntMetodo) libAntMetodo.value='Efectivo';
         const carrierEl = document.getElementById('lib-carrier'); if(carrierEl) carrierEl.value='';
         const diasEl = document.getElementById('lib-dias'); if(diasEl) diasEl.value='5';
         const panel = document.getElementById('lib-panel'); if(panel) panel.classList.remove('editing');
@@ -4632,12 +5084,15 @@ ${tc}`,
             } else {
                 const libHistRows = entregadas.map(l => `<tr>
                     <td style="font-family:var(--mono);color:#818cf8;font-weight:700;font-size:12px">${l.id}</td>
-                    <td style="font-weight:700">${l.client}</td>
-                    <td>${l.model}</td>
+                    <td style="font-weight:700">${l.client}<div style="font-size:11px;color:var(--text-dim);font-weight:500;font-family:var(--mono)">${l.phone||''}</div></td>
+                    <td>${l.model}<div style="font-size:10px;color:var(--text-dim)">${l.carrier}</div></td>
                     <td style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">${l.imei}</td>
-                    <td style="font-size:12px;color:var(--text-dim)">${l.carrier}</td>
                     <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(l.price)}</td>
                     <td style="font-size:12px;color:var(--text-dim)">${l.deliveredAt ? new Date(l.deliveredAt).toLocaleDateString('es-ES') : '—'}</td>
+                    <td><div style="display:flex;gap:4px">
+                        <div class="action-icon wa" title="WhatsApp" onclick="Engine.abrirLibWa('${l.id}')"><i data-lucide="message-circle" size="13"></i></div>
+                        <div class="action-icon" title="Ver abonos" style="color:var(--success)" onclick="Engine.abrirAbonoLib('${l.id}')"><i data-lucide="banknote" size="13"></i></div>
+                    </div></td>
                 </tr>`);
                 libHistEl.innerHTML = this.paginate('lib-hist-tbody', libHistRows, 10).join('');
             }

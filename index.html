@@ -369,6 +369,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .lib-status-badge.en-proceso  { background:rgba(245,158,11,.12); color:#f59e0b; animation:blink 2s infinite; }
 .lib-status-badge.listo       { background:rgba(16,185,129,.12); color:#10b981; }
 .lib-status-badge.entregado   { background:rgba(129,140,248,.1); color:#818cf8; opacity:.7; }
+.lib-status-badge.fallido     { background:rgba(107,114,128,.1); color:#6b7280; }
 .lib-card { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:22px 24px; margin-bottom:14px; position:relative; overflow:hidden; transition:.25s; }
 .lib-card:hover { border-color:rgba(255,255,255,.1); transform:translateY(-1px); }
 .lib-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; border-radius:2px 0 0 2px; }
@@ -376,6 +377,8 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .lib-card.en-proceso::before { background:#f59e0b; }
 .lib-card.listo::before      { background:var(--success); }
 .lib-card.entregado::before  { background:rgba(129,140,248,.3); }
+.lib-card.fallido::before    { background:#6b7280; }
+.lib-card.fallido            { opacity:.65; }
 .lib-card-row { display:flex; align-items:flex-start; gap:18px; flex-wrap:wrap; }
 .lib-card-main { flex:1; min-width:200px; }
 .lib-card-id   { font-family:var(--mono); font-size:11px; font-weight:700; color:var(--accent); letter-spacing:.5px; }
@@ -1158,6 +1161,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <button class="lib-filter-btn" onclick="Engine.filterLib('en-proceso',this)"><span style="color:#f59e0b">●</span> En Proceso</button>
         <button class="lib-filter-btn" onclick="Engine.filterLib('listo',this)"><span style="color:#10b981">●</span> Listos</button>
         <button class="lib-filter-btn" onclick="Engine.filterLib('entregado',this)"><span style="color:#818cf8;opacity:.5">●</span> Entregados</button>
+        <button class="lib-filter-btn" onclick="Engine.filterLib('fallido',this)"><span style="color:#6b7280">●</span> Fallidos</button>
     </div>
 
     <!-- Cards de liberaciones activas -->
@@ -2962,7 +2966,7 @@ ${tc}`,
 
         // ── LIBERACIONES en dashboard ──
         const libs = this.db.liberaciones || [];
-        const libActivas = libs.filter(l => l.status !== 'entregado');
+        const libActivas = libs.filter(l => l.status !== 'entregado' && l.status !== 'fallido');
         const libProceso = libs.filter(l => l.status === 'en-proceso').length;
         const libListo   = libs.filter(l => l.status === 'listo').length;
         const libSaldo   = libActivas.reduce((s,l) => {
@@ -2981,7 +2985,7 @@ ${tc}`,
         const hoy = new Date(); hoy.setHours(0,0,0,0);
         const libTableBody = document.getElementById('dash-lib-table');
         if (libTableBody) {
-            const libSorted = [...libs].filter(l=>l.status!=='entregado')
+            const libSorted = [...libs].filter(l=>l.status!=='entregado' && l.status!=='fallido')
                 .sort((a,b) => new Date(a.fechaEntrega||'9999') - new Date(b.fechaEntrega||'9999'));
             if (libSorted.length === 0) {
                 libTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-dim)">No hay liberaciones activas.</td></tr>`;
@@ -4376,8 +4380,16 @@ ${tc}`,
     async toggleStatusLib(id) {
         const lib = (this.db.liberaciones||[]).find(l=>l.id===id);
         if (!lib) return;
+        // Ciclo normal: recibido → en-proceso → listo → entregado
+        // Fallido es estado terminal — solo se puede reactivar manualmente con setLibStatus
         const cycle = { 'recibido':'en-proceso', 'en-proceso':'listo', 'listo':'entregado', 'entregado':'recibido' };
         const newStatus = cycle[lib.status] || 'recibido';
+        await this.setLibStatus(id, newStatus);
+    },
+
+    async setLibStatus(id, newStatus) {
+        const lib = (this.db.liberaciones||[]).find(l=>l.id===id);
+        if (!lib || lib.status === newStatus) return;
         const now = new Date();
         const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
 
@@ -4409,12 +4421,49 @@ ${tc}`,
                     d.cobrado = true; d.cobradoEl = now.toISOString();
                 }
             });
+
+        } else if (newStatus === 'fallido') {
+            // Limpiar anticipos retenidos sin tocar caja
+            this.db.anticipos = (this.db.anticipos||[]).filter(a => a.ticketRef !== id);
+            // Eliminar deudores vinculados activos
+            this.db.deudores = (this.db.deudores||[]).filter(d => !(d.ticketRef === id && !d.cobrado));
+            lib.deliveredAt = null;
+
+        } else if (lib.status === 'fallido') {
+            // Reactivar desde fallido: recrear anticipo en bolsa si había abonos
+            const totalAbonado = (lib.abonos||[]).reduce((s,a)=>s+a.monto,0);
+            if (totalAbonado > 0) {
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now(), ticketRef: id, esLib: true,
+                    client: lib.client, model: lib.model,
+                    monto: totalAbonado, metodo: 'Efectivo',
+                    date: this.today(), time: timeStr
+                });
+            }
+            // Recrear deudor si hay saldo pendiente
+            const saldoPend = Math.max(0, lib.price - totalAbonado);
+            if (saldoPend > 0) {
+                if (!this.db.deudores) this.db.deudores = [];
+                const fechaPago = (() => { const d=new Date(); d.setDate(d.getDate()+30); return d.toISOString().split('T')[0]; })();
+                this.db.deudores.unshift({
+                    id: 'D-' + Date.now().toString().slice(-6),
+                    client: lib.client, phone: lib.phone,
+                    total: saldoPend, fechaPago,
+                    nota: `Saldo liberación ${id} — ${lib.model} (reactivada)`,
+                    items: [{ name: `Liberación ${lib.model}`, qty:1, salePrice: saldoPend }],
+                    cobrado: false, cobradoEl: null,
+                    ticketRef: id, esLib: true,
+                    createdAt: now.toISOString(), date: this.today()
+                });
+            }
         }
 
         lib.status = newStatus;
         await this.save();
-        const labels = {'recibido':'Recibido','en-proceso':'En Proceso','listo':'Listo','entregado':'Entregado'};
-        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, newStatus==='entregado'?'success':'info', 2500);
+        const labels = {'recibido':'Recibido','en-proceso':'En Proceso','listo':'Listo','entregado':'Entregado','fallido':'Fallido'};
+        const types  = {'entregado':'success','fallido':'info'};
+        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, types[newStatus]||'info', 2500);
     },
 
     async deleteLib(id) {
@@ -4440,11 +4489,10 @@ ${tc}`,
 
         // KPIs
         const el = id => document.getElementById(id);
-        if(el('lib-st-total'))   el('lib-st-total').innerText   = libs.length;
+        if(el('lib-st-total'))   el('lib-st-total').innerText   = libs.filter(l=>l.status!=='fallido').length;
         if(el('lib-st-proceso')) el('lib-st-proceso').innerText = libs.filter(l=>l.status==='en-proceso').length;
         if(el('lib-st-listo'))   el('lib-st-listo').innerText   = libs.filter(l=>l.status==='listo').length;
-        const capital = libs.filter(l=>l.status!=='entregado').reduce((s,l)=>{
-            // Solo el saldo pendiente (descontando anticipos ya abonados)
+        const capital = libs.filter(l=>l.status!=='entregado' && l.status!=='fallido').reduce((s,l)=>{
             const ab = (l.abonos||[]).reduce((a,b)=>a+b.monto,0);
             return s + Math.max(0, l.price - ab);
         },0);
@@ -4493,11 +4541,18 @@ ${tc}`,
                             <span class="lib-meta-chip"><strong>Carrier:</strong> ${l.carrier}</span>
                             ${l.notas ? `<span class="lib-meta-chip">${l.notas}</span>` : ''}
                         </div>
-                        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+                        <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
                             ${diasInfo}
-                            <span class="lib-status-badge ${l.status}" onclick="Engine.toggleStatusLib('${l.id}')" title="Clic para cambiar estado">
-                                ${statusLabels[l.status]||l.status}
-                            </span>
+                            <div style="background:${l.status==='fallido'?'rgba(107,114,128,.15)':l.status==='entregado'?'rgba(129,140,248,.1)':l.status==='listo'?'rgba(16,185,129,.12)':l.status==='en-proceso'?'rgba(245,158,11,.12)':'rgba(79,70,229,.12)'};border:1px solid ${l.status==='fallido'?'rgba(107,114,128,.3)':l.status==='entregado'?'rgba(129,140,248,.25)':l.status==='listo'?'rgba(16,185,129,.3)':l.status==='en-proceso'?'rgba(245,158,11,.3)':'rgba(129,140,248,.3)'};border-radius:8px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">
+                                <span style="width:6px;height:6px;border-radius:50%;background:${l.status==='fallido'?'#6b7280':l.status==='entregado'?'#818cf8':l.status==='listo'?'#10b981':l.status==='en-proceso'?'#f59e0b':'#818cf8'};flex-shrink:0${l.status==='en-proceso'?';animation:blink 2s infinite':''}"></span>
+                                <select style="background:transparent;border:none;color:${l.status==='fallido'?'#6b7280':l.status==='entregado'?'#818cf8':l.status==='listo'?'#10b981':l.status==='en-proceso'?'#f59e0b':'#818cf8'};font-family:var(--font);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;padding:0;outline:none;-webkit-appearance:none;appearance:none" onchange="Engine.setLibStatus('${l.id}',this.value)">
+                                    <option value="recibido"${l.status==='recibido'?' selected':''}>RECIBIDO</option>
+                                    <option value="en-proceso"${l.status==='en-proceso'?' selected':''}>EN PROCESO</option>
+                                    <option value="listo"${l.status==='listo'?' selected':''}>LISTO</option>
+                                    <option value="entregado"${l.status==='entregado'?' selected':''}>ENTREGADO</option>
+                                    <option value="fallido"${l.status==='fallido'?' selected':''}>FALLIDO</option>
+                                </select>
+                            </div>
                         </div>
                         <!-- Barra de pago -->
                         <div style="margin-top:10px">

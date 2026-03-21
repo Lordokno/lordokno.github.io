@@ -1075,6 +1075,30 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <span class="warranty-input-hint">📅 Opcional — alerta si vence</span>
             </div>
         </div>
+        <!-- ── REPUESTOS USADOS ── -->
+        <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
+            <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+                <i data-lucide="package" size="13"></i> Repuestos Utilizados
+                <span style="font-weight:600;font-size:10px;opacity:.6">(opcional — descuenta del inventario automáticamente)</span>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+                <div class="field field-relative" style="flex:2;min-width:200px">
+                    <label>Buscar repuesto del inventario</label>
+                    <input type="text" id="lab-rep-search" placeholder="Nombre del repuesto..." autocomplete="off"
+                        oninput="Engine.labRepSearch(this)">
+                    <div class="autocomplete-list" id="lab-rep-autocomplete" style="display:none"></div>
+                </div>
+                <div class="field" style="flex:0 0 100px">
+                    <label>Cantidad</label>
+                    <input type="number" id="lab-rep-qty" value="1" min="1" style="text-align:center">
+                </div>
+                <button class="btn-main ghost" onclick="Engine.labAddRepuesto()" style="padding:12px 16px;white-space:nowrap">
+                    <i data-lucide="plus" size="14"></i> Agregar
+                </button>
+            </div>
+            <div id="lab-repuestos-list" style="display:flex;flex-wrap:wrap;gap:8px;min-height:0"></div>
+        </div>
+
         <div style="display:flex;gap:10px;margin-top:20px;align-items:center">
             <button class="btn-main" id="btn-lab-save" onclick="Engine.processOrder()"><i data-lucide="check-circle-2" size="16"></i><span id="txt-lab-btn">REGISTRAR ENTRADA</span></button>
             <button class="btn-main ghost" id="btn-lab-cancel" style="display:none" onclick="Engine.cancelEdit('lab')">CANCELAR</button>
@@ -2287,6 +2311,11 @@ const Engine = {
         if (!data.client||!data.model) return Engine.toast('Completa cliente y modelo del equipo.','error');
         if (data.anticipo > data.price && data.price > 0) return Engine.toast('El anticipo no puede superar el presupuesto.','error');
 
+        // Leer repuestos seleccionados en el formulario
+        const repuestosUsados = (Engine._labRepuestos || []).map(r => ({
+            stockId: r.stockId, name: r.name, qty: r.qty, costo: r.costo
+        }));
+
         const isEdit = !!this.editState.lab;
         if (this.editState.lab) {
             const idx = this.db.orders.findIndex(o=>o.id===this.editState.lab);
@@ -2295,12 +2324,32 @@ const Engine = {
                 const oldHasOtherOrders = this.db.orders.some((o,i) => i!==idx && o.client.toLowerCase()===existing.client.toLowerCase());
                 if (!oldHasOtherOrders) this.db.clients = this.db.clients.filter(c=>c.name.toLowerCase()!==existing.client.toLowerCase());
             }
-            const newData = {...existing,...data};
+            // Si hay nuevos repuestos en la edición, devolver los anteriores y descontar los nuevos
+            const oldReps = existing.repuestos || [];
+            if (repuestosUsados.length > 0 || oldReps.length > 0) {
+                // Devolver stock de repuestos anteriores
+                oldReps.forEach(r => {
+                    const sIdx = this.db.stock.findIndex(s=>s.id===r.stockId);
+                    if (sIdx > -1) this.db.stock[sIdx].qty += r.qty;
+                });
+                // Descontar los nuevos
+                repuestosUsados.forEach(r => {
+                    const sIdx = this.db.stock.findIndex(s=>s.id===r.stockId);
+                    if (sIdx > -1) this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - r.qty);
+                });
+            }
+            const newData = {...existing,...data, repuestos: repuestosUsados.length > 0 ? repuestosUsados : oldReps};
             if (data.warrantyDays!==existing.warrantyDays) newData.warrantyStart=null;
             this.db.orders[idx]=newData;
         } else {
+            // Descontar stock de repuestos al crear la orden
+            repuestosUsados.forEach(r => {
+                const sIdx = this.db.stock.findIndex(s=>s.id===r.stockId);
+                if (sIdx > -1) this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - r.qty);
+            });
             const newOrder = {
                 id:'TK-'+Date.now().toString().slice(-6), ...data,
+                repuestos: repuestosUsados,
                 status:'PENDIENTE', warrantyStart:null,
                 abonos: data.anticipo > 0 ? [{
                     id: Date.now(), monto: data.anticipo, metodo: data.anticipoMetodo,
@@ -2356,9 +2405,9 @@ const Engine = {
         const cIdx = this.db.clients.findIndex(c=>c.name.toLowerCase()===data.client.toLowerCase());
         if (cIdx>-1) this.db.clients[cIdx]=clientData; else this.db.clients.unshift(clientData);
 
+        Engine._labRepuestos = [];
         await this.save();
         this.cancelEdit('lab');
-        // Scroll al top en móvil para ver el resultado en la tabla
         if (window.innerWidth <= 768) {
             document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2377,6 +2426,9 @@ const Engine = {
         document.getElementById('l-warranty').value=o.warrantyDays||0;
         document.getElementById('l-anticipo').value=o.anticipo||0;
         const fpEl = document.getElementById('l-fecha-prometida'); if(fpEl) fpEl.value=o.fechaPrometida||'';
+        // Cargar repuestos de la orden existente
+        Engine._labRepuestos = (o.repuestos||[]).map(r=>({...r}));
+        Engine.labRenderRepuestos();
         this.updateAnticipoBadge();
         document.getElementById('lab-panel').classList.add('editing');
         document.getElementById('txt-lab-btn').innerText='ACTUALIZAR TICKET';
@@ -2445,7 +2497,12 @@ const Engine = {
             });
 
         } else if (newStatus === 'FALLIDO') {
-            // Limpiar anticipos retenidos sin tocar caja (el dinero nunca fue ingreso real)
+            // Devolver repuestos al inventario
+            (o.repuestos||[]).forEach(r => {
+                const sIdx = this.db.stock.findIndex(s=>s.id===r.stockId);
+                if (sIdx > -1) this.db.stock[sIdx].qty += r.qty;
+            });
+            // Limpiar anticipos retenidos sin tocar caja
             if (this.db.anticipos) {
                 this.db.anticipos = this.db.anticipos.filter(a => a.ticketRef !== o.id);
             }
@@ -2470,9 +2527,15 @@ const Engine = {
     async deleteItem(type,id) {
         if (!await Engine.confirm('Eliminar registro', '¿Eliminar este registro? Esta acción no se puede deshacer.')) return;
         if (type==='lab') {
-            // Limpiar anticipos retenidos, movimientos y deudores vinculados
             const order = this.db.orders.find(o=>o.id===id);
             if (order) {
+                // Devolver repuestos al inventario si la orden no estaba entregada
+                if (order.status !== 'ENTREGADO') {
+                    (order.repuestos||[]).forEach(r => {
+                        const sIdx = this.db.stock.findIndex(s=>s.id===r.stockId);
+                        if (sIdx > -1) this.db.stock[sIdx].qty += r.qty;
+                    });
+                }
                 if (this.db.anticipos) this.db.anticipos = this.db.anticipos.filter(a=>a.ticketRef !== id);
                 this.db.movimientos = (this.db.movimientos||[]).filter(m=>!m.desc.includes(id));
                 this.db.deudores    = (this.db.deudores||[]).filter(d=>d.ticketRef !== id);
@@ -2498,6 +2561,12 @@ const Engine = {
             document.getElementById('txt-lab-btn').innerText='REGISTRAR ENTRADA';
             document.getElementById('btn-lab-save').classList.remove('update');
             document.getElementById('btn-lab-cancel').style.display='none';
+            // Limpiar repuestos del formulario
+            Engine._labRepuestos = [];
+            Engine.labRenderRepuestos();
+            const repSearch = document.getElementById('lab-rep-search'); if(repSearch) repSearch.value='';
+            const repQty = document.getElementById('lab-rep-qty'); if(repQty) repQty.value='1';
+            const repAuto = document.getElementById('lab-rep-autocomplete'); if(repAuto) repAuto.style.display='none';
 
         } else {
             ['i-item','i-qty','i-cost','i-sale','i-min'].forEach(i=>document.getElementById(i).value='');
@@ -3802,7 +3871,24 @@ ${wi ? `
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deleteItem('lab','${x.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>
-            ${hasDetail ? `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content"><strong>Diagnóstico:</strong> ${x.fail}${x.pin?` &nbsp;·&nbsp; <strong>PIN:</strong> ${x.pin}`:''}${x.statusLog&&x.statusLog.length>0?`<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Historial:</span>${x.statusLog.map(l=>`<span style="font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--text-dim)">${l.date} ${l.time} <strong style="color:#fff">${l.from}→${l.to}</strong></span>`).join('')}</div>`:''}</div></td></tr>` : (x.statusLog&&x.statusLog.length>0?`<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content">${x.pin?`<strong>PIN:</strong> ${x.pin} &nbsp;·&nbsp; `:''}<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Historial:</span>${x.statusLog.map(l=>`<span style="font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--text-dim)">${l.date} ${l.time} <strong style="color:#fff">${l.from}→${l.to}</strong></span>`).join('')}</div></div></td></tr>`:'')}`;
+            ${(() => {
+                const hasExpandContent = hasDetail || (x.statusLog&&x.statusLog.length>0) || (x.repuestos&&x.repuestos.length>0);
+                if (!hasExpandContent) return '';
+                const diagPart = x.fail ? `<strong>Diagnóstico:</strong> ${x.fail}` : '';
+                const pinPart  = x.pin  ? `${diagPart?' &nbsp;·&nbsp; ':''}<strong>PIN:</strong> ${x.pin}` : '';
+                const repPart  = (x.repuestos&&x.repuestos.length>0)
+                    ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Repuestos:</span>
+                        ${x.repuestos.map(r=>`<span style="font-size:11px;background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.25);padding:2px 9px;border-radius:6px;color:#818cf8">${r.name} x${r.qty}</span>`).join('')}
+                        <span style="font-size:11px;color:var(--text-dim)">costo: ${this.formatMoney(x.repuestos.reduce((s,r)=>s+r.qty*r.costo,0))}</span>
+                      </div>` : '';
+                const logPart  = (x.statusLog&&x.statusLog.length>0)
+                    ? `<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                        <span style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)">Historial:</span>
+                        ${x.statusLog.map(l=>`<span style="font-size:11px;background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px;color:var(--text-dim)">${l.date} ${l.time} <strong style="color:#fff">${l.from}→${l.to}</strong></span>`).join('')}
+                       </div>` : '';
+                return `<tr class="expand-row" id="expand-${x.id}" style="display:none"><td colspan="9"><div class="expand-content">${diagPart}${pinPart}${repPart}${logPart}</div></td></tr>`;
+            })()}`;
         });
         document.getElementById('lab-table').innerHTML = this.paginate('lab-table', labRows, 10).join('');
         if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -6350,6 +6436,93 @@ ${contacto}`
         if (!row) return;
         const isOpen = row.style.display !== 'none';
         row.style.display = isOpen ? 'none' : '';
+    },
+
+    // ── REPUESTOS EN LAB ──
+    _labRepuestos: [],
+
+    labRepSearch(input) {
+        const term = (input.value||'').toLowerCase().trim();
+        const list = document.getElementById('lab-rep-autocomplete');
+        if (!list) return;
+        if (term.length < 1) { list.style.display='none'; return; }
+        const matches = this.db.stock
+            .filter(s => s.name.toLowerCase().includes(term) && s.qty > 0)
+            .slice(0, 8);
+        if (matches.length === 0) { list.style.display='none'; return; }
+        list.innerHTML = matches.map(s => {
+            const alreadyAdded = (Engine._labRepuestos||[]).some(r=>r.stockId===s.id);
+            return `<div class="autocomplete-item" style="${alreadyAdded?'opacity:.5':''}"
+                onclick="Engine.labSelectRepuesto(${s.id})">
+                <strong style="color:#fff">${s.name}</strong>
+                <span style="font-size:11px;color:var(--text-dim);margin-left:8px">${this.formatMoney(s.cost)} costo · ${s.qty} en stock</span>
+                ${alreadyAdded ? `<span style="font-size:10px;color:var(--accent);margin-left:6px">(ya agregado)</span>` : ''}
+            </div>`;
+        }).join('');
+        list.style.display = 'block';
+        setTimeout(()=>document.addEventListener('click', ()=>list.style.display='none', {once:true}), 0);
+    },
+
+    labSelectRepuesto(stockId) {
+        const s = this.db.stock.find(x=>x.id===stockId);
+        if (!s) return;
+        const searchEl = document.getElementById('lab-rep-search');
+        if (searchEl) searchEl.value = s.name;
+        const listEl = document.getElementById('lab-rep-autocomplete');
+        if (listEl) listEl.style.display = 'none';
+        // Guardar referencia del repuesto seleccionado
+        Engine._selectedRepuesto = s;
+    },
+
+    labAddRepuesto() {
+        const s = Engine._selectedRepuesto;
+        const qtyEl = document.getElementById('lab-rep-qty');
+        const qty = parseInt(qtyEl?.value) || 1;
+        if (!s) return Engine.toast('Selecciona un repuesto de la lista.', 'error');
+        if (qty <= 0) return Engine.toast('La cantidad debe ser mayor a 0.', 'error');
+        if (qty > s.qty) return Engine.toast(`Solo hay ${s.qty} unidad(es) en stock.`, 'error');
+
+        if (!Engine._labRepuestos) Engine._labRepuestos = [];
+        const existing = Engine._labRepuestos.find(r=>r.stockId===s.id);
+        if (existing) {
+            if (existing.qty + qty > s.qty) return Engine.toast(`Stock insuficiente. Disponible: ${s.qty}.`, 'error');
+            existing.qty += qty;
+        } else {
+            Engine._labRepuestos.push({ stockId:s.id, name:s.name, qty, costo:s.cost });
+        }
+
+        Engine._selectedRepuesto = null;
+        const searchEl = document.getElementById('lab-rep-search'); if(searchEl) searchEl.value='';
+        if (qtyEl) qtyEl.value = '1';
+        Engine.labRenderRepuestos();
+    },
+
+    labRemoveRepuesto(stockId) {
+        Engine._labRepuestos = (Engine._labRepuestos||[]).filter(r=>r.stockId!==stockId);
+        Engine.labRenderRepuestos();
+    },
+
+    labRenderRepuestos() {
+        const el = document.getElementById('lab-repuestos-list');
+        if (!el) return;
+        const reps = Engine._labRepuestos || [];
+        if (reps.length === 0) {
+            el.innerHTML = '<span style="font-size:12px;color:var(--text-dim);padding:4px 0">Sin repuestos asignados.</span>';
+            return;
+        }
+        const totalCosto = reps.reduce((s,r)=>s+r.qty*r.costo, 0);
+        el.innerHTML = reps.map(r => `
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.25);border-radius:10px;padding:6px 12px">
+                <span style="font-size:12px;font-weight:700;color:#fff">${r.name}</span>
+                <span style="font-size:11px;color:var(--accent);font-family:var(--mono)">x${r.qty}</span>
+                <span style="font-size:11px;color:var(--text-dim)">${this.formatMoney(r.qty*r.costo)}</span>
+                <button onclick="Engine.labRemoveRepuesto(${r.stockId})"
+                    style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;line-height:1;padding:0 2px"
+                    title="Quitar">×</button>
+            </div>`).join('') +
+            `<div style="display:inline-flex;align-items:center;padding:6px 10px;font-size:11px;color:var(--text-dim)">
+                Total repuestos: <strong style="color:#fff;margin-left:4px">${this.formatMoney(totalCosto)}</strong>
+            </div>`;
     },
 
     labClientInput(input) {

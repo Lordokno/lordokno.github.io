@@ -2858,6 +2858,10 @@ ${tc}`,
 
         // Anticipos retenidos (bolsa temporal — aún no son ingresos reales)
         const anticiposActivos = (this.db.anticipos||[]).filter(a => {
+            if (a.esLib) {
+                const lib = (this.db.liberaciones||[]).find(x=>x.id===a.ticketRef);
+                return lib && lib.status !== 'entregado';
+            }
             const order = this.db.orders.find(x=>x.id===a.ticketRef);
             return order && order.status !== 'ENTREGADO' && order.status !== 'FALLIDO';
         });
@@ -4299,8 +4303,31 @@ ${tc}`,
             };
             this.db.liberaciones.unshift(lib);
 
+            // Anticipo → bolsa temporal (no es ingreso real hasta ENTREGADO)
             if (anticipo > 0) {
-                this.db.movimientos.unshift({ id:Date.now()+1, tipo:'ingreso', desc:`Anticipo Liberacion ${libId} — ${client}`, amount:anticipo, metodo:'Efectivo', date:this.today(), time:now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now()+1, ticketRef: libId, esLib: true,
+                    client, model, monto: anticipo, metodo: 'Efectivo',
+                    date: this.today(), time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+            }
+
+            // Deudor si hay saldo pendiente
+            const saldoPendLib = price - anticipo;
+            if (saldoPendLib > 0 && price > 0) {
+                if (!this.db.deudores) this.db.deudores = [];
+                const fechaPagoLib = (() => { const d=new Date(); d.setDate(d.getDate()+30); return d.toISOString().split('T')[0]; })();
+                this.db.deudores.unshift({
+                    id: 'D-' + Date.now().toString().slice(-6),
+                    client, phone, total: saldoPendLib, fechaPago: fechaPagoLib,
+                    nota: `Saldo liberación ${libId} — ${model}`,
+                    items: [{ name: `Liberación ${model}`, qty:1, salePrice: saldoPendLib }],
+                    cobrado: false, cobradoEl: null,
+                    ticketRef: libId, esLib: true,
+                    createdAt: now.toISOString(), date: this.today()
+                });
+                Engine.toast(`Saldo de ${this.formatMoney(saldoPendLib)} registrado en Deudores.`, 'info', 4000);
             }
 
             // Upsert cliente
@@ -4350,13 +4377,51 @@ ${tc}`,
         const lib = (this.db.liberaciones||[]).find(l=>l.id===id);
         if (!lib) return;
         const cycle = { 'recibido':'en-proceso', 'en-proceso':'listo', 'listo':'entregado', 'entregado':'recibido' };
-        lib.status = cycle[lib.status] || 'recibido';
-        if (lib.status === 'entregado') lib.deliveredAt = new Date().toISOString();
+        const newStatus = cycle[lib.status] || 'recibido';
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+
+        if (newStatus === 'entregado') {
+            lib.deliveredAt = now.toISOString();
+            // Pasar anticipos retenidos a ingresos reales
+            const anticRetenidos = (this.db.anticipos||[]).filter(a => a.ticketRef === id);
+            anticRetenidos.forEach(a => {
+                this.registrarMovimiento({
+                    tipo: 'ingreso',
+                    desc: `Anticipo entregado ${id} — ${lib.client} (${lib.model})`,
+                    amount: a.monto, metodo: a.metodo || 'Efectivo', time: timeStr
+                });
+            });
+            this.db.anticipos = (this.db.anticipos||[]).filter(a => a.ticketRef !== id);
+            // Registrar saldo final si queda algo
+            const totalAbonado = (lib.abonos||[]).reduce((s,a)=>s+a.monto,0);
+            const saldoFinal = Math.max(0, lib.price - totalAbonado);
+            if (saldoFinal > 0) {
+                this.registrarMovimiento({
+                    tipo: 'ingreso',
+                    desc: `Saldo entrega ${id} — ${lib.client} (${lib.model})`,
+                    amount: saldoFinal, time: timeStr
+                });
+            }
+            // Cerrar deudor vinculado
+            (this.db.deudores||[]).forEach(d => {
+                if (d.ticketRef === id && !d.cobrado) {
+                    d.cobrado = true; d.cobradoEl = now.toISOString();
+                }
+            });
+        }
+
+        lib.status = newStatus;
         await this.save();
+        const labels = {'recibido':'Recibido','en-proceso':'En Proceso','listo':'Listo','entregado':'Entregado'};
+        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, newStatus==='entregado'?'success':'info', 2500);
     },
 
     async deleteLib(id) {
         if (!await Engine.confirm('Eliminar liberación', '¿Eliminar esta liberación? Esta acción no se puede deshacer.')) return;
+        // Limpiar anticipos retenidos y deudores vinculados
+        this.db.anticipos = (this.db.anticipos||[]).filter(a => a.ticketRef !== id);
+        this.db.deudores  = (this.db.deudores||[]).filter(d => d.ticketRef !== id);
         this.db.liberaciones = (this.db.liberaciones||[]).filter(l=>l.id!==id);
         await this.save();
     },
@@ -4379,6 +4444,7 @@ ${tc}`,
         if(el('lib-st-proceso')) el('lib-st-proceso').innerText = libs.filter(l=>l.status==='en-proceso').length;
         if(el('lib-st-listo'))   el('lib-st-listo').innerText   = libs.filter(l=>l.status==='listo').length;
         const capital = libs.filter(l=>l.status!=='entregado').reduce((s,l)=>{
+            // Solo el saldo pendiente (descontando anticipos ya abonados)
             const ab = (l.abonos||[]).reduce((a,b)=>a+b.monto,0);
             return s + Math.max(0, l.price - ab);
         },0);
@@ -4521,7 +4587,21 @@ ${tc}`,
             if (monto > saldo + 0.01) return Engine.toast(`El abono supera el saldo disponible (${this.formatMoney(saldo)}).`,'error');
             if (!this.db.liberaciones[idx].abonos) this.db.liberaciones[idx].abonos = [];
             this.db.liberaciones[idx].abonos.push({ id:Date.now(), monto, metodo, nota, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
-            this.db.movimientos.unshift({ id:Date.now()+1, tipo:'ingreso', desc:`Abono Liberacion ${id} — ${l.client}${nota?' ('+nota+')':''}`, amount:monto, metodo, date:this.today(), time:new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
+            // Guardar abono en bolsa temporal (no en ingresos hasta ENTREGADO)
+            if (!this.db.anticipos) this.db.anticipos = [];
+            this.db.anticipos.push({
+                id: Date.now()+1, ticketRef: id, esLib: true,
+                client: l.client, model: l.model, monto, metodo, nota,
+                date: this.today(), time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+            });
+            // Actualizar deudor vinculado a esta liberación
+            const totalAbonadoLib2 = this.db.liberaciones[idx].abonos.reduce((s,a)=>s+a.monto,0);
+            const nuevoSaldoLib = Math.max(0, l.price - totalAbonadoLib2);
+            const deudLibIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===id && !d.cobrado);
+            if (deudLibIdx > -1) {
+                if (nuevoSaldoLib <= 0) this.db.deudores.splice(deudLibIdx, 1);
+                else this.db.deudores[deudLibIdx].total = nuevoSaldoLib;
+            }
             await this.save();
             this.abrirAbonoLib(id);
         } else {
@@ -4564,11 +4644,29 @@ ${tc}`,
         }
     },
 
-    async deleteAbonoLib(libId, idx) {
-        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono del historial?')) return;
+    async deleteAbonoLib(libId, abonoIdx) {
+        if (!await Engine.confirm('Eliminar abono', '¿Eliminar este abono? Se quitará de los anticipos retenidos.')) return;
         const lIdx = (this.db.liberaciones||[]).findIndex(l=>l.id===libId);
         if (lIdx===-1) return;
-        this.db.liberaciones[lIdx].abonos.splice(idx,1);
+        const abono = this.db.liberaciones[lIdx].abonos[abonoIdx];
+        // Quitar de la bolsa de anticipos
+        if (abono && abono.monto > 0 && this.db.anticipos) {
+            const antiIdx = [...this.db.anticipos].reverse()
+                .findIndex(a => a.ticketRef === libId && Math.abs(a.monto - abono.monto) < 0.01);
+            if (antiIdx > -1) {
+                const realIdx = this.db.anticipos.length - 1 - antiIdx;
+                this.db.anticipos.splice(realIdx, 1);
+            }
+        }
+        this.db.liberaciones[lIdx].abonos.splice(abonoIdx, 1);
+        // Restaurar saldo en deudor vinculado
+        const l = this.db.liberaciones[lIdx];
+        const totalAbonado = l.abonos.reduce((s,a)=>s+a.monto,0);
+        const nuevoSaldo = Math.max(0, l.price - totalAbonado);
+        if (nuevoSaldo > 0) {
+            const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===libId && !d.cobrado);
+            if (deudIdx > -1) this.db.deudores[deudIdx].total = nuevoSaldo;
+        }
         await this.save();
         this.abrirAbonoLib(libId);
     },

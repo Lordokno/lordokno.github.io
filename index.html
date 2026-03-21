@@ -2654,7 +2654,7 @@ ${o.phone?`<div class="sm">${o.phone}</div>`:''}
 <div class="row"><span class="sm">EQUIPO</span></div>
 <div class="b">${o.model}</div>
 ${o.pin?`<div class="row sm"><span>PIN:</span><span>${o.pin}</span></div>`:''}
-${o.fail?`<div style="margin:1mm 0"><span class="sm">Falla: </span><span class="sm">${o.fail}</span></div>`:''}
+${o.fail?`<div style="margin:1.5mm 0 0 0"><div class="sm" style="font-weight:bold">DESCRIPCION DE FALLA:</div><div class="sm" style="margin-top:.5mm;white-space:pre-wrap;word-break:break-word">${o.fail}</div></div>`:''}
 <hr class="hr">
 <div class="row"><span>Presupuesto:</span><span class="b">${this.formatMoney(o.price)}</span></div>
 ${abonos.map(a=>`<div class="row sm"><span>  Abono (${a.metodo}):</span><span>${this.formatMoney(a.monto)}</span></div>`).join('')}

@@ -578,6 +578,11 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .page-info { font-size:11px; color:var(--text-dim); font-weight:600; margin-left:auto; }
 
 
+.search-bar-wrap{position:relative;display:flex;align-items:center;}
+.search-bar-wrap i[data-lucide]{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;opacity:.45;}
+.search-bar-wrap input{padding-left:38px;font-size:13px;width:100%;}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;display:none;}
+.search-clear.visible{display:block;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;}
@@ -890,7 +895,15 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= DASHBOARD ======= -->
 <section id="v-dash" class="view active">
-    <div class="view-title"><h1>Resumen Ejecutivo</h1><p>Monitoreo en tiempo real del taller.</p></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Resumen Ejecutivo</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Monitoreo en tiempo real del taller.</p></div>
+        <div class="search-bar-wrap" style="width:320px;flex-shrink:0">
+            <i data-lucide="search" size="15"></i>
+            <input type="text" id="global-search" placeholder="Buscar tickets, clientes, equipos..." oninput="Engine.globalSearch(this.value)" style="border-radius:13px">
+            <button class="search-clear" id="global-search-clear" onclick="Engine.globalSearch('');this.classList.remove('visible');document.getElementById('global-search').value=''">✕</button>
+        </div>
+    </div>
+    <div id="global-search-results" style="display:none;margin-bottom:16px"></div>
     <!-- Fila 1: estado de órdenes + ingresos hoy -->
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">
         <div class="stat-card">
@@ -1177,7 +1190,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
     </div>
 
-    <!-- Filtros -->
+    <!-- Búsqueda + Filtros -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="search-bar-wrap" style="flex:1;max-width:340px">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="lib-search" placeholder="Buscar por cliente, IMEI, equipo..." oninput="Engine.renderLib()">
+            <button class="search-clear" onclick="document.getElementById('lib-search').value='';this.classList.remove('visible');Engine.renderLib()">✕</button>
+        </div>
+    </div>
     <div class="lib-filters">
         <button class="lib-filter-btn active" onclick="Engine.filterLib('all',this)">Todas</button>
         <button class="lib-filter-btn" onclick="Engine.filterLib('recibido',this)"><span style="color:#818cf8">●</span> Recibido</button>
@@ -1202,7 +1222,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= INVENTARIO ======= -->
 <section id="v-inv" class="view">
-    <div class="view-title"><h1>Control de Stock</h1><p>Gestión de repuestos y suministros críticos.</p></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Control de Stock</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Gestión de repuestos y suministros críticos.</p></div>
+        <div class="search-bar-wrap" style="width:280px;flex-shrink:0">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="inv-search" placeholder="Buscar repuesto..." oninput="Engine.renderInv()">
+            <button class="search-clear" onclick="document.getElementById('inv-search').value='';this.classList.remove('visible');Engine.renderInv()">✕</button>
+        </div>
+    </div>
     <div class="smart-panel" id="inv-panel">
         <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
             <div class="field" style="flex:2"><label>Nombre del Repuesto</label><input type="text" id="i-item" placeholder="Pantalla iPhone 14"></div>
@@ -1223,7 +1250,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= CLIENTES ======= -->
 <section id="v-clients" class="view">
-    <div class="view-title"><h1>Directorio de Clientes</h1><p>Base de datos de contactos del taller.</p></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Directorio de Clientes</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Base de datos de contactos del taller.</p></div>
+        <div class="search-bar-wrap" style="width:280px;flex-shrink:0">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="clients-search" placeholder="Buscar cliente o teléfono..." oninput="Engine.renderClients()">
+            <button class="search-clear" onclick="document.getElementById('clients-search').value='';this.classList.remove('visible');Engine.renderClients()">✕</button>
+        </div>
+    </div>
     <div class="smart-panel" id="clients-panel">
         <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
             <div class="field" style="flex:2"><label>Nombre</label><input type="text" id="c-name" placeholder="Juan Pérez"></div>
@@ -1240,7 +1274,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= GARANTÍAS ======= -->
 <section id="v-warranty" class="view">
-    <div class="view-title"><h1>Centro de Garantías</h1><p>Ciclo de vida activo de garantías emitidas.</p></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Centro de Garantías</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Ciclo de vida activo de garantías emitidas.</p></div>
+        <div class="search-bar-wrap" style="width:280px;flex-shrink:0">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="warranty-search" placeholder="Buscar cliente o dispositivo..." oninput="Engine.renderWarranty()">
+            <button class="search-clear" onclick="document.getElementById('warranty-search').value='';this.classList.remove('visible');Engine.renderWarranty()">✕</button>
+        </div>
+    </div>
     <div class="stats-grid-3" id="warranty-stats"></div>
     <div class="warranty-filters">
         <button class="wfilter-btn active" onclick="Engine.filterWarranty('all',this)">Todas</button>
@@ -1757,11 +1798,16 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         </div>
     </div>
 
-    <!-- Filtro de fecha + resumen por método -->
+    <!-- Filtro de fecha + búsqueda + resumen por método -->
     <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px">
         <div class="field" style="flex:0 0 auto">
             <label>Ver movimientos del día</label>
             <input type="date" id="caja-filter-date" onchange="Engine.renderCaja()" style="width:180px">
+        </div>
+        <div class="search-bar-wrap" style="flex:1;max-width:280px">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="caja-search" placeholder="Buscar en movimientos..." oninput="Engine.renderCaja()">
+            <button class="search-clear" onclick="document.getElementById('caja-search').value='';this.classList.remove('visible');Engine.renderCaja()">✕</button>
         </div>
         <div id="caja-metodos-resumen" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
         <button class="btn-main ghost" onclick="Engine.cerrarCajaDia()" style="margin-left:auto;font-size:11px;padding:9px 16px">
@@ -1790,7 +1836,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= DEUDORES ======= -->
 <section id="v-deudores" class="view">
-    <div class="view-title"><h1>Deudores</h1><p>Clientes con ventas al crédito pendientes de cobro.</p></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Deudores</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Clientes con ventas al crédito pendientes de cobro.</p></div>
+        <div class="search-bar-wrap" style="width:280px;flex-shrink:0">
+            <i data-lucide="search" size="14"></i>
+            <input type="text" id="deudores-search" placeholder="Buscar deudor..." oninput="Engine.renderDeudores()">
+            <button class="search-clear" onclick="document.getElementById('deudores-search').value='';this.classList.remove('visible');Engine.renderDeudores()">✕</button>
+        </div>
+    </div>
 
     <!-- KPIs -->
     <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
@@ -2595,9 +2648,15 @@ const Engine = {
         if (egrFecha && !egrFecha.value) egrFecha.value = this.today();
 
         // ── Movimientos del día seleccionado ──
-        const movs = (this.db.movimientos||[]).filter(m => m.date === fecha);
-        const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.amount,0);
-        const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.amount,0);
+        const search = (document.getElementById('caja-search')?.value||'').toLowerCase();
+        const clearBtnCaja = document.getElementById('caja-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtnCaja) clearBtnCaja.classList.toggle('visible', search.length > 0);
+        const allMovsFecha = (this.db.movimientos||[]).filter(m => m.date === fecha);
+        const movs = search
+            ? allMovsFecha.filter(m=>(m.desc||'').toLowerCase().includes(search)||(m.categoria||'').toLowerCase().includes(search)||(m.metodo||'').toLowerCase().includes(search))
+            : allMovsFecha;
+        const ingresos = allMovsFecha.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.amount,0);
+        const egresos  = allMovsFecha.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.amount,0);
         const balance  = ingresos - egresos;
 
         // ── KPIs ──
@@ -3756,7 +3815,11 @@ ${wi ? `
     },
 
     renderInv() {
-        const invRows=this.db.stock.map(x=>{
+        const search = (document.getElementById('inv-search')?.value||'').toLowerCase();
+        const clearBtn = document.getElementById('inv-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
+        const stock = search ? this.db.stock.filter(x=>x.name.toLowerCase().includes(search)) : this.db.stock;
+        const invRows=stock.map(x=>{
             const total=(x.qty*x.cost).toFixed(2);
             const isLow=x.qty<=(x.minStock||3);
             const stockColor=isLow?'color:#ef4444;font-weight:800':'';
@@ -3764,22 +3827,40 @@ ${wi ? `
             const salePriceCell = x.salePrice ? `<span class="pos-price-tag">${this.formatMoney(x.salePrice)}</span>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
             return `<tr><td style="font-weight:700;color:#fff">${x.name}</td><td style="${stockColor}">${x.qty}<small>uds</small></td><td style="color:var(--text-dim)">${x.minStock||3}<small>uds</small></td><td style="color:var(--text-dim);font-family:var(--mono)">${this.formatMoney(x.cost)}</td><td>${salePriceCell}</td><td style="color:var(--success);font-weight:800">${this.formatMoney(total)}</td><td>${alertBadge}</td><td><div style="display:flex;gap:6px"><div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="13"></i></div><div class="action-icon del" onclick="Engine.deleteItem('inv',${x.id})"><i data-lucide="trash-2" size="13"></i></div></div></td></tr>`;
         });
-        document.getElementById('inv-list').innerHTML=this.paginate('inv-list',invRows,10).join('');
+        if (invRows.length === 0) {
+            document.getElementById('inv-list').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-dim)">Sin resultados${search?' para "'+search+'"':''}</td></tr>`;
+        } else {
+            document.getElementById('inv-list').innerHTML=this.paginate('inv-list',invRows,10).join('');
+        }
         lucide.createIcons();
     },
 
     renderClients() {
         if (!this.db.clients) this.db.clients=[];
-        const clientRows=this.db.clients.map((c,i)=>{
+        const search = (document.getElementById('clients-search')?.value||'').toLowerCase();
+        const clearBtn = document.getElementById('clients-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
+        const clients = search
+            ? this.db.clients.filter(c=>c.name.toLowerCase().includes(search)||c.phone.includes(search))
+            : this.db.clients;
+        const clientRows=clients.map((c,i)=>{
             const orders=this.db.orders.filter(o=>o.client.toLowerCase()===c.name.toLowerCase());
             return `<tr><td style="font-weight:700">${c.name}</td><td style="color:var(--success);font-family:var(--mono);font-weight:700">${c.phone}</td><td style="color:var(--text-dim)">${c.lastSeen}</td><td><span style="color:var(--text-dim);font-size:12px">${orders.length} reparación${orders.length!==1?'es':''}</span> <span onclick="Engine.showHistorial('${c.name.replace(/'/g,"\\'")}')" style="cursor:pointer;color:var(--accent);font-size:11px;font-weight:700;margin-left:6px">VER ›</span></td><td><div class="action-icon wa" onclick="window.open('https://wa.me/${c.phone.replace(/[^0-9]/g,'')}','_blank')"><i data-lucide="message-circle" size="13"></i></div><div class="action-icon del" onclick="Engine.delClient(${i})"><i data-lucide="trash-2" size="13"></i></div></td></tr>`;
         });
-        document.getElementById('clients-list').innerHTML = this.paginate('clients-list', clientRows, 10).join('');
+        if (clientRows.length === 0) {
+            document.getElementById('clients-list').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-dim)">Sin resultados${search?' para "'+search+'"':''}</td></tr>`;
+        } else {
+            document.getElementById('clients-list').innerHTML = this.paginate('clients-list', clientRows, 10).join('');
+        }
         if(typeof lucide!=='undefined') lucide.createIcons();
     },
 
     renderWarranty() {
-        const all=this.getWarrantiesWithInfo();
+        const search = (document.getElementById('warranty-search')?.value||'').toLowerCase();
+        const clearBtn = document.getElementById('warranty-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
+        let all=this.getWarrantiesWithInfo();
+        if (search) all = all.filter(w=>w.client.toLowerCase().includes(search)||w.model.toLowerCase().includes(search)||(w.id||'').toLowerCase().includes(search));
         const active=all.filter(w=>w.wInfo.statusKey==='active').length;
         const expiring=all.filter(w=>w.wInfo.statusKey==='expiring').length;
         const expired=all.filter(w=>w.wInfo.statusKey==='expired').length;
@@ -4876,9 +4957,13 @@ ${wi ? `
     },
 
     renderDeudores() {
+        const search = (document.getElementById('deudores-search')?.value||'').toLowerCase();
+        const clearBtn = document.getElementById('deudores-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
         const deudores = (this.db.deudores || []);
-        const activos  = deudores.filter(d => !d.cobrado);
+        let activos  = deudores.filter(d => !d.cobrado);
         const cobrados = deudores.filter(d =>  d.cobrado);
+        if (search) activos = activos.filter(d=>d.client.toLowerCase().includes(search)||(d.phone||'').includes(search)||(d.nota||'').toLowerCase().includes(search));
         const hoy = new Date(); hoy.setHours(0,0,0,0);
 
         const totalAdeudado = activos.reduce((s,d) => s+d.total, 0);
@@ -5481,7 +5566,17 @@ ${wi ? `
     renderLib() {
         const libs = this.db.liberaciones || [];
         const filter = this.libFilter || 'all';
-        const filtered = filter==='all' ? libs : libs.filter(l=>l.status===filter);
+        const search = (document.getElementById('lib-search')?.value||'').toLowerCase();
+        const clearBtn = document.getElementById('lib-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
+        let filtered = filter==='all' ? libs : libs.filter(l=>l.status===filter);
+        if (search) filtered = filtered.filter(l=>
+            l.client.toLowerCase().includes(search) ||
+            l.model.toLowerCase().includes(search)  ||
+            (l.imei||'').includes(search)            ||
+            (l.id||'').toLowerCase().includes(search)||
+            (l.carrier||'').toLowerCase().includes(search)
+        );
 
         // KPIs
         const el = id => document.getElementById(id);
@@ -6141,6 +6236,99 @@ ${contacto}`
             t.style.animation = 'toast-out .3s ease forwards';
             setTimeout(() => t.remove(), 300);
         }, duration);
+    },
+
+    globalSearch(term) {
+        const q = (term||'').toLowerCase().trim();
+        const clearBtn = document.getElementById('global-search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', q.length > 0);
+        const resultsEl = document.getElementById('global-search-results');
+        if (!resultsEl) return;
+
+        if (!q) { resultsEl.style.display = 'none'; resultsEl.innerHTML = ''; return; }
+
+        const results = [];
+
+        // Órdenes de lab
+        (this.db.orders||[]).forEach(o => {
+            if (o.id.toLowerCase().includes(q) || o.client.toLowerCase().includes(q) ||
+                o.model.toLowerCase().includes(q) || (o.fail||'').toLowerCase().includes(q) ||
+                (o.phone||'').includes(q)) {
+                results.push({ type:'lab', icon:'wrench', color:'var(--accent)',
+                    title: `${o.id} — ${o.client}`,
+                    sub: `${o.model} · ${o.status} · ${this.formatMoney(o.price)}`,
+                    action: `go('lab', document.querySelector('.nav-item[onclick*=lab]'))` });
+            }
+        });
+
+        // Liberaciones
+        (this.db.liberaciones||[]).forEach(l => {
+            if (l.id.toLowerCase().includes(q) || l.client.toLowerCase().includes(q) ||
+                l.model.toLowerCase().includes(q) || (l.imei||'').includes(q) ||
+                (l.phone||'').includes(q)) {
+                results.push({ type:'lib', icon:'signal', color:'#818cf8',
+                    title: `${l.id} — ${l.client}`,
+                    sub: `${l.model} · ${l.carrier} · ${l.status}`,
+                    action: `go('lib', document.querySelector('.nav-item[onclick*=lib]'))` });
+            }
+        });
+
+        // Clientes
+        (this.db.clients||[]).forEach(c => {
+            if (c.name.toLowerCase().includes(q) || (c.phone||'').includes(q)) {
+                results.push({ type:'client', icon:'user', color:'var(--warranty)',
+                    title: c.name,
+                    sub: `${c.phone} · Última visita: ${c.lastSeen||'—'}`,
+                    action: `go('clients', document.querySelector('.nav-item[onclick*=clients]'))` });
+            }
+        });
+
+        // Inventario
+        (this.db.stock||[]).forEach(s => {
+            if (s.name.toLowerCase().includes(q)) {
+                results.push({ type:'inv', icon:'package', color:'var(--edit)',
+                    title: s.name,
+                    sub: `Stock: ${s.qty} · ${this.formatMoney(s.salePrice||s.cost||0)}`,
+                    action: `go('inv', document.querySelector('.nav-item[onclick*=inv]'))` });
+            }
+        });
+
+        // Deudores
+        (this.db.deudores||[]).filter(d=>!d.cobrado).forEach(d => {
+            if (d.client.toLowerCase().includes(q) || (d.phone||'').includes(q)) {
+                results.push({ type:'deudor', icon:'user-x', color:'var(--danger)',
+                    title: `${d.client} — Deudor`,
+                    sub: `Debe: ${this.formatMoney(d.total)} · Vence: ${d.fechaPago}`,
+                    action: `go('deudores', document.querySelector('.nav-item[onclick*=deudores]'))` });
+            }
+        });
+
+        if (results.length === 0) {
+            resultsEl.innerHTML = `<div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 20px;color:var(--text-dim);font-size:13px">Sin resultados para "<strong style="color:#fff">${term}</strong>"</div>`;
+            resultsEl.style.display = 'block';
+            return;
+        }
+
+        const limited = results.slice(0, 8);
+        resultsEl.innerHTML = `
+        <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+            <div style="padding:10px 16px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border)">
+                ${results.length} resultado${results.length!==1?'s':''} para "${term}"${results.length>8?' (mostrando 8)':''}
+            </div>
+            ${limited.map(r=>`
+            <div onclick="${r.action}" style="padding:10px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-bottom:1px solid var(--border);transition:.15s" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background=''">
+                <div style="width:32px;height:32px;border-radius:9px;background:${r.color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i data-lucide="${r.icon}" size="14" style="color:${r.color}"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:13px;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.title}</div>
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.sub}</div>
+                </div>
+                <i data-lucide="arrow-right" size="13" style="color:var(--text-dim);flex-shrink:0"></i>
+            </div>`).join('')}
+        </div>`;
+        resultsEl.style.display = 'block';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
     setLabFilter(filter, btn) {

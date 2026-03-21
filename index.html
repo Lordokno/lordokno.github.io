@@ -55,13 +55,13 @@ main{flex:1;overflow-y:auto;padding:52px 72px;scroll-behavior:smooth;}
 .view-title p{color:var(--text-dim);margin-top:4px;font-weight:500;font-size:14px;}
 
 /* GRIDS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:40px;}
-.stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:36px;}
-.stat-card{background:var(--panel);border:1px solid var(--border);padding:28px;border-radius:var(--rx);transition:.3s;}
-.stat-card:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-3px);}
-.stat-card .label{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-.stat-card .value{font-size:38px;font-weight:800;line-height:1;}
-.stat-icon{width:18px;height:18px;stroke-width:2.5px;filter:drop-shadow(0 0 5px currentColor);opacity:.9;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat-card{background:var(--panel);border:1px solid var(--border);padding:14px 16px;border-radius:16px;transition:.3s;}
+.stat-card:hover{border-color:rgba(255,255,255,0.12);transform:translateY(-2px);}
+.stat-card .label{display:flex;justify-content:space-between;align-items:center;font-size:9px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;}
+.stat-card .value{font-size:26px;font-weight:800;line-height:1;}
+.stat-icon{width:14px;height:14px;stroke-width:2.5px;filter:drop-shadow(0 0 4px currentColor);opacity:.85;}
 
 /* PANELS */
 .smart-panel{background:var(--panel);border:1px solid var(--border);padding:36px;border-radius:var(--rx);margin-bottom:36px;transition:.4s;}
@@ -549,9 +549,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 /* Period summary */
 .period-summary { background:var(--panel); border:1px solid var(--border); border-radius:var(--rx); padding:24px; margin-bottom:24px; }
 .period-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
-.pkpi { background:rgba(0,0,0,.2); border-radius:12px; padding:16px; }
-.pkpi-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); margin-bottom:6px; }
-.pkpi-value { font-size:24px; font-weight:800; font-family:var(--mono); }
+.pkpi { background:rgba(0,0,0,.2); border-radius:10px; padding:10px 12px; }
+.pkpi-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-dim); margin-bottom:3px; }
+.pkpi-value { font-size:18px; font-weight:800; font-family:var(--mono); }
 
 /* ── PAGINATION ── */
 .pagination { display:flex; align-items:center; gap:6px; padding:12px 16px; border-top:1px solid var(--border); flex-wrap:wrap; }
@@ -671,8 +671,8 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         gap: 12px;
         margin-bottom: 24px;
     }
-    .stat-card { padding: 18px 16px; }
-    .stat-card .value { font-size: 28px; }
+    .stat-card { padding: 10px 12px; }
+    .stat-card .value { font-size: 20px; }
 
     /* Panels */
     .smart-panel { padding: 20px 16px; }
@@ -753,7 +753,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 @media (max-width: 420px) {
     .stats-grid { grid-template-columns: 1fr 1fr !important; }
-    .stat-card .value { font-size: 24px; }
+    .stat-card .value { font-size: 18px; }
     main { padding: 68px 12px 20px; }
     .view-title h1 { font-size: 20px; }
     table { min-width: 460px; }
@@ -873,7 +873,8 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 <!-- ======= DASHBOARD ======= -->
 <section id="v-dash" class="view active">
     <div class="view-title"><h1>Resumen Ejecutivo</h1><p>Monitoreo en tiempo real del taller.</p></div>
-    <div class="stats-grid">
+    <!-- Fila 1: estado de órdenes + ingresos hoy -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px">
         <div class="stat-card">
             <div class="label">Servicios <i data-lucide="layers" class="stat-icon" style="color:var(--accent)"></i></div>
             <div class="value" id="st-total">0</div>
@@ -890,37 +891,28 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="label" style="color:#818cf8">Entregados <i data-lucide="package-check" class="stat-icon" style="color:#818cf8"></i></div>
             <div class="value" id="st-delivered" style="color:#818cf8">0</div>
         </div>
+        <div class="stat-card" style="border-color:rgba(6,182,212,.2)">
+            <div class="label" style="color:var(--warranty)">Garantías <i data-lucide="shield-check" class="stat-icon" style="color:var(--warranty)"></i></div>
+            <div class="value" id="st-warranties" style="color:var(--warranty)">0</div>
+        </div>
     </div>
-    <!-- Fila 2: caja hoy + garantías + capital -->
-    <div class="stats-grid-3" style="grid-template-columns:1fr 1fr 1fr;">
+    <!-- Fila 2: finanzas -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
         <div class="stat-card" style="border-color:rgba(167,139,250,.2)">
             <div class="label" style="color:var(--cash)">Ingresos Hoy <i data-lucide="trending-up" class="stat-icon" style="color:var(--cash)"></i></div>
             <div class="value" id="st-ingresos-hoy" style="color:var(--cash)">$0</div>
         </div>
-        <div class="stat-card" style="border-color:rgba(6,182,212,.2)">
-            <div class="label" style="color:var(--warranty)">Garantías Activas <i data-lucide="shield-check" class="stat-icon" style="color:var(--warranty)"></i></div>
-            <div class="value" id="st-warranties" style="color:var(--warranty)">0</div>
+        <div class="stat-card" style="border-color:rgba(16,185,129,.15)">
+            <div class="label" style="color:var(--success)">Confirmados Hoy <i data-lucide="check-circle-2" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="st-ingresos-confirmados" style="color:var(--success)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.3)">
+            <div class="label" style="color:var(--edit)">Anticipos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="st-anticipos" style="color:var(--edit)">$0</div>
         </div>
         <div class="stat-card">
-            <div class="label" style="color:var(--success)">Capital Pendiente <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="label" style="color:var(--success)">Capital Pend. <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
             <div class="value" id="st-cash" style="color:var(--success)">$0</div>
-        </div>
-    </div>
-    <!-- Fila 3: anticipos retenidos -->
-    <div class="stats-grid-3" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px">
-        <div class="stat-card" style="border-color:rgba(245,158,11,.3)">
-            <div class="label" style="color:var(--edit)">Anticipos Retenidos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
-            <div class="value" id="st-anticipos" style="color:var(--edit)">$0</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;font-weight:600">Pasan a ingresos al entregar</div>
-        </div>
-        <div class="stat-card" style="border-color:rgba(245,158,11,.15)">
-            <div class="label" style="color:var(--text-dim)">Órdenes con Anticipo <i data-lucide="receipt" class="stat-icon" style="color:var(--text-dim)"></i></div>
-            <div class="value" id="st-anticipos-count">0</div>
-        </div>
-        <div class="stat-card" style="border-color:rgba(16,185,129,.15)">
-            <div class="label" style="color:var(--text-dim)">Ingresos Confirmados Hoy <i data-lucide="check-circle-2" class="stat-icon" style="color:var(--success)"></i></div>
-            <div class="value" id="st-ingresos-confirmados" style="color:var(--success)">$0</div>
-            <div style="font-size:10px;color:var(--text-dim);margin-top:4px;font-weight:600">Solo órdenes entregadas</div>
         </div>
     </div>
     <!-- Banner equipos listos -->
@@ -971,7 +963,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
     <!-- Liberaciones en Dashboard -->
     <div class="section-divider" style="margin-top:8px">Liberaciones Activas</div>
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
         <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
             <div class="label" style="color:#818cf8">Total Liberaciones <i data-lucide="signal" class="stat-icon" style="color:#818cf8"></i></div>
             <div class="value" id="dash-lib-total" style="color:#818cf8">0</div>
@@ -1096,7 +1088,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     <div class="view-title"><h1>Liberaciones</h1><p>Gestión de desbloqueo de equipos — IMEI, compañía y seguimiento de plazos.</p></div>
 
     <!-- KPIs -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:28px">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
         <div class="stat-card"><div class="label" style="color:var(--accent)">Total <i data-lucide="signal" class="stat-icon" style="color:var(--accent)"></i></div><div class="value" id="lib-st-total" style="color:var(--accent)">0</div></div>
         <div class="stat-card" style="border-color:rgba(245,158,11,.2)"><div class="label" style="color:var(--edit)">En Proceso <i data-lucide="loader" class="stat-icon" style="color:var(--edit)"></i></div><div class="value" id="lib-st-proceso" style="color:var(--edit)">0</div></div>
         <div class="stat-card" style="border-color:rgba(16,185,129,.2)"><div class="label" style="color:var(--success)">Listos <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div><div class="value" id="lib-st-listo" style="color:var(--success)">0</div></div>
@@ -1249,7 +1241,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 
     <!-- KPIs principales -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
         <div class="stat-card"><div class="label">Total Órdenes <i data-lucide="clipboard-list" class="stat-icon" style="color:var(--accent)"></i></div><div class="value" id="r-total">0</div></div>
         <div class="stat-card"><div class="label" style="color:var(--success)">Completadas <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div><div class="value" id="r-done" style="color:var(--success)">0</div></div>
         <div class="stat-card"><div class="label" style="color:var(--cash)">Ticket Promedio <i data-lucide="trending-up" class="stat-icon" style="color:var(--cash)"></i></div><div class="value" id="r-avg" style="color:var(--cash)">$0</div></div>
@@ -1257,7 +1249,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 
     <!-- KPIs secundarios -->
-    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
         <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
             <div class="label" style="color:var(--success)">Ingresos del Período <i data-lucide="arrow-down-circle" class="stat-icon" style="color:var(--success)"></i></div>
             <div class="value" id="r-ingresos" style="color:var(--success)">$0</div>
@@ -1501,7 +1493,7 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="section-divider">Historial de Ventas por Día</div>
 
         <!-- Resumen del día -->
-        <div class="stats-grid-3" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="stats-grid-3" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
             <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
                 <div class="label" style="color:var(--success)">Ventas del Día <i data-lucide="shopping-bag" class="stat-icon" style="color:var(--success)"></i></div>
                 <div class="value" id="pos-hist-count" style="color:var(--success)">0</div>
@@ -1660,9 +1652,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     <div class="view-title"><h1>Deudores</h1><p>Clientes con ventas al crédito pendientes de cobro.</p></div>
 
     <!-- KPIs -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:28px">
+    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
         <div class="stat-card" style="border-color:rgba(239,68,68,.2)">
-            <div class="label" style="color:var(--danger)">Total Adeudado <i data-lucide="alert-circle" class="stat-icon" style="color:var(--danger)"></i></div>
+            <div class="label" style="color:var(--danger)">Adeudado <i data-lucide="alert-circle" class="stat-icon" style="color:var(--danger)"></i></div>
             <div class="value" id="deud-total" style="color:var(--danger)">$0</div>
         </div>
         <div class="stat-card" style="border-color:rgba(245,158,11,.2)">
@@ -2873,7 +2865,6 @@ ${tc}`,
         const elAntic = document.getElementById('st-anticipos');
         const elAnticCount = document.getElementById('st-anticipos-count');
         if (elAntic) elAntic.innerText = this.formatMoney(totalAnticipado);
-        if (elAnticCount) elAnticCount.innerText = [...new Set(anticiposActivos.map(a=>a.ticketRef))].length;
 
         // Ingresos confirmados hoy = movimientos de ingreso del día (solo entregados)
         const ingConfirmadosHoy = hoyMovs.filter(m=>m.tipo==='ingreso').reduce((a,b)=>a+b.amount,0);

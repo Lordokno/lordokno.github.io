@@ -1440,6 +1440,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <button class="btn-main success" onclick="Engine.sendPdfWhatsApp()">
                 <i data-lucide="send" size="16"></i>DESCARGAR PDF Y ABRIR WHATSAPP
             </button>
+            <button class="btn-main ghost" onclick="(() => { const id=document.getElementById('wa-pdf-order')?.value; if(!id){Engine.toast('Selecciona un ticket primero.','error');return;} const type=document.getElementById('wa-pdf-type')?.value||'ticket'; if(type==='ticket') Engine.printTicketRep(id); else Engine.printWarranty(id); })()">
+                <i data-lucide="printer" size="16"></i>IMPRIMIR
+            </button>
         </div>
         <p id="wa-pdf-hint" style="font-size:11px;color:var(--text-dim);margin-top:10px;line-height:1.6;display:none">
             💡 Se descargará el PDF en tu dispositivo. Luego podrás adjuntarlo en la conversación de WhatsApp que se abrirá automáticamente.
@@ -2567,6 +2570,209 @@ ${contacto}`
         return msgs[type]||'';
     },
 
+    // ── IMPRESIÓN DIRECTA EN IMPRESORA TÉRMICA ──
+    // Genera HTML optimizado para rollo 80mm y llama window.print()
+    imprimirTicketHTML(htmlBody, titulo) {
+        const win = window.open('', '_blank', 'width=400,height=700');
+        if (!win) { Engine.toast('Permite ventanas emergentes para imprimir.', 'error'); return; }
+        win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>${titulo||'Ticket'}</title>
+<style>
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Courier New', monospace;
+    font-size: 10pt;
+    width: 80mm;
+    color: #000;
+    background: #fff;
+    padding: 4mm 4mm 8mm 4mm;
+  }
+  .c  { text-align:center; }
+  .r  { text-align:right; }
+  .b  { font-weight:bold; }
+  .sm { font-size:8pt; color:#444; }
+  .xs { font-size:7pt; color:#666; }
+  .hr { border:none; border-top:1px dashed #000; margin:3mm 0; }
+  .hr-solid { border:none; border-top:1px solid #000; margin:3mm 0; }
+  .row { display:flex; justify-content:space-between; margin:1mm 0; }
+  .row-item { display:flex; justify-content:space-between; margin:.5mm 0; font-size:9pt; }
+  .big { font-size:13pt; font-weight:bold; }
+  .badge { text-align:center; border:1px solid #000; padding:1mm 3mm; margin:2mm auto; display:inline-block; font-weight:bold; font-size:9pt; }
+  @media print {
+    html, body { width:80mm; }
+    button { display:none !important; }
+  }
+</style>
+</head>
+<body>
+${htmlBody}
+<br><br>
+<div style="text-align:center;margin-top:4mm">
+  <button onclick="window.print();setTimeout(()=>window.close(),500)"
+    style="padding:6px 20px;font-size:11pt;cursor:pointer;background:#000;color:#fff;border:none;border-radius:4px;font-family:monospace">
+    🖨 IMPRIMIR
+  </button>
+  &nbsp;
+  <button onclick="window.close()"
+    style="padding:6px 16px;font-size:11pt;cursor:pointer;background:#fff;color:#000;border:1px solid #000;border-radius:4px;font-family:monospace">
+    ✕ CERRAR
+  </button>
+</div>
+</body></html>`);
+        win.document.close();
+    },
+
+    // Construye el HTML del ticket de reparación para imprimir
+    _buildTicketRepHTML(o) {
+        const abonos       = o.abonos || [];
+        const totalAbonado = abonos.reduce((s,a)=>s+a.monto,0);
+        const saldo        = Math.max(0, o.price - totalAbonado);
+        const wi           = this.getWarrantyInfo(o);
+        const now          = new Date();
+        const fecha        = now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const hora         = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const pagoLabel    = saldo===0 ? 'PAGADO COMPLETO' : totalAbonado>0 ? 'PAGO PARCIAL' : 'PENDIENTE DE PAGO';
+
+        let html = `
+<div class="c b" style="font-size:12pt">NEXTCOM MULTISERVICIOS</div>
+<div class="c sm">Especialistas en Celulares</div>
+<div class="c sm">Tel: 7512-0282</div>
+<hr class="hr-solid">
+<div class="row"><span class="b">${o.id}</span><span class="sm">${hora} ${fecha}</span></div>
+<hr class="hr">
+<div class="row"><span class="sm">CLIENTE</span></div>
+<div class="b">${o.client}</div>
+${o.phone?`<div class="sm">${o.phone}</div>`:''}
+<hr class="hr">
+<div class="row"><span class="sm">EQUIPO</span></div>
+<div class="b">${o.model}</div>
+${o.pin?`<div class="row sm"><span>PIN:</span><span>${o.pin}</span></div>`:''}
+${o.fail?`<div style="margin:1mm 0"><span class="sm">Falla: </span><span class="sm">${o.fail}</span></div>`:''}
+<hr class="hr">
+<div class="row"><span>Presupuesto:</span><span class="b">${this.formatMoney(o.price)}</span></div>
+${abonos.map(a=>`<div class="row sm"><span>  Abono (${a.metodo}):</span><span>${this.formatMoney(a.monto)}</span></div>`).join('')}
+<hr class="hr">
+<div class="row big"><span>TOTAL:</span><span>${this.formatMoney(o.price)}</span></div>
+<div class="row sm"><span>Abonado:</span><span>${this.formatMoney(totalAbonado)}</span></div>
+<div class="row sm"><span>Saldo:</span><span class="b">${this.formatMoney(saldo)}</span></div>
+<div class="c" style="margin:2mm 0"><span class="badge">${pagoLabel}</span></div>
+`;
+        if (o.warrantyDays > 0) {
+            html += `<hr class="hr"><div class="c b sm">GARANTIA DE SERVICIO</div>`;
+            if (wi) {
+                html += `
+<div class="row sm"><span>Periodo:</span><span>${wi.daysTotal} dias</span></div>
+<div class="row sm"><span>Desde:</span><span>${wi.start}</span></div>
+<div class="row sm"><span>Hasta:</span><span>${wi.end}</span></div>
+<div class="c"><span class="badge">${wi.statusKey==='expired'?'GARANTIA VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'GARANTIA VIGENTE'}</span></div>`;
+            } else {
+                html += `<div class="row sm"><span>Periodo:</span><span>${o.warrantyDays} dias</span></div>
+<div class="c sm">(Se activa al completar el servicio)</div>`;
+            }
+        }
+        html += `
+<hr class="hr">
+<div class="row"><span>Estado:</span><span class="b">${o.status}</span></div>
+<hr class="hr">
+<div class="xs">* La garantia cubre unicamente la falla indicada.</div>
+<div class="xs">* No aplica por agua, golpes o terceros.</div>
+<div class="xs">* No nos responsabilizamos por perdida de datos.</div>
+<div class="xs">* Equipos sin retirar en 30 dias generan cargo.</div>
+<div class="xs">* Al retirar acepta el trabajo realizado.</div>
+<div class="xs">* Conserve este ticket para su garantia.</div>
+<hr class="hr-solid">
+<div class="c xs" style="margin:2mm 0">Al presentar este ticket al retirar su equipo queda activada y vigente la garantia del servicio realizado por NEXTCOM Multiservicios.</div>
+<hr class="hr-solid">
+<div class="c b" style="margin-top:2mm">GRACIAS POR SU PREFERENCIA</div>
+<div class="c sm">NEXTCOM  |  Tel: 7512-0282</div>`;
+        return html;
+    },
+
+    // Construye el HTML del ticket de venta POS para imprimir
+    _buildTicketVentaHTML(v) {
+        const now   = new Date();
+        const fecha = now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const hora  = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        let html = `
+<div class="c b" style="font-size:12pt">NEXTCOM MULTISERVICIOS</div>
+<div class="c sm">Especialistas en Celulares</div>
+<div class="c sm">Tel: 7512-0282</div>
+<hr class="hr-solid">
+<div class="row"><span class="b">${v.id}</span><span class="sm">${v.time||hora} ${v.date||fecha}</span></div>
+${v.client && v.client!=='Consumidor Final' ? `<div class="row sm"><span>Cliente:</span><span>${v.client}</span></div>` : ''}
+<hr class="hr">
+<div class="row sm"><span class="b">PRODUCTO</span><span class="b" style="margin-left:auto;padding-left:8mm">CANT</span><span class="b" style="width:18mm;text-align:right">TOTAL</span></div>
+<hr class="hr">
+${v.items.map(item=>`
+<div class="row-item">
+  <span style="flex:1;padding-right:2mm">${item.name}</span>
+  <span style="width:8mm;text-align:center">${item.qty}</span>
+  <span style="width:18mm;text-align:right">${this.formatMoney(item.qty*item.salePrice)}</span>
+</div>
+${item.qty>1?`<div class="xs" style="padding-left:2mm">$${item.salePrice.toFixed(2)} c/u</div>`:''}`).join('')}
+<hr class="hr">
+<div class="row big"><span>TOTAL:</span><span>$${v.total.toFixed(2)}</span></div>
+<div class="row sm"><span>Método de pago:</span><span class="b">${v.metodo}</span></div>
+<hr class="hr-solid">
+<div class="c b" style="margin-top:2mm">GRACIAS POR SU COMPRA</div>
+<div class="c sm">NEXTCOM  |  Tel: 7512-0282</div>`;
+        return html;
+    },
+
+    printTicketRep(id) {
+        const o = this.db.orders.find(x=>x.id===id);
+        if (!o) return;
+        this.imprimirTicketHTML(this._buildTicketRepHTML(o), `Ticket-${o.id}`);
+    },
+
+    printTicketVenta(ventaId) {
+        const v = (this.db.ventas||[]).find(x=>x.id===ventaId);
+        if (!v) return;
+        this.imprimirTicketHTML(this._buildTicketVentaHTML(v), `Venta-${v.id}`);
+    },
+
+    printWarranty(id) {
+        const o = this.db.orders.find(x=>x.id===id);
+        if (!o || !o.warrantyDays) return;
+        const wi   = this.getWarrantyInfo(o);
+        const now  = new Date();
+        const fecha = now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const hora  = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const html = `
+<div class="c b" style="font-size:12pt">NEXTCOM MULTISERVICIOS</div>
+<div class="c sm">Especialistas en Celulares</div>
+<div class="c sm">Tel: 7512-0282</div>
+<hr class="hr-solid">
+<div class="c b" style="font-size:11pt;margin:2mm 0">CERTIFICADO DE GARANTIA</div>
+<div class="c sm">${hora} ${fecha}</div>
+<hr class="hr">
+<div class="row sm"><span>Ticket:</span><span class="b">${o.id}</span></div>
+<div class="row sm"><span>Cliente:</span><span class="b">${o.client}</span></div>
+<div class="row sm"><span>Dispositivo:</span><span class="b">${o.model}</span></div>
+<hr class="hr">
+${wi ? `
+<div class="row sm"><span>Periodo:</span><span>${wi.daysTotal} dias</span></div>
+<div class="row sm"><span>Desde:</span><span>${wi.start}</span></div>
+<div class="row sm"><span>Hasta:</span><span>${wi.end}</span></div>
+<div class="c"><span class="badge">${wi.statusKey==='expired'?'GARANTIA VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'GARANTIA VIGENTE'}</span></div>
+` : `<div class="row sm"><span>Periodo:</span><span>${o.warrantyDays} dias</span></div>`}
+<hr class="hr">
+<div class="xs">* La garantia cubre unicamente la falla reparada.</div>
+<div class="xs">* No cubre danos por agua, golpes o terceros.</div>
+<div class="xs">* No aplica por manipulacion de terceros.</div>
+<hr class="hr-solid">
+<div class="c b" style="margin-top:2mm">GRACIAS POR SU PREFERENCIA</div>
+<div class="c sm">NEXTCOM  |  Tel: 7512-0282</div>`;
+        this.imprimirTicketHTML(html, `Garantia-${o.id}`);
+    },
+
     downloadTicketPDF(id) {
         const o = this.db.orders.find(x => x.id === id);
         if (!o) return;
@@ -3242,7 +3448,8 @@ ${contacto}`
                     <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>
                     <div class="action-icon" title="Registrar Abono" style="color:var(--success)" onclick="Engine.abrirAbono('${x.id}')"><i data-lucide="banknote" size="13"></i></div>
                     <div class="action-icon wa" title="WhatsApp" onclick="Engine.quickWa('${x.id}')"><i data-lucide="message-circle" size="13"></i></div>`:''}
-                    <div class="action-icon" title="Descargar Ticket PDF" style="color:var(--cash)" onclick="Engine.downloadTicketPDF('${x.id}')"><i data-lucide="file-down" size="13"></i></div>
+                    <div class="action-icon" title="Imprimir Ticket" style="color:var(--cash)" onclick="Engine.printTicketRep('${x.id}')"><i data-lucide="printer" size="13"></i></div>
+                    <div class="action-icon" title="Descargar PDF" style="color:var(--text-dim)" onclick="Engine.downloadTicketPDF('${x.id}')"><i data-lucide="file-down" size="13"></i></div>
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deleteItem('lab','${x.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>
@@ -3300,7 +3507,8 @@ ${contacto}`
             const warRows = filtered.map(w=>{
                 const wi=w.wInfo, color=this.getWarrantyBarColor(wi.statusKey);
                 const tl=wi.statusKey==='expired'?`<span style="color:var(--danger);font-weight:800">VENCIDA</span>`:`<div class="days-cell"><span style="color:${color};font-weight:700;font-size:12px">${wi.daysRemaining} días</span><div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%;background:${color}"></div></div></div>`;
-                return `<tr><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${w.id}</td><td style="font-weight:700">${w.client}</td><td>${w.model}</td><td style="color:var(--text-dim);font-size:12px">${wi.start}</td><td style="color:var(--text-dim);font-size:12px">${wi.end}</td><td>${tl}</td><td><span class="wbadge wbadge-${wi.statusKey}">${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}</span></td><td><div class="action-icon" title="Descargar Garantia" style="color:var(--cash)" onclick="Engine.downloadWarrantyPDF('${w.id}')"><i data-lucide="file-down" size="13"></i></div></td></tr>`;
+                return `<tr><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${w.id}</td><td style="font-weight:700">${w.client}</td><td>${w.model}</td><td style="color:var(--text-dim);font-size:12px">${wi.start}</td><td style="color:var(--text-dim);font-size:12px">${wi.end}</td><td>${tl}</td><td><span class="wbadge wbadge-${wi.statusKey}">${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}</span></td><td><div class="action-icon" title="Imprimir Garantia" style="color:var(--warranty)" onclick="Engine.printWarranty('${w.id}')"><i data-lucide="printer" size="13"></i></div>
+<div class="action-icon" title="Descargar PDF" style="color:var(--cash)" onclick="Engine.downloadWarrantyPDF('${w.id}')"><i data-lucide="file-down" size="13"></i></div></td></tr>`;
             });
             document.getElementById('warranty-table').innerHTML = this.paginate('warranty-table', warRows, 10).join('');
         }
@@ -4013,8 +4221,8 @@ ${contacto}`
         this.renderPosProducts();
         this.renderPosHistory();
         Engine.toast(`Venta ${ventaId} registrada — ${this.formatMoney(total)}`, 'success', 3000);
-        // Auto-generar ticket PDF de la venta
-        setTimeout(() => this.ticketVentaPDF(ventaId), 300);
+        // Auto-abrir ventana de impresión al cobrar
+        setTimeout(() => this.printTicketVenta(ventaId), 300);
     },
 
     // ── HISTORIAL DE VENTAS POS ──
@@ -4069,7 +4277,8 @@ ${contacto}`
                 <td><span class="badge" style="background:rgba(79,70,229,.1);color:#818cf8;font-size:10px">${v.metodo}</span></td>
                 <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(v.total)}</td>
                 <td><div style="display:flex;gap:5px">
-                    <div class="action-icon" title="Ticket PDF" style="color:var(--cash)" onclick="Engine.ticketVentaPDF('${v.id}')"><i data-lucide="receipt" size="13"></i></div>
+                    <div class="action-icon" title="Imprimir Ticket" style="color:var(--cash)" onclick="Engine.printTicketVenta('${v.id}')"><i data-lucide="printer" size="13"></i></div>
+                    <div class="action-icon" title="Descargar PDF" style="color:var(--text-dim)" onclick="Engine.ticketVentaPDF('${v.id}')"><i data-lucide="file-down" size="13"></i></div>
                     <div class="action-icon edit" title="Editar" onclick="Engine.editPosVenta('${v.id}')"><i data-lucide="edit-2" size="13"></i></div>
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deletePosVenta('${v.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>

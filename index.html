@@ -215,67 +215,78 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .ready-banner-count { font-size: 42px; font-weight: 800; color: var(--success); line-height: 1; font-family: var(--mono); flex-shrink: 0; }
 
 /* POS */
-.pos-layout { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
-.pos-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 14px; }
+.pos-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+.pos-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 8px; }
 .pos-product-card {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px 16px;
+    border-radius: 12px;
+    padding: 12px 11px;
     cursor: pointer;
-    transition: .25s;
+    transition: .18s cubic-bezier(.4,0,.2,1);
     position: relative;
+    display: flex; flex-direction: column; gap: 3px;
+    overflow: hidden;
 }
-.pos-product-card:hover { border-color: var(--accent); transform: translateY(-2px); background: rgba(79,70,229,.06); }
-.pos-product-card.out-of-stock { opacity: .4; cursor: not-allowed; pointer-events: none; }
-.pos-product-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; line-height: 1.3; }
-.pos-product-price { font-size: 18px; font-weight: 800; color: var(--success); font-family: var(--mono); }
-.pos-product-stock { font-size: 10px; color: var(--text-dim); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.pos-product-card::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(79,70,229,.06),transparent); opacity:0; transition:.18s; }
+.pos-product-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(79,70,229,.18); }
+.pos-product-card:hover::after { opacity:1; }
+.pos-product-card:active { transform: scale(.96); }
+.pos-product-card.out-of-stock { opacity: .3; cursor: not-allowed; pointer-events: none; }
+.pos-product-name { font-size: 11.5px; font-weight: 700; color: #fff; line-height: 1.3; }
+.pos-product-price { font-size: 16px; font-weight: 800; color: var(--success); font-family: var(--mono); margin-top: 3px; }
+.pos-product-stock { font-size: 9px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+.pos-product-add-hint { font-size: 9px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; opacity:0; transition:.15s; margin-top:2px; }
+.pos-product-card:hover .pos-product-add-hint { opacity:1; }
 .pos-stock-badge {
-    position: absolute; top: 10px; right: 10px;
-    background: rgba(239,68,68,.15); color: #ef4444;
-    font-size: 9px; font-weight: 800; padding: 2px 7px;
-    border-radius: 6px; text-transform: uppercase; letter-spacing: .5px;
+    position: absolute; top: 7px; right: 7px;
+    background: rgba(239,68,68,.18); color: #ef4444;
+    font-size: 8px; font-weight: 800; padding: 2px 5px;
+    border-radius: 4px; text-transform: uppercase; letter-spacing: .4px;
 }
 /* Carrito */
 .pos-cart {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: var(--rx);
-    position: sticky; top: 24px;
+    border-radius: 18px;
+    position: sticky; top: 16px;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
 }
 .pos-cart-header {
-    background: rgba(79,70,229,.1);
+    background: linear-gradient(135deg, rgba(79,70,229,.2), rgba(124,58,237,.1));
     border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-    font-size: 13px; font-weight: 800; color: #fff;
-    text-transform: uppercase; letter-spacing: 1px;
-    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    font-size: 11px; font-weight: 800; color: #fff;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    display: flex; align-items: center; gap: 9px;
 }
-.pos-cart-items { min-height: 200px; max-height: 340px; overflow-y: auto; }
+.pos-cart-items { min-height: 140px; max-height: 280px; overflow-y: auto; }
 .pos-cart-item {
-    padding: 12px 20px;
+    padding: 9px 14px;
     border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 7px;
+    transition: background .12s;
 }
-.pos-cart-item-name { flex: 1; font-size: 13px; font-weight: 600; color: #fff; }
-.pos-cart-item-price { font-size: 12px; color: var(--success); font-weight: 700; font-family: var(--mono); white-space: nowrap; }
-.pos-qty-ctrl { display: flex; align-items: center; gap: 6px; }
-.pos-qty-btn { width: 24px; height: 24px; border-radius: 7px; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: #fff; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: .2s; }
-.pos-qty-btn:hover { background: rgba(255,255,255,.1); }
-.pos-qty-num { font-size: 13px; font-weight: 700; color: #fff; min-width: 20px; text-align: center; }
-.pos-cart-empty { padding: 40px 20px; text-align: center; color: var(--text-dim); font-size: 13px; }
-.pos-cart-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
-.pos-total-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.pos-total-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-dim); }
-.pos-total-amount { font-size: 28px; font-weight: 800; color: var(--success); font-family: var(--mono); }
-.pos-client-row { margin: 12px 0; }
-.pos-checkout-btn { width: 100%; padding: 15px; border-radius: 13px; border: none; background: var(--success); color: #fff; font-weight: 800; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: .2s; }
-.pos-checkout-btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(16,185,129,.25); }
-.pos-checkout-btn:disabled { background: rgba(255,255,255,.08); color: var(--text-dim); cursor: not-allowed; transform: none; box-shadow: none; }
-.pos-clear-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-weight: 600; font-size: 12px; cursor: pointer; margin-top: 8px; transition: .2s; }
-.pos-clear-btn:hover { color: var(--danger); border-color: var(--danger); }
+.pos-cart-item:hover { background: rgba(255,255,255,.02); }
+.pos-cart-item-name { flex: 1; font-size: 12px; font-weight: 600; color: #fff; line-height: 1.25; }
+.pos-cart-item-price { font-size: 12px; color: var(--success); font-weight: 800; font-family: var(--mono); white-space: nowrap; }
+.pos-qty-ctrl { display: flex; align-items: center; gap: 3px; }
+.pos-qty-btn { width: 20px; height: 20px; border-radius: 6px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: .12s; }
+.pos-qty-btn:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); }
+.pos-qty-num { font-size: 12px; font-weight: 800; color: #fff; min-width: 16px; text-align: center; font-family: var(--mono); }
+.pos-cart-empty { padding: 28px 16px; text-align: center; color: var(--text-dim); font-size: 12px; line-height: 1.6; }
+.pos-cart-footer { padding: 12px 16px; border-top: 1px solid var(--border); background: rgba(0,0,0,.18); }
+.pos-total-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.pos-total-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+.pos-total-amount { font-size: 30px; font-weight: 800; color: var(--success); font-family: var(--mono); line-height: 1; margin-bottom: 10px; }
+.pos-client-row { margin-bottom: 10px; display: flex; flex-direction: column; gap: 7px; }
+.pos-checkout-btn { width: 100%; padding: 13px; border-radius: 11px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-weight: 800; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px; transition: .18s; letter-spacing: .5px; }
+.pos-checkout-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(16,185,129,.3); }
+.pos-checkout-btn:active { transform: scale(.98); }
+.pos-checkout-btn:disabled { background: rgba(255,255,255,.06); color: var(--text-dim); cursor: not-allowed; transform: none; box-shadow: none; }
+.pos-clear-btn { width: 100%; padding: 7px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-weight: 600; font-size: 11px; cursor: pointer; margin-top: 5px; transition: .12s; }
+.pos-clear-btn:hover { color: var(--danger); border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.05); }
 /* Precio venta en inventario */
 .pos-price-tag { font-size: 11px; color: var(--warranty); font-weight: 700; font-family: var(--mono); }
 
@@ -343,13 +354,14 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 .deudor-plazo.vigente  { background:rgba(6,182,212,.1);   color:var(--warranty); }
 .nav-dot.orange { background:var(--edit); box-shadow:0 0 6px var(--edit); animation:pulse-dot 2s infinite; }
 .pos-credit-btn {
-    width:100%; padding:13px; border-radius:13px; border:1px solid rgba(245,158,11,.4);
-    background:rgba(245,158,11,.07); color:#f59e0b; font-weight:800; font-size:13px;
-    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-    transition:.2s; margin-top:8px;
+    width:100%; padding:11px; border-radius:11px; border:1px solid rgba(245,158,11,.3);
+    background:rgba(245,158,11,.06); color:#f59e0b; font-weight:800; font-size:12px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+    transition:.2s; margin-top:7px; letter-spacing:.3px;
 }
-.pos-credit-btn:hover { background:rgba(245,158,11,.15); border-color:rgba(245,158,11,.6); }
-.pos-credit-btn:disabled { opacity:.35; cursor:not-allowed; }
+.pos-credit-btn:hover { background:rgba(245,158,11,.13); border-color:rgba(245,158,11,.5); }
+.pos-credit-btn:active { transform:scale(.98); }
+.pos-credit-btn:disabled { opacity:.3; cursor:not-allowed; }
 
 
 
@@ -1433,60 +1445,63 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
 
 <!-- ======= PUNTO DE VENTA POS ======= -->
 <section id="v-pos" class="view">
-    <div class="view-title"><h1>Punto de Venta</h1><p>Vende accesorios e insumos del inventario de forma rápida.</p></div>
+    <div class="view-title" style="margin-bottom:20px"><h1>Punto de Venta</h1><p>Vende accesorios e insumos del inventario de forma rápida.</p></div>
     <div class="pos-layout">
-        <!-- Productos -->
+        <!-- Panel izquierdo: búsqueda + productos -->
         <div>
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                <input type="text" id="pos-search" placeholder="Buscar producto..." oninput="Engine.renderPosProducts()" style="flex:1;max-width:320px;">
+            <!-- Barra de búsqueda + contador -->
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <div style="position:relative;flex:1">
+                    <i data-lucide="search" size="14" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none"></i>
+                    <input type="text" id="pos-search" placeholder="Buscar producto..." oninput="Engine.renderPosProducts()" style="width:100%;padding-left:38px;font-size:13px;padding-top:10px;padding-bottom:10px;">
+                </div>
+                <div id="pos-catalog-count" style="font-size:11px;font-weight:700;color:var(--text-dim);white-space:nowrap;flex-shrink:0"></div>
             </div>
             <div class="pos-products-grid" id="pos-products-grid">
                 <div style="color:var(--text-dim);font-size:13px;padding:20px 0">Cargando productos...</div>
             </div>
         </div>
-        <!-- Carrito -->
+        <!-- Panel derecho: carrito -->
         <div>
             <div class="pos-cart">
                 <div class="pos-cart-header">
-                    <i data-lucide="shopping-cart" size="16"></i>
-                    Carrito de Venta
-                    <span id="pos-cart-badge" style="background:var(--accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:99px;margin-left:auto;display:none">0</span>
+                    <i data-lucide="shopping-cart" size="15"></i>
+                    Carrito
+                    <span id="pos-cart-badge" style="background:var(--accent);color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;margin-left:auto;display:none">0</span>
                 </div>
                 <div class="pos-cart-items" id="pos-cart-items">
-                    <div class="pos-cart-empty">El carrito está vacío.<br>Selecciona productos.</div>
+                    <div class="pos-cart-empty">
+                        <i data-lucide="package" size="28" style="opacity:.25;margin-bottom:8px;display:block;margin-inline:auto"></i>
+                        Carrito vacío<br>
+                        <span style="font-size:11px;opacity:.6">Selecciona productos del catálogo</span>
+                    </div>
                 </div>
                 <div class="pos-cart-footer">
                     <div class="pos-total-line">
-                        <span class="pos-total-label">Total a cobrar</span>
+                        <span class="pos-total-label">Total</span>
+                        <span style="font-size:10px;color:var(--text-dim);font-weight:600" id="pos-items-count"></span>
                     </div>
                     <div class="pos-total-amount" id="pos-total">$0.00</div>
                     <div class="pos-client-row">
-                        <div class="field">
-                            <label>Cliente (opcional)</label>
-                            <input type="text" id="pos-client-name" placeholder="Nombre del cliente">
-                        </div>
-                        <div class="field" style="margin-top:10px">
-                            <label>Teléfono / WhatsApp</label>
-                            <input type="text" id="pos-client-phone" placeholder="7788-9900">
-                        </div>
-                        <div class="field" style="margin-top:10px">
-                            <label>Método de Pago</label>
-                            <select id="pos-metodo">
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="Tarjeta">Tarjeta</option>
-                            </select>
-                        </div>
+                        <input type="text" id="pos-client-name" placeholder="Cliente (opcional)" style="font-size:12px;padding:10px 14px;">
+                        <input type="text" id="pos-client-phone" placeholder="Teléfono / WhatsApp" style="font-size:12px;padding:10px 14px;">
+                        <select id="pos-metodo" style="font-size:12px;padding:10px 14px;">
+                            <option value="Efectivo">💵 Efectivo</option>
+                            <option value="Transferencia">🏦 Transferencia</option>
+                            <option value="Tarjeta">💳 Tarjeta</option>
+                        </select>
                     </div>
                     <button class="pos-checkout-btn" id="pos-checkout-btn" onclick="Engine.posCheckout()" disabled>
-                        <i data-lucide="check-circle" size="16"></i>
-                        COBRAR VENTA
+                        <i data-lucide="check-circle" size="15"></i>
+                        COBRAR
                     </button>
                     <button class="pos-credit-btn" id="pos-credit-btn" onclick="Engine.posCreditCheckout()" disabled>
-                        <i data-lucide="clock" size="14"></i>
+                        <i data-lucide="clock" size="13"></i>
                         AL CRÉDITO
                     </button>
-                    <button class="pos-clear-btn" onclick="Engine.posClearCart()">Vaciar carrito</button>
+                    <button class="pos-clear-btn" onclick="Engine.posClearCart()">
+                        <i data-lucide="trash-2" size="11" style="display:inline-block;vertical-align:middle;margin-right:4px"></i>Vaciar
+                    </button>
                 </div>
             </div>
         </div>
@@ -2843,7 +2858,8 @@ ${tc}`,
 
     renderDash() {
         const o=this.db.orders;
-        document.getElementById('st-total').innerText=o.length;
+        // Excluir FALLIDO de todos los conteos del dashboard
+        document.getElementById('st-total').innerText=o.filter(x=>x.status!=='FALLIDO').length;
         document.getElementById('st-urgent').innerText=o.filter(x=>x.status==='URGENTE').length;
         document.getElementById('st-process').innerText=o.filter(x=>x.status==='PENDIENTE').length;
         document.getElementById('st-delivered').innerText=o.filter(x=>x.status==='ENTREGADO').length;
@@ -2974,7 +2990,7 @@ ${tc}`,
             return s + Math.max(0, l.price - ab);
         },0);
 
-        const elT = document.getElementById('dash-lib-total');   if(elT) elT.innerText = libs.length;
+        const elT = document.getElementById('dash-lib-total');   if(elT) elT.innerText = libs.filter(l=>l.status!=='fallido').length;
         const elP = document.getElementById('dash-lib-proceso');  if(elP) elP.innerText = libProceso;
         const elL = document.getElementById('dash-lib-listo');    if(elL) elL.innerText = libListo;
         const elS = document.getElementById('dash-lib-saldo');    if(elS) elS.innerText = this.formatMoney(libSaldo);
@@ -3331,9 +3347,10 @@ ${tc}`,
 
         // KPIs
         const elR = id => document.getElementById(id);
-        if(elR('r-total'))    elR('r-total').innerText    = o.length;
-        if(elR('r-done'))     elR('r-done').innerText     = o.filter(x=>x.status==='LISTO'||x.status==='ENTREGADO').length;
-        const avg = o.length>0 ? o.reduce((a,b)=>a+b.price,0)/o.length : 0;
+        const oActivas = o.filter(x=>x.status!=='FALLIDO');
+        if(elR('r-total'))    elR('r-total').innerText    = oActivas.length;
+        if(elR('r-done'))     elR('r-done').innerText     = oActivas.filter(x=>x.status==='LISTO'||x.status==='ENTREGADO').length;
+        const avg = oActivas.length>0 ? oActivas.reduce((a,b)=>a+b.price,0)/oActivas.length : 0;
         if(elR('r-avg'))      elR('r-avg').innerText      = this.formatMoney(avg);
         if(elR('r-clients'))  elR('r-clients').innerText  = this.db.clients.length;
         if(elR('r-ingresos')) elR('r-ingresos').innerText = this.formatMoney(ingresos);
@@ -3591,21 +3608,35 @@ ${tc}`,
 
     renderPosProducts() {
         const search = (document.getElementById('pos-search')?.value||'').toLowerCase();
-        const items = this.db.stock.filter(x => !search || x.name.toLowerCase().includes(search));
+        const allItems = this.db.stock;
+        const items = allItems.filter(x => !search || x.name.toLowerCase().includes(search));
         const grid = document.getElementById('pos-products-grid');
         if (!grid) return;
+        // Actualizar contador
+        const cntEl = document.getElementById('pos-catalog-count');
+        if (cntEl) {
+            const inStock = items.filter(x=>x.qty>0).length;
+            cntEl.innerText = search ? `${items.length} resultado${items.length!==1?'s':''}` : `${inStock} producto${inStock!==1?'s':''} disponibles`;
+        }
         if (items.length === 0) {
-            grid.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:20px 0;grid-column:1/-1">Sin productos en inventario. Agrégalos en Inventario.</div>`;
+            grid.innerHTML = search
+                ? `<div style="color:var(--text-dim);font-size:13px;padding:20px 0;grid-column:1/-1;text-align:center">Sin resultados para "<strong style="color:#fff">${search}</strong>"</div>`
+                : `<div style="color:var(--text-dim);font-size:13px;padding:20px 0;grid-column:1/-1;text-align:center">Sin productos en inventario. Agrégalos en Inventario.</div>`;
             return;
         }
         grid.innerHTML = items.map(x => {
             const price = x.salePrice || x.cost || 0;
             const outOfStock = x.qty <= 0;
+            const stockColor = x.qty <= (x.minStock||3) && !outOfStock ? 'color:#f59e0b' : 'color:var(--text-dim)';
+            const inCart = Engine.cart.find(c=>c.stockId===x.id);
+            const cartQty = inCart ? inCart.qty : 0;
             return `<div class="pos-product-card${outOfStock?' out-of-stock':''}" onclick="Engine.posAddToCart(${x.id})">
                 ${outOfStock ? `<div class="pos-stock-badge">Sin stock</div>` : ''}
+                ${cartQty > 0 ? `<div style="position:absolute;top:7px;right:7px;background:var(--accent);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:99px">${cartQty}</div>` : ''}
                 <div class="pos-product-name">${x.name}</div>
                 <div class="pos-product-price">${this.formatMoney(price)}</div>
-                <div class="pos-product-stock">${x.qty} en stock</div>
+                <div class="pos-product-stock" style="${stockColor}">${x.qty} en stock</div>
+                <div class="pos-product-add-hint">+ Agregar</div>
             </div>`;
         }).join('');
     },
@@ -3622,6 +3653,7 @@ ${tc}`,
             this.cart.push({ stockId, name: item.name, qty: 1, salePrice: item.salePrice || item.cost || 0 });
         }
         this.renderPosCart();
+        this.renderPosProducts();
     },
 
     posRemoveFromCart(stockId) {
@@ -3630,6 +3662,7 @@ ${tc}`,
         if (this.cart[idx].qty > 1) this.cart[idx].qty--;
         else this.cart.splice(idx, 1);
         this.renderPosCart();
+        this.renderPosProducts();
     },
 
     posClearCart() {
@@ -3653,16 +3686,26 @@ ${tc}`,
         }
         if (totalEl) totalEl.innerText = this.formatMoney(total);
         if (btnEl) btnEl.disabled = this.cart.length === 0;
+        const cntEl = document.getElementById('pos-items-count');
+        if (cntEl) cntEl.innerText = totalItems > 0 ? `${totalItems} ítem${totalItems>1?'s':''}` : '';
         const creditBtn = document.getElementById('pos-credit-btn');
         if (creditBtn) creditBtn.disabled = this.cart.length === 0;
 
         if (this.cart.length === 0) {
-            cartEl.innerHTML = `<div class="pos-cart-empty">El carrito está vacío.<br>Selecciona productos.</div>`;
+            cartEl.innerHTML = `<div class="pos-cart-empty">
+                <i data-lucide="shopping-cart" size="26" style="opacity:.18;display:block;margin:0 auto 8px"></i>
+                Carrito vacío<br>
+                <span style="font-size:11px;opacity:.5">Toca un producto para agregarlo</span>
+            </div>`;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             return;
         }
         cartEl.innerHTML = this.cart.map(c => `
             <div class="pos-cart-item">
-                <div class="pos-cart-item-name">${c.name}</div>
+                <div class="pos-cart-item-name">
+                    ${c.name}
+                    ${c.qty > 1 ? `<div style="font-size:10px;color:var(--text-dim);font-weight:600;margin-top:1px">${this.formatMoney(c.salePrice)} c/u</div>` : ''}
+                </div>
                 <div class="pos-qty-ctrl">
                     <button class="pos-qty-btn" onclick="Engine.posRemoveFromCart(${c.stockId})">−</button>
                     <span class="pos-qty-num">${c.qty}</span>
@@ -3717,9 +3760,11 @@ ${tc}`,
         await this.save();
         this.cart = [];
         document.getElementById('pos-client-name').value = '';
+        if (document.getElementById('pos-client-phone')) document.getElementById('pos-client-phone').value = '';
         this.renderPosCart();
         this.renderPosProducts();
         this.renderPosHistory();
+        Engine.toast(`Venta ${ventaId} registrada — ${this.formatMoney(total)}`, 'success', 3000);
     },
 
     // ── HISTORIAL DE VENTAS POS ──

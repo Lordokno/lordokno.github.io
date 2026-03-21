@@ -847,6 +847,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="nav-item" onclick="go('reportes',this)"><i data-lucide="bar-chart-2" size="16"></i> Reportes</div>
         <div class="nav-item" onclick="go('whatsapp',this)"><i data-lucide="message-circle" size="16"></i> WhatsApp</div>
         <div class="nav-item" onclick="go('pos',this)"><i data-lucide="shopping-cart" size="16"></i> Punto de Venta</div>
+        <div class="nav-item" onclick="go('caja',this)">
+            <i data-lucide="landmark" size="16"></i> Caja
+        </div>
         <div class="nav-item" onclick="go('deudores',this)">
             <i data-lucide="user-x" size="16"></i> Deudores
             <span class="nav-dot orange" id="deudores-dot" style="display:none"></span>
@@ -1684,6 +1687,107 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </div>
 
+<!-- ======= CAJA / EGRESOS ======= -->
+<section id="v-caja" class="view">
+    <div class="view-title"><h1>Caja</h1><p>Registra egresos y consulta el flujo de dinero del día.</p></div>
+
+    <!-- KPIs del día -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="caja-kpis">
+        <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+            <div class="label" style="color:var(--success)">Ingresos Hoy <i data-lucide="arrow-down-circle" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="caja-ing-hoy" style="color:var(--success)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(239,68,68,.2)">
+            <div class="label" style="color:var(--danger)">Egresos Hoy <i data-lucide="arrow-up-circle" class="stat-icon" style="color:var(--danger)"></i></div>
+            <div class="value" id="caja-egr-hoy" style="color:var(--danger)">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
+            <div class="label" style="color:#818cf8">Balance Hoy <i data-lucide="scale" class="stat-icon" style="color:#818cf8"></i></div>
+            <div class="value" id="caja-bal-hoy" style="color:#818cf8">$0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.2)">
+            <div class="label" style="color:var(--edit)">Anticipos Retenidos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="caja-anticipos" style="color:var(--edit)">$0</div>
+        </div>
+    </div>
+
+    <!-- Formulario rápido de egreso -->
+    <div class="smart-panel" id="caja-panel">
+        <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--danger);margin-bottom:16px;display:flex;align-items:center;gap:8px">
+            <i data-lucide="minus-circle" size="14"></i> Registrar Egreso
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;align-items:flex-end;flex-wrap:wrap">
+            <div class="field">
+                <label>Descripción *</label>
+                <input type="text" id="egr-desc" placeholder="Ej: Compra de pantalla iPhone 14, Renta local..." autocomplete="off">
+            </div>
+            <div class="field">
+                <label>Monto *</label>
+                <input type="number" id="egr-monto" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="field">
+                <label>Categoría</label>
+                <select id="egr-cat">
+                    <option value="Repuestos">🔧 Repuestos</option>
+                    <option value="Servicios">⚡ Servicios</option>
+                    <option value="Renta">🏠 Renta</option>
+                    <option value="Salarios">👤 Salarios</option>
+                    <option value="Transporte">🚗 Transporte</option>
+                    <option value="Equipos">💻 Equipos</option>
+                    <option value="Otros">📦 Otros</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Método</label>
+                <select id="egr-metodo">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Transferencia">Transferencia</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:16px;align-items:flex-end;flex-wrap:wrap">
+            <div class="field">
+                <label>Fecha</label>
+                <input type="date" id="egr-fecha" style="width:160px">
+            </div>
+            <button class="btn-main danger" onclick="Engine.registrarEgreso()">
+                <i data-lucide="minus-circle" size="15"></i> REGISTRAR EGRESO
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtro de fecha + resumen por método -->
+    <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="field" style="flex:0 0 auto">
+            <label>Ver movimientos del día</label>
+            <input type="date" id="caja-filter-date" onchange="Engine.renderCaja()" style="width:180px">
+        </div>
+        <div id="caja-metodos-resumen" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
+        <button class="btn-main ghost" onclick="Engine.cerrarCajaDia()" style="margin-left:auto;font-size:11px;padding:9px 16px">
+            <i data-lucide="lock" size="13"></i> Cierre del Día
+        </button>
+    </div>
+
+    <!-- Tabla de movimientos del día -->
+    <div class="table-box">
+        <div class="table-title" id="caja-table-title">Movimientos de Hoy</div>
+        <table>
+            <thead><tr>
+                <th>Hora</th>
+                <th>Tipo</th>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th>Método</th>
+                <th>Monto</th>
+                <th>Acciones</th>
+            </tr></thead>
+            <tbody id="caja-movimientos-tbody"></tbody>
+        </table>
+        <div class="pagination" id="pg-caja" style="display:none"></div>
+    </div>
+</section>
+
 <!-- ======= DEUDORES ======= -->
 <section id="v-deudores" class="view">
     <div class="view-title"><h1>Deudores</h1><p>Clientes con ventas al crédito pendientes de cobro.</p></div>
@@ -2060,6 +2164,7 @@ const Engine = {
         this.renderPosHistory();
         this.renderDeudores();
         this.renderLib();
+        this.renderCaja();
         this.updateNavDots();
         lucide.createIcons();
     },
@@ -2431,18 +2536,203 @@ const Engine = {
 
     // ── CAJA ──
 
-    // FIX #6: Función centralizada para registrar movimientos de caja
-    registrarMovimiento({ tipo, desc, amount, metodo = 'Efectivo', date = null, time = null }) {
+    // Función centralizada para registrar movimientos de caja
+    registrarMovimiento({ tipo, desc, amount, metodo = 'Efectivo', date = null, time = null, categoria = '' }) {
         const now = new Date();
         this.db.movimientos.unshift({
-            id:     Date.now(),
+            id:       Date.now(),
             tipo,
             desc,
-            amount: parseFloat(amount) || 0,
+            amount:   parseFloat(amount) || 0,
             metodo,
-            date:   date  || this.today(),
-            time:   time  || now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+            categoria,
+            date:     date  || this.today(),
+            time:     time  || now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
         });
+    },
+
+    async registrarEgreso() {
+        const desc     = document.getElementById('egr-desc')?.value.trim();
+        const monto    = parseFloat(document.getElementById('egr-monto')?.value) || 0;
+        const cat      = document.getElementById('egr-cat')?.value || 'Otros';
+        const metodo   = document.getElementById('egr-metodo')?.value || 'Efectivo';
+        const fechaEl  = document.getElementById('egr-fecha');
+        const fecha    = fechaEl?.value || this.today();
+
+        if (!desc)   return Engine.toast('Escribe una descripción.', 'error');
+        if (monto <= 0) return Engine.toast('Ingresa un monto mayor a 0.', 'error');
+
+        this.registrarMovimiento({ tipo:'egreso', desc, amount:monto, metodo, categoria:cat, date:fecha });
+        await this.save();
+
+        // Limpiar formulario
+        if (document.getElementById('egr-desc'))  document.getElementById('egr-desc').value  = '';
+        if (document.getElementById('egr-monto')) document.getElementById('egr-monto').value = '';
+        if (fechaEl) fechaEl.value = this.today();
+
+        Engine.toast(`Egreso de ${this.formatMoney(monto)} registrado — ${cat}`, 'success');
+        this.renderCaja();
+    },
+
+    async eliminarMovimiento(id) {
+        if (!await Engine.confirm('Eliminar movimiento', '¿Eliminar este movimiento de caja? Esta acción no se puede deshacer.', true)) return;
+        this.db.movimientos = this.db.movimientos.filter(m => m.id !== id);
+        await this.save();
+        this.renderCaja();
+        Engine.toast('Movimiento eliminado.', 'info');
+    },
+
+    renderCaja() {
+        // ── Fecha seleccionada ──
+        const fechaEl = document.getElementById('caja-filter-date');
+        if (fechaEl && !fechaEl.value) fechaEl.value = this.today();
+        const fecha = fechaEl?.value || this.today();
+        const fechaLabel = fecha === this.today() ? 'Hoy' :
+            new Date(fecha+'T00:00:00').toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short',year:'numeric'}).toUpperCase();
+
+        // ── Fecha del formulario ──
+        const egrFecha = document.getElementById('egr-fecha');
+        if (egrFecha && !egrFecha.value) egrFecha.value = this.today();
+
+        // ── Movimientos del día seleccionado ──
+        const movs = (this.db.movimientos||[]).filter(m => m.date === fecha);
+        const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.amount,0);
+        const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.amount,0);
+        const balance  = ingresos - egresos;
+
+        // ── KPIs ──
+        const el = id => document.getElementById(id);
+        if (el('caja-ing-hoy')) { el('caja-ing-hoy').innerText = this.formatMoney(ingresos); }
+        if (el('caja-egr-hoy')) { el('caja-egr-hoy').innerText = this.formatMoney(egresos); }
+        if (el('caja-bal-hoy')) {
+            el('caja-bal-hoy').innerText = this.formatMoney(balance);
+            el('caja-bal-hoy').style.color = balance >= 0 ? '#818cf8' : 'var(--danger)';
+        }
+
+        // Anticipos retenidos (total activo, no solo del día)
+        const anticActivos = (this.db.anticipos||[]).filter(a => {
+            if (a.esLib) {
+                const lib = (this.db.liberaciones||[]).find(x=>x.id===a.ticketRef);
+                return lib && lib.status !== 'entregado' && lib.status !== 'fallido';
+            }
+            const order = (this.db.orders||[]).find(x=>x.id===a.ticketRef);
+            return order && order.status !== 'ENTREGADO' && order.status !== 'FALLIDO';
+        });
+        const anticTotal = anticActivos.reduce((s,a)=>s+a.monto,0);
+        if (el('caja-anticipos')) el('caja-anticipos').innerText = this.formatMoney(anticTotal);
+
+        // ── Título tabla ──
+        const titleEl = el('caja-table-title');
+        if (titleEl) titleEl.innerText = `Movimientos — ${fechaLabel}`;
+
+        // ── Resumen por método ──
+        const byMetodo = {};
+        movs.forEach(m => {
+            if (!byMetodo[m.metodo]) byMetodo[m.metodo] = { ing:0, egr:0 };
+            if (m.tipo==='ingreso') byMetodo[m.metodo].ing += m.amount;
+            else                    byMetodo[m.metodo].egr += m.amount;
+        });
+        const metColors = { Efectivo:'#10b981', Transferencia:'#818cf8', Tarjeta:'#06b6d4' };
+        const metEl = el('caja-metodos-resumen');
+        if (metEl) {
+            if (Object.keys(byMetodo).length === 0) {
+                metEl.innerHTML = `<span style="font-size:11px;color:var(--text-dim)">Sin movimientos para esta fecha</span>`;
+            } else {
+                metEl.innerHTML = Object.entries(byMetodo).map(([met,v]) => {
+                    const col = metColors[met]||'var(--accent)';
+                    return `<div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;padding:6px 12px;font-size:11px">
+                        <span style="font-weight:700;color:${col}">${met}</span>
+                        <span style="color:var(--success);margin-left:8px;font-family:var(--mono)">+${this.formatMoney(v.ing)}</span>
+                        ${v.egr>0?`<span style="color:var(--danger);margin-left:6px;font-family:var(--mono)">-${this.formatMoney(v.egr)}</span>`:''}
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        // ── Tabla movimientos ──
+        const tbody = el('caja-movimientos-tbody');
+        if (!tbody) return;
+
+        if (movs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:var(--text-dim)">Sin movimientos para esta fecha.</td></tr>`;
+            if (el('pg-caja')) el('pg-caja').style.display = 'none';
+            return;
+        }
+
+        const catIcons = { Repuestos:'🔧', Servicios:'⚡', Renta:'🏠', Salarios:'👤', Transporte:'🚗', Equipos:'💻', Otros:'📦' };
+        const rows = movs.map(m => {
+            const isIng = m.tipo === 'ingreso';
+            const cat   = m.categoria || (isIng ? '—' : 'Otros');
+            const catIcon = catIcons[cat] || '📦';
+            return `<tr>
+                <td style="color:var(--text-dim);font-size:12px;font-family:var(--mono)">${m.time||'—'}</td>
+                <td>
+                    <span class="badge" style="background:${isIng?'rgba(16,185,129,.12)':'rgba(239,68,68,.1)'};color:${isIng?'#10b981':'#ef4444'};font-size:10px">
+                        ${isIng ? '↓ INGRESO' : '↑ EGRESO'}
+                    </span>
+                </td>
+                <td style="font-size:12px">${isIng ? '<span style="color:var(--text-dim);font-size:11px">—</span>' : `${catIcon} ${cat}`}</td>
+                <td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.desc}">${m.desc}</td>
+                <td><span style="font-size:11px;color:var(--text-dim)">${m.metodo||'—'}</span></td>
+                <td style="font-weight:800;font-family:var(--mono);color:${isIng?'var(--success)':'var(--danger)'};white-space:nowrap">
+                    ${isIng?'+':'-'}${this.formatMoney(m.amount)}
+                </td>
+                <td>
+                    <div class="action-icon del" title="Eliminar" onclick="Engine.eliminarMovimiento(${m.id})">
+                        <i data-lucide="trash-2" size="13"></i>
+                    </div>
+                </td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = this.paginate('caja-movimientos-tbody', rows, 15).join('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+
+    async cerrarCajaDia() {
+        const fecha = document.getElementById('caja-filter-date')?.value || this.today();
+        const movs  = (this.db.movimientos||[]).filter(m => m.date === fecha);
+        if (movs.length === 0) return Engine.toast('No hay movimientos para cerrar en esta fecha.', 'info');
+
+        const ingresos  = movs.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.amount,0);
+        const egresos   = movs.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.amount,0);
+        const ventasPOS = (this.db.ventas||[]).filter(v=>v.date===fecha).length;
+        const now       = new Date();
+
+        // Verificar si ya existe cierre para este día
+        if ((this.db.cierres||[]).some(c=>c.fecha===fecha)) {
+            return Engine.toast('Ya existe un cierre para esta fecha.', 'info');
+        }
+
+        const ok = await Engine.confirm(
+            'Cierre de Caja',
+            `¿Confirmar cierre del día ${fecha}?
+
+Ingresos: ${this.formatMoney(ingresos)}
+Egresos: ${this.formatMoney(egresos)}
+Balance: ${this.formatMoney(ingresos-egresos)}`
+        );
+        if (!ok) return;
+
+        if (!this.db.cierres) this.db.cierres = [];
+        this.db.cierres.unshift({
+            id:          'C-' + Date.now().toString().slice(-6),
+            fecha,
+            fechaLabel:  new Date(fecha+'T00:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+            horaCierre:  now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}),
+            horaApertura:'—',
+            ingresos,
+            egresos,
+            balance:     ingresos - egresos,
+            movimientos: movs.length,
+            ventasPOS,
+            createdAt:   now.toISOString()
+        });
+
+        await this.save();
+        Engine.toast(`Cierre del día registrado — Balance: ${this.formatMoney(ingresos-egresos)}`, 'success', 4000);
+        this.renderCaja();
+        this.renderCierres();
     },
 
     // ── GARANTÍAS ──
@@ -5934,6 +6224,7 @@ function go(v, el) {
     if(v==='reportes') setTimeout(()=>Engine.renderReportes(),50);
     if(v==='lab')      setTimeout(()=>Engine.renderLab(),20);
     if(v==='lib')      setTimeout(()=>Engine.renderLib(),20);
+    if(v==='caja')     setTimeout(()=>Engine.renderCaja(),20);
     if(typeof lucide !== 'undefined') lucide.createIcons();
     // Cerrar sidebar en móvil al navegar
     if (window.innerWidth <= 768) closeSidebar();

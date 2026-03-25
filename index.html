@@ -927,25 +927,17 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
             <div class="value" id="st-warranties" style="color:var(--warranty)">0</div>
         </div>
     </div>
-    <!-- Fila 2: finanzas -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+    <!-- Fila 2: ingresos hoy -->
+    <div style="display:grid;grid-template-columns:repeat(1,1fr);gap:12px;margin-bottom:16px;max-width:260px">
         <div class="stat-card" style="border-color:rgba(167,139,250,.2)">
             <div class="label" style="color:var(--cash)">Ingresos Hoy <i data-lucide="trending-up" class="stat-icon" style="color:var(--cash)"></i></div>
             <div class="value" id="st-ingresos-hoy" style="color:var(--cash)">$0</div>
         </div>
-        <div class="stat-card" style="border-color:rgba(16,185,129,.15)">
-            <div class="label" style="color:var(--success)">Confirmados Hoy <i data-lucide="check-circle-2" class="stat-icon" style="color:var(--success)"></i></div>
-            <div class="value" id="st-ingresos-confirmados" style="color:var(--success)">$0</div>
-        </div>
-        <div class="stat-card" style="border-color:rgba(245,158,11,.3)">
-            <div class="label" style="color:var(--edit)">Anticipos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
-            <div class="value" id="st-anticipos" style="color:var(--edit)">$0</div>
-        </div>
-        <div class="stat-card">
-            <div class="label" style="color:var(--success)">Capital Pend. <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
-            <div class="value" id="st-cash" style="color:var(--success)">$0</div>
-        </div>
     </div>
+    <!-- IDs ocultos para mantener compatibilidad con renderDash -->
+    <span id="st-ingresos-confirmados" style="display:none"></span>
+    <span id="st-anticipos" style="display:none"></span>
+    <span id="st-cash" style="display:none"></span>
     <!-- Banner equipos listos -->
     <div class="ready-banner" id="ready-banner">
         <div class="ready-banner-icon"><i data-lucide="package-check" size="24" style="color:var(--success)"></i></div>
@@ -1969,6 +1961,25 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </div>
 
+<!-- MODAL ADD STOCK -->
+<div id="modal-addstock" class="modal-overlay" style="display:none">
+    <div class="modal" style="max-width:360px;width:100%">
+        <h2 style="margin-bottom:4px">Agregar al Stock</h2>
+        <p id="addstock-nombre" style="color:var(--text-dim);font-size:13px;margin-bottom:6px;font-weight:600"></p>
+        <p id="addstock-actual" style="color:var(--warranty);font-size:12px;margin-bottom:20px;font-family:var(--mono)"></p>
+        <input type="hidden" id="addstock-id">
+        <div class="field" style="margin-bottom:20px">
+            <label>Cantidad a agregar <span style="color:var(--text-dim);font-weight:500">(usa número negativo para restar)</span></label>
+            <input type="number" id="addstock-qty" placeholder="Ej: 10 ó -3" style="font-size:18px;text-align:center;font-weight:800"
+                onkeydown="if(event.key==='Enter')Engine.confirmarAddStock()">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-main success" onclick="Engine.confirmarAddStock()"><i data-lucide="plus-circle" size="15"></i>CONFIRMAR</button>
+            <button class="btn-main ghost" onclick="document.getElementById('modal-addstock').style.display='none'">CANCELAR</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL CONFIRMACION CUSTOM -->
 <div id="modal-confirm" class="modal-overlay" style="display:none">
     <div class="modal" style="max-width:380px;width:100%;text-align:center">
@@ -2577,6 +2588,39 @@ const Engine = {
     },
 
     // ── INVENTARIO ──
+    async quickStock(id, delta) {
+        const idx = this.db.stock.findIndex(s=>s.id===id);
+        if (idx === -1) return;
+        const newQty = Math.max(0, this.db.stock[idx].qty + delta);
+        this.db.stock[idx].qty = newQty;
+        await this.save();
+        Engine.toast(`${this.db.stock[idx].name}: ${newQty} uds`, 'info', 1500);
+    },
+
+    abrirAddStock(id) {
+        const s = this.db.stock.find(x=>x.id===id);
+        if (!s) return;
+        document.getElementById('addstock-id').value    = id;
+        document.getElementById('addstock-nombre').innerText = s.name;
+        document.getElementById('addstock-actual').innerText = `${s.qty} unidades en stock`;
+        document.getElementById('addstock-qty').value   = '';
+        document.getElementById('modal-addstock').style.display = 'flex';
+        setTimeout(()=>document.getElementById('addstock-qty')?.focus(), 100);
+    },
+
+    async confirmarAddStock() {
+        const id  = document.getElementById('addstock-id').value;
+        const qty = parseInt(document.getElementById('addstock-qty').value) || 0;
+        if (qty === 0) return Engine.toast('Ingresa una cantidad válida (puede ser negativa para restar).', 'error');
+        const idx = this.db.stock.findIndex(s=>s.id==id);
+        if (idx === -1) return;
+        const newQty = Math.max(0, this.db.stock[idx].qty + qty);
+        this.db.stock[idx].qty = newQty;
+        document.getElementById('modal-addstock').style.display = 'none';
+        await this.save();
+        Engine.toast(`${this.db.stock[idx].name}: ahora ${newQty} uds`, qty>0?'success':'info', 2000);
+    },
+
     async processInv() {
         const data = {
             name: document.getElementById('i-item').value.trim(),
@@ -3911,7 +3955,29 @@ ${wi ? `
             const stockColor=isLow?'color:#ef4444;font-weight:800':'';
             const alertBadge=isLow?`<span class="badge" style="background:rgba(239,68,68,.1);color:#ef4444">⚠ BAJO</span>`:`<span class="badge" style="background:rgba(16,185,129,.1);color:#10b981">OK</span>`;
             const salePriceCell = x.salePrice ? `<span class="pos-price-tag">${this.formatMoney(x.salePrice)}</span>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
-            return `<tr><td style="font-weight:700;color:#fff">${x.name}</td><td style="${stockColor}">${x.qty}<small>uds</small></td><td style="color:var(--text-dim)">${x.minStock||3}<small>uds</small></td><td style="color:var(--text-dim);font-family:var(--mono)">${this.formatMoney(x.cost)}</td><td>${salePriceCell}</td><td style="color:var(--success);font-weight:800">${this.formatMoney(total)}</td><td>${alertBadge}</td><td><div style="display:flex;gap:6px"><div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="13"></i></div><div class="action-icon del" onclick="Engine.deleteItem('inv',${x.id})"><i data-lucide="trash-2" size="13"></i></div></div></td></tr>`;
+            return `<tr>
+                <td style="font-weight:700;color:#fff">${x.name}</td>
+                <td style="${stockColor}">
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <span>${x.qty}<small>uds</small></span>
+                        <div style="display:flex;gap:3px">
+                            <button onclick="Engine.quickStock(${x.id},-1)" title="Restar 1"
+                                style="width:20px;height:20px;border-radius:5px;border:1px solid var(--border);background:rgba(239,68,68,.08);color:#ef4444;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:800">−</button>
+                            <button onclick="Engine.abrirAddStock(${x.id})" title="Agregar cantidad al stock"
+                                style="width:20px;height:20px;border-radius:5px;border:1px solid rgba(16,185,129,.4);background:rgba(16,185,129,.12);color:#10b981;cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:800">+</button>
+                        </div>
+                    </div>
+                </td>
+                <td style="color:var(--text-dim)">${x.minStock||3}<small>uds</small></td>
+                <td style="color:var(--text-dim);font-family:var(--mono)">${this.formatMoney(x.cost)}</td>
+                <td>${salePriceCell}</td>
+                <td style="color:var(--success);font-weight:800">${this.formatMoney(total)}</td>
+                <td>${alertBadge}</td>
+                <td><div style="display:flex;gap:6px">
+                    <div class="action-icon edit" onclick="Engine.editInv(${x.id})"><i data-lucide="edit-3" size="13"></i></div>
+                    <div class="action-icon del" onclick="Engine.deleteItem('inv',${x.id})"><i data-lucide="trash-2" size="13"></i></div>
+                </div></td>
+            </tr>`;
         });
         if (invRows.length === 0) {
             document.getElementById('inv-list').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-dim)">Sin resultados${search?' para "'+search+'"':''}</td></tr>`;
@@ -5209,6 +5275,22 @@ ${wi ? `
             // Saldo completo — marcar como cobrado
             this.db.deudores[idx].cobrado   = true;
             this.db.deudores[idx].cobradoEl = new Date().toISOString();
+            // Si viene de lab: marcar orden como ENTREGADO automáticamente
+            if (d.ticketRef && !d.esLib) {
+                const orderIdx = this.db.orders.findIndex(o=>o.id===d.ticketRef);
+                if (orderIdx !== -1 && this.db.orders[orderIdx].status !== 'ENTREGADO') {
+                    await this.setOrderStatus(d.ticketRef, 'ENTREGADO');
+                    Engine.toast(`${d.ticketRef} marcado como ENTREGADO automáticamente.`, 'success', 3500);
+                }
+            }
+            // Si viene de lib: marcar liberación como entregada
+            if (d.ticketRef && d.esLib) {
+                const libIdx = (this.db.liberaciones||[]).findIndex(l=>l.id===d.ticketRef);
+                if (libIdx !== -1 && this.db.liberaciones[libIdx].status !== 'entregado') {
+                    await this.setLibStatus(d.ticketRef, 'entregado');
+                    Engine.toast(`${d.ticketRef} marcado como ENTREGADO automáticamente.`, 'success', 3500);
+                }
+            }
         } else {
             this.db.deudores[idx].total = nuevoTotal;
         }
@@ -5246,19 +5328,60 @@ ${wi ? `
         this.db.deudores[idx].cobrado   = true;
         this.db.deudores[idx].cobradoEl = new Date().toISOString();
 
-        // Si viene de un ticket de lab, agregar abono con método correcto
-        if (d.ticketRef) {
+        // Si viene de un ticket de lab, agregar abono y verificar si está pagado completo
+        if (d.ticketRef && !d.esLib) {
             const orderIdx = this.db.orders.findIndex(o => o.id === d.ticketRef);
             if (orderIdx !== -1) {
-                if (!this.db.orders[orderIdx].abonos) this.db.orders[orderIdx].abonos = [];
-                this.db.orders[orderIdx].abonos.push({
+                const order = this.db.orders[orderIdx];
+                if (!order.abonos) order.abonos = [];
+                order.abonos.push({
                     id: Date.now(), monto: d.total, metodo,
                     nota: 'Cobro desde Deudores',
                     date: this.today(),
                     time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
                 });
+                // Guardar anticipo en bolsa temporal
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now()+1, ticketRef: d.ticketRef, esLib: false,
+                    client: order.client, model: order.model,
+                    monto: d.total, metodo,
+                    date: this.today(),
+                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+                // Si el total abonado cubre el precio, marcar automáticamente como ENTREGADO
+                const totalAbonado = order.abonos.reduce((s,a)=>s+a.monto, 0);
+                if (order.price > 0 && totalAbonado >= order.price && order.status !== 'ENTREGADO') {
+                    await this.setOrderStatus(d.ticketRef, 'ENTREGADO');
+                    Engine.toast(`${d.ticketRef} marcado como ENTREGADO automáticamente.`, 'success', 3500);
+                }
             }
-            // El ingreso en caja se registra al marcar ENTREGADO
+        } else if (d.ticketRef && d.esLib) {
+            // Deudor de liberación — agregar abono a la liberación
+            const libIdx = (this.db.liberaciones||[]).findIndex(l => l.id === d.ticketRef);
+            if (libIdx !== -1) {
+                const lib = this.db.liberaciones[libIdx];
+                if (!lib.abonos) lib.abonos = [];
+                lib.abonos.push({
+                    id: Date.now(), monto: d.total, metodo,
+                    nota: 'Cobro desde Deudores',
+                    date: this.today(),
+                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({
+                    id: Date.now()+1, ticketRef: d.ticketRef, esLib: true,
+                    client: lib.client, model: lib.model,
+                    monto: d.total, metodo,
+                    date: this.today(),
+                    time: new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+                });
+                const totalAbonado = lib.abonos.reduce((s,a)=>s+a.monto, 0);
+                if (lib.price > 0 && totalAbonado >= lib.price && lib.status !== 'entregado') {
+                    await this.setLibStatus(d.ticketRef, 'entregado');
+                    Engine.toast(`${d.ticketRef} marcado como ENTREGADO automáticamente.`, 'success', 3500);
+                }
+            }
         } else {
             // Deudor de POS — registrar ingreso inmediatamente con método correcto
             this.registrarMovimiento({

@@ -2352,6 +2352,34 @@ const Engine = {
             const newData = {...existing,...data, repuestos: repuestosUsados.length > 0 ? repuestosUsados : oldReps};
             if (data.warrantyDays!==existing.warrantyDays) newData.warrantyStart=null;
             this.db.orders[idx]=newData;
+            // Si cambió el precio, actualizar el deudor vinculado
+            if (data.price !== existing.price) {
+                const totalAbonado = (newData.abonos||[]).reduce((s,a)=>s+a.monto,0);
+                const nuevoSaldo = Math.max(0, data.price - totalAbonado);
+                const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===this.editState.lab && !d.cobrado);
+                if (deudIdx > -1) {
+                    if (nuevoSaldo <= 0) {
+                        this.db.deudores.splice(deudIdx, 1);
+                    } else {
+                        this.db.deudores[deudIdx].total = nuevoSaldo;
+                        this.db.deudores[deudIdx].nota  = `Saldo de reparación ${this.editState.lab} — ${data.model}`;
+                    }
+                } else if (nuevoSaldo > 0 && data.price > 0) {
+                    // Crear deudor si no existía y ahora hay saldo
+                    if (!this.db.deudores) this.db.deudores = [];
+                    const fechaPago = (() => { const d=new Date(); d.setDate(d.getDate()+30); return d.toISOString().split('T')[0]; })();
+                    this.db.deudores.unshift({
+                        id: 'D-' + Date.now().toString().slice(-6),
+                        client: data.client, phone: data.phone,
+                        total: nuevoSaldo, fechaPago,
+                        nota: `Saldo de reparación ${this.editState.lab} — ${data.model}`,
+                        items: [{ name:`Reparación ${data.model}`, qty:1, salePrice:nuevoSaldo }],
+                        cobrado: false, cobradoEl: null,
+                        ticketRef: this.editState.lab,
+                        createdAt: new Date().toISOString(), date: this.today()
+                    });
+                }
+            }
         } else {
             // Descontar stock de repuestos al crear la orden
             repuestosUsados.forEach(r => {
@@ -2427,6 +2455,11 @@ const Engine = {
 
     editOrder(id) {
         const o = this.db.orders.find(x=>x.id===id);
+        if (!o) return;
+        // No permitir editar órdenes ya entregadas (los ingresos ya están registrados)
+        if (o.status === 'ENTREGADO') {
+            return Engine.toast('No se puede editar una orden entregada. Los ingresos ya fueron registrados en caja.', 'info', 4000);
+        }
         this.editState.lab=id;
         document.getElementById('l-name').value=o.client;
         document.getElementById('l-phone').value=o.phone;
@@ -2452,8 +2485,16 @@ const Engine = {
     async toggleStatusLab(id) {
         const o = this.db.orders.find(x=>x.id===id);
         if (!o) return;
-        const cycle = {PENDIENTE:'URGENTE',URGENTE:'LISTO',LISTO:'ENTREGADO',ENTREGADO:'PENDIENTE',FALLIDO:'PENDIENTE'};
-        const next = cycle[o.status] || 'PENDIENTE';
+        // ENTREGADO y FALLIDO son estados terminales — no se pueden cambiar desde el badge
+        if (o.status === 'ENTREGADO') {
+            return Engine.toast('Esta orden ya fue entregada. Usa el selector de estado si necesitas corregirla.', 'info', 3500);
+        }
+        if (o.status === 'FALLIDO') {
+            return Engine.toast('Esta orden está marcada como fallida. Usa el selector de estado para reactivarla.', 'info', 3500);
+        }
+        const cycle = {PENDIENTE:'URGENTE', URGENTE:'LISTO', LISTO:'ENTREGADO'};
+        const next = cycle[o.status];
+        if (!next) return;
         await this.setOrderStatus(id, next);
     },
 
@@ -2474,32 +2515,36 @@ const Engine = {
         } else if (newStatus === 'ENTREGADO') {
             // Garantía activa desde hoy
             if (o.warrantyDays>0) o.warrantyStart = now.toISOString();
+            // Guardar deliveredAt solo la primera vez que se entrega
+            const yaEntregado = !!o.deliveredAt;
             if (!o.deliveredAt) o.deliveredAt = now.toISOString();
-            // Al entregar: mover anticipos retenidos a ingresos reales + registrar saldo final
-            const totalAbonado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
-            // 1. Convertir cada anticipo retenido en ingreso real
-            if (this.db.anticipos) {
-                const anticRetenidos = this.db.anticipos.filter(a => a.ticketRef === o.id);
-                anticRetenidos.forEach(a => {
+
+            // Solo registrar ingresos si NO había sido entregado antes (evitar duplicados)
+            if (!yaEntregado) {
+                const totalAbonado = (o.abonos||[]).reduce((s,a)=>s+a.monto, 0);
+                // 1. Convertir anticipos retenidos en ingresos reales
+                if (this.db.anticipos) {
+                    const anticRetenidos = this.db.anticipos.filter(a => a.ticketRef === o.id);
+                    anticRetenidos.forEach(a => {
+                        this.registrarMovimiento({
+                            tipo: 'ingreso',
+                            desc: `Anticipo entregado ${o.id} — ${o.client} (${o.model})`,
+                            amount: a.monto, metodo: a.metodo || 'Efectivo', time: timeStr
+                        });
+                    });
+                    this.db.anticipos = this.db.anticipos.filter(a => a.ticketRef !== o.id);
+                }
+                // 2. Registrar saldo restante
+                const saldoAlEntregar = Math.max(0, o.price - totalAbonado);
+                if (saldoAlEntregar > 0) {
                     this.registrarMovimiento({
                         tipo: 'ingreso',
-                        desc: `Anticipo entregado ${o.id} — ${o.client} (${o.model})`,
-                        amount: a.monto, metodo: a.metodo || 'Efectivo', time: timeStr
+                        desc: `Saldo entrega ${o.id} — ${o.client} (${o.model})`,
+                        amount: saldoAlEntregar, time: timeStr
                     });
-                });
-                // Limpiar anticipos de este ticket
-                this.db.anticipos = this.db.anticipos.filter(a => a.ticketRef !== o.id);
+                }
             }
-            // 2. Registrar saldo restante al momento de entregar
-            const saldoAlEntregar = Math.max(0, o.price - totalAbonado);
-            if (saldoAlEntregar > 0) {
-                this.registrarMovimiento({
-                    tipo: 'ingreso',
-                    desc: `Saldo entrega ${o.id} — ${o.client} (${o.model})`,
-                    amount: saldoAlEntregar, time: timeStr
-                });
-            }
-            // Cerrar deudor vinculado
+            // Cerrar deudores vinculados (siempre, en caso de que se hayan creado nuevos)
             (this.db.deudores||[]).forEach(d => {
                 if (d.ticketRef === o.id && !d.cobrado) {
                     d.cobrado = true;
@@ -2524,7 +2569,13 @@ const Engine = {
             o.deliveredAt   = null;
 
         } else {
-            // PENDIENTE / URGENTE — reset
+            // PENDIENTE / URGENTE
+            // Si venía de ENTREGADO, revertir ingresos registrados y restaurar anticipos
+            if (o.status === 'ENTREGADO' || (o.statusLog && o.statusLog.length > 0 && o.statusLog[o.statusLog.length-2]?.to === 'ENTREGADO')) {
+                // Esta reversión es inusual — avisar que los movimientos de caja no se revierten automáticamente
+                // para evitar duplicados. El usuario debe ajustarlos manualmente en Caja si es necesario.
+                Engine.toast('⚠ Revertir ENTREGADO no revierte los ingresos de caja. Revisa Caja si es necesario.', 'info', 6000);
+            }
             o.warrantyStart = null;
             o.deliveredAt   = null;
         }
@@ -3906,8 +3957,9 @@ ${wi ? `
                 <td style="color:var(--text-dim);font-size:12px;white-space:nowrap">${dateStr}</td>
                 <td style="white-space:nowrap">${promCell}</td>
                 <td><div style="display:flex;gap:4px">
+                    ${x.status!=='ENTREGADO'?`
+                    <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>`:''}
                     ${!isTerminal?`
-                    <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>
                     <div class="action-icon" title="Registrar Abono" style="color:var(--success)" onclick="Engine.abrirAbono('${x.id}')"><i data-lucide="banknote" size="13"></i></div>
                     <div class="action-icon wa" title="WhatsApp" onclick="Engine.quickWa('${x.id}')"><i data-lucide="message-circle" size="13"></i></div>`:''}
                     <div class="action-icon" title="Imprimir Ticket" style="color:var(--cash)" onclick="Engine.printTicketRep('${x.id}')"><i data-lucide="printer" size="13"></i></div>

@@ -2071,14 +2071,19 @@ const app    = initializeApp({
 getAnalytics(app);
 const db_fs  = getFirestore(app);
 const auth   = getAuth(app);
-const DB_DOC = doc(db_fs, 'nextcom', 'maindb');
+// DB_DOC se determina por usuario — cada uid tiene su propio documento
+let _userDoc = null;
 
 window.__fb = {
-    save:      (data)       => setDoc(DB_DOC, data),
-    subscribe: (cb, errCb)  => onSnapshot(DB_DOC, cb, errCb),
-    login:     (email, pass)=> signInWithEmailAndPassword(auth, email, pass),
-    logout:    ()           => signOut(auth),
-    onAuth:    (cb)         => onAuthStateChanged(auth, cb)
+    save:      (data)        => _userDoc ? setDoc(_userDoc, data) : Promise.reject('No hay sesión activa'),
+    subscribe: (cb, errCb)   => _userDoc ? onSnapshot(_userDoc, cb, errCb) : (() => { errCb(new Error('No hay sesión')); return ()=>{}; })(),
+    login:     (email, pass) => signInWithEmailAndPassword(auth, email, pass),
+    logout:    ()            => signOut(auth),
+    onAuth:    (cb)          => onAuthStateChanged(auth, (user) => {
+        // Al autenticarse, apuntar al documento del usuario
+        _userDoc = user ? doc(db_fs, 'users', user.uid) : null;
+        cb(user);
+    })
 };
 
 // Avisar al Engine que Firebase ya está listo

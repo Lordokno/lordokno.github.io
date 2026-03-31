@@ -833,9 +833,9 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="nav-section">Principal</div>
         <div class="nav-item active" onclick="go('dash',this)"><i data-lucide="layout-grid" size="16"></i> Dashboard</div>
         <div class="nav-item" onclick="go('lab',this)"><i data-lucide="wrench" size="16"></i> Laboratorio</div>
-        <div class="nav-item" onclick="go('lib',this)">
-            <i data-lucide="signal" size="16"></i> Liberaciones
-            <span class="nav-dot purple" id="lib-dot" style="display:none"></span>
+        <div class="nav-item" onclick="go('pedidos',this)">
+            <i data-lucide="shopping-bag" size="16"></i> Pedidos
+            <span class="nav-dot orange" id="pedidos-dot" style="display:none"></span>
         </div>
         <div class="nav-item" onclick="go('inv',this)">
             <i data-lucide="package" size="16"></i> Inventario
@@ -981,31 +981,26 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
         <div class="pagination" id="pg-dash" style="display:none"></div>
     </div>
 
-    <!-- Liberaciones en Dashboard -->
-    <div class="section-divider" style="margin-top:8px">Liberaciones Activas</div>
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
-        <div class="stat-card" style="border-color:rgba(129,140,248,.2)">
-            <div class="label" style="color:#818cf8">Total Liberaciones <i data-lucide="signal" class="stat-icon" style="color:#818cf8"></i></div>
-            <div class="value" id="dash-lib-total" style="color:#818cf8">0</div>
-        </div>
+    <!-- Pedidos pendientes en Dashboard -->
+    <div class="section-divider" style="margin-top:8px">Pedidos Pendientes</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
         <div class="stat-card" style="border-color:rgba(245,158,11,.2)">
-            <div class="label" style="color:var(--edit)">En Proceso <i data-lucide="loader" class="stat-icon" style="color:var(--edit)"></i></div>
-            <div class="value" id="dash-lib-proceso" style="color:var(--edit)">0</div>
+            <div class="label" style="color:var(--edit)">Pendientes <i data-lucide="shopping-bag" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="dash-ped-pendiente" style="color:var(--edit)">0</div>
         </div>
         <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
-            <div class="label" style="color:var(--success)">Listas p/ Entregar <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div>
-            <div class="value" id="dash-lib-listo" style="color:var(--success)">0</div>
+            <div class="label" style="color:var(--success)">Listos p/ Entregar <i data-lucide="package-check" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="dash-ped-listo" style="color:var(--success)">0</div>
         </div>
         <div class="stat-card">
-            <div class="label" style="color:var(--cash)">Saldo Pendiente <i data-lucide="wallet" class="stat-icon" style="color:var(--cash)"></i></div>
-            <div class="value" id="dash-lib-saldo" style="color:var(--cash)">$0</div>
+            <div class="label" style="color:var(--cash)">Anticipos Retenidos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--cash)"></i></div>
+            <div class="value" id="dash-ped-anticipos" style="color:var(--cash)">$0</div>
         </div>
     </div>
-    <div class="table-box" id="dash-lib-box">
-        <div class="table-title">Liberaciones Recientes</div>
-        <table><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>IMEI</th><th>Carrier</th><th>Entrega</th><th>Estado</th></tr></thead>
-        <tbody id="dash-lib-table"></tbody></table>
-        <div class="pagination" id="pg-dash-lib" style="display:none"></div>
+    <div class="table-box" id="dash-ped-box">
+        <div class="table-title">Pedidos Recientes</div>
+        <table><thead><tr><th>ID</th><th>Cliente</th><th>Artículo</th><th>Anticipo</th><th>Llega</th><th>Estado</th></tr></thead>
+        <tbody id="dash-ped-table"></tbody></table>
     </div>
 </section>
 
@@ -1127,109 +1122,134 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
     </div>
 </section>
 
-<!-- ======= LIBERACIONES ======= -->
-<section id="v-lib" class="view">
-    <div class="view-title"><h1>Liberaciones</h1><p>Gestión de desbloqueo de equipos — IMEI, compañía y seguimiento de plazos.</p></div>
+<!-- ======= PEDIDOS ======= -->
+<section id="v-pedidos" class="view">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        <div style="flex:1"><h1 style="font-size:28px;font-weight:800;letter-spacing:-1px">Pedidos</h1><p style="color:var(--text-dim);font-size:13px;font-weight:500;margin-top:2px">Registra artículos que debes conseguir para un cliente — pantallas, baterías, repuestos especiales.</p></div>
+    </div>
 
     <!-- KPIs -->
-    <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
-        <div class="stat-card"><div class="label" style="color:var(--accent)">Total <i data-lucide="signal" class="stat-icon" style="color:var(--accent)"></i></div><div class="value" id="lib-st-total" style="color:var(--accent)">0</div></div>
-        <div class="stat-card" style="border-color:rgba(245,158,11,.2)"><div class="label" style="color:var(--edit)">En Proceso <i data-lucide="loader" class="stat-icon" style="color:var(--edit)"></i></div><div class="value" id="lib-st-proceso" style="color:var(--edit)">0</div></div>
-        <div class="stat-card" style="border-color:rgba(16,185,129,.2)"><div class="label" style="color:var(--success)">Listos <i data-lucide="check-circle" class="stat-icon" style="color:var(--success)"></i></div><div class="value" id="lib-st-listo" style="color:var(--success)">0</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--success)">Capital <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div><div class="value" id="lib-st-capital" style="color:var(--success)">$0</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card">
+            <div class="label" style="color:var(--edit)">Pendientes <i data-lucide="clock" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="ped-st-pendiente" style="color:var(--edit)">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(16,185,129,.2)">
+            <div class="label" style="color:var(--success)">Listos <i data-lucide="package-check" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="ped-st-listo" style="color:var(--success)">0</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(245,158,11,.3)">
+            <div class="label" style="color:var(--edit)">Anticipos Retenidos <i data-lucide="piggy-bank" class="stat-icon" style="color:var(--edit)"></i></div>
+            <div class="value" id="ped-st-anticipos" style="color:var(--edit)">$0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label" style="color:var(--success)">Capital Pendiente <i data-lucide="wallet" class="stat-icon" style="color:var(--success)"></i></div>
+            <div class="value" id="ped-st-capital" style="color:var(--success)">$0</div>
+        </div>
     </div>
 
     <!-- Formulario -->
-    <div class="smart-panel" id="lib-panel">
+    <div class="smart-panel" id="pedidos-panel">
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:8px">
+            <i data-lucide="plus-circle" size="13"></i> Registrar Pedido
+        </div>
         <div class="input-row">
-            <div class="field"><label>Cliente</label><input type="text" id="lib-client" placeholder="Nombre completo" autocomplete="off"></div>
-            <div class="field"><label>WhatsApp</label><input type="text" id="lib-phone" placeholder="7788-9900"></div>
+            <div class="field field-relative">
+                <label>Cliente</label>
+                <input type="text" id="ped-client" placeholder="Nombre completo" autocomplete="off" oninput="Engine.pedClientInput(this)">
+                <div class="autocomplete-list" id="ped-client-autocomplete" style="display:none"></div>
+            </div>
+            <div class="field"><label>WhatsApp</label><input type="text" id="ped-phone" placeholder="7788-9900"></div>
         </div>
         <div class="input-row" style="grid-template-columns:2fr 1fr">
-            <div class="field"><label>Modelo del Equipo</label><input type="text" id="lib-model" placeholder="iPhone 13 Pro"></div>
-            <div class="field"><label>IMEI</label><input type="text" id="lib-imei" placeholder="352999XXXXXXXXX" maxlength="20"></div>
+            <div class="field">
+                <label>Artículo a conseguir</label>
+                <input type="text" id="ped-item" placeholder="Ej: Pantalla iPhone 14 Pro, Batería Samsung S21...">
+            </div>
+            <div class="field">
+                <label>Modelo del equipo</label>
+                <input type="text" id="ped-model" placeholder="iPhone 14 Pro">
+            </div>
         </div>
         <div class="input-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
             <div class="field">
-                <label>Compañía de Origen (USA)</label>
-                <select id="lib-carrier">
-                    <option value="">— Seleccionar —</option>
-                    <option value="AT&T">AT&T</option>
-                    <option value="T-Mobile">T-Mobile</option>
-                    <option value="Verizon">Verizon</option>
-                    <option value="Sprint">Sprint</option>
-                    <option value="Metro by T-Mobile">Metro by T-Mobile</option>
-                    <option value="Cricket Wireless">Cricket Wireless</option>
-                    <option value="Boost Mobile">Boost Mobile</option>
-                    <option value="US Cellular">US Cellular</option>
-                    <option value="Consumer Cellular">Consumer Cellular</option>
-                    <option value="Straight Talk">Straight Talk</option>
-                    <option value="Otra">Otra</option>
-                </select>
+                <label>Precio del servicio</label>
+                <input type="number" id="ped-price" placeholder="0.00" min="0" oninput="Engine.updatePedAnticipoBadge()">
             </div>
-            <div class="field"><label>Precio de Liberación</label><input type="number" id="lib-price" placeholder="0.00" min="0"></div>
-            <div class="field"><label>Anticipo</label><input type="number" id="lib-anticipo" placeholder="0.00" min="0"></div>
             <div class="field">
-                <label>Método Anticipo</label>
-                <select id="lib-anticipo-metodo">
+                <label>Anticipo recibido</label>
+                <input type="number" id="ped-anticipo" placeholder="0.00" min="0" oninput="Engine.updatePedAnticipoBadge()">
+            </div>
+            <div class="field">
+                <label>Método anticipo</label>
+                <select id="ped-anticipo-metodo">
                     <option value="Efectivo">Efectivo</option>
                     <option value="Transferencia">Transferencia</option>
                     <option value="Tarjeta">Tarjeta</option>
                 </select>
             </div>
+            <div class="field" style="justify-content:flex-end;padding-top:22px">
+                <div id="ped-anticipo-preview" style="font-size:12px;color:var(--text-dim);font-weight:600"></div>
+            </div>
+        </div>
+        <div class="input-row" style="grid-template-columns:2fr 1fr 1fr">
             <div class="field">
-                <label>Días estimados</label>
-                <select id="lib-dias" onchange="Engine.calcLibFechaEntrega()">
-                    <option value="0">De inmediato</option>
-                    <option value="1">1 día</option>
-                    <option value="2">2 días</option>
-                    <option value="3">3 días</option>
-                    <option value="5" selected>5 días</option>
+                <label>Notas / Especificaciones</label>
+                <input type="text" id="ped-notas" placeholder="Ej: Color negro, con marco, original...">
+            </div>
+            <div class="field">
+                <label>Fecha estimada de llegada</label>
+                <input type="date" id="ped-fecha-llegada">
+                <span class="warranty-input-hint">📅 Cuándo lo tendrás disponible</span>
+            </div>
+            <div class="field">
+                <label>Días de garantía (servicio)</label>
+                <select id="ped-warranty">
+                    <option value="0">Sin garantía</option>
                     <option value="7">7 días</option>
-                    <option value="10">10 días</option>
                     <option value="15">15 días</option>
-                    <option value="21">21 días</option>
-                    <option value="30">30 días</option>
+                    <option value="30" selected>30 días</option>
+                    <option value="60">60 días</option>
+                    <option value="90">90 días</option>
                 </select>
             </div>
         </div>
-        <div class="input-row" style="grid-template-columns:3fr 1fr">
-            <div class="field"><label>Notas</label><input type="text" id="lib-notas" placeholder="Ej: Requiere verificación de cuenta iCloud..."></div>
-            <div class="field"><label>Fecha de Entrega Estimada</label><input type="date" id="lib-fecha-entrega"></div>
-        </div>
-        <div style="display:flex;gap:10px;margin-top:24px">
-            <button class="btn-main" id="btn-lib-save" onclick="Engine.processLib()"><i data-lucide="signal" size="16"></i><span id="txt-lib-btn">REGISTRAR LIBERACIÓN</span></button>
-            <button class="btn-main ghost" id="btn-lib-cancel" style="display:none" onclick="Engine.cancelLib()">CANCELAR</button>
+        <div style="display:flex;gap:10px;margin-top:16px;align-items:center">
+            <button class="btn-main" id="btn-ped-save" onclick="Engine.processPedido()">
+                <i data-lucide="shopping-bag" size="15"></i><span id="txt-ped-btn">REGISTRAR PEDIDO</span>
+            </button>
+            <button class="btn-main ghost" id="btn-ped-cancel" style="display:none" onclick="Engine.cancelPedido()">CANCELAR</button>
+            <span id="ped-saving-hint" style="font-size:12px;color:var(--text-dim);display:none">Guardando...</span>
         </div>
     </div>
 
-    <!-- Búsqueda + Filtros -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
-        <div class="search-bar-wrap" style="flex:1;max-width:340px">
+    <!-- Filtros -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <div class="search-bar-wrap" style="flex:1;max-width:320px">
             <i data-lucide="search" size="14"></i>
-            <input type="text" id="lib-search" placeholder="Buscar por cliente, IMEI, equipo..." oninput="Engine.renderLib()">
-            <button class="search-clear" onclick="document.getElementById('lib-search').value='';this.classList.remove('visible');Engine.renderLib()">✕</button>
+            <input type="text" id="pedidos-search" placeholder="Buscar cliente, artículo..." oninput="Engine.renderPedidos()">
+            <button class="search-clear" onclick="document.getElementById('pedidos-search').value='';this.classList.remove('visible');Engine.renderPedidos()">✕</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="lab-tab active" onclick="Engine.setPedFilter('all',this)">Todos <span class="tab-count" id="ptc-all">0</span></button>
+            <button class="lab-tab" onclick="Engine.setPedFilter('pendiente',this)"><span style="color:#f59e0b">●</span> Pendiente <span class="tab-count" id="ptc-pendiente">0</span></button>
+            <button class="lab-tab" onclick="Engine.setPedFilter('en-camino',this)"><span style="color:#818cf8">●</span> En Camino <span class="tab-count" id="ptc-encamino">0</span></button>
+            <button class="lab-tab" onclick="Engine.setPedFilter('listo',this)"><span style="color:#10b981">●</span> Listo <span class="tab-count" id="ptc-listo">0</span></button>
+            <button class="lab-tab" onclick="Engine.setPedFilter('entregado',this)"><span style="color:#818cf8;opacity:.6">●</span> Entregado <span class="tab-count" id="ptc-entregado">0</span></button>
+            <button class="lab-tab" onclick="Engine.setPedFilter('cancelado',this)"><span style="color:#6b7280">●</span> Cancelado <span class="tab-count" id="ptc-cancelado">0</span></button>
         </div>
     </div>
-    <div class="lib-filters">
-        <button class="lib-filter-btn active" onclick="Engine.filterLib('all',this)">Todas</button>
-        <button class="lib-filter-btn" onclick="Engine.filterLib('recibido',this)"><span style="color:#818cf8">●</span> Recibido</button>
-        <button class="lib-filter-btn" onclick="Engine.filterLib('en-proceso',this)"><span style="color:#f59e0b">●</span> En Proceso</button>
-        <button class="lib-filter-btn" onclick="Engine.filterLib('listo',this)"><span style="color:#10b981">●</span> Listos</button>
-        <button class="lib-filter-btn" onclick="Engine.filterLib('entregado',this)"><span style="color:#818cf8;opacity:.5">●</span> Entregados</button>
-        <button class="lib-filter-btn" onclick="Engine.filterLib('fallido',this)"><span style="color:#6b7280">●</span> Fallidos</button>
-    </div>
 
-    <!-- Cards de liberaciones activas -->
-    <div id="lib-cards"></div>
+    <!-- Cards de pedidos -->
+    <div id="pedidos-cards"></div>
 
-    <!-- Historial de liberaciones entregadas -->
-    <div class="section-divider" style="margin-top:8px">Historial de Liberaciones Entregadas</div>
+    <!-- Historial entregados -->
+    <div class="section-divider" style="margin-top:8px">Historial de Pedidos Entregados</div>
     <div class="table-box">
-        <table><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>IMEI</th><th>Precio</th><th>Entregado</th><th>Acciones</th></tr></thead>
-        <tbody id="lib-hist-tbody"></tbody>
+        <table><thead><tr><th>ID</th><th>Cliente</th><th>Artículo</th><th>Precio</th><th>Entregado</th></tr></thead>
+        <tbody id="ped-hist-tbody"></tbody>
     </table>
-    <div class="pagination" id="pg-lib-hist" style="display:none"></div>
+    <div class="pagination" id="pg-ped-hist" style="display:none"></div>
     </div>
 </section>
 
@@ -2104,7 +2124,7 @@ function setStatus(msg, color='#64748b') {
 //  ENGINE COMPLETO
 // =============================================
 const Engine = {
-    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[] },
+    db: { orders:[], stock:[], clients:[], movimientos:[], ventas:[], deudores:[], cierres:[], liberaciones:[], pedidos:[] },
     libFilter: 'all',
     editState: { lab:null, inv:null, lib:null },
     warrantyFilter: 'all',
@@ -2132,7 +2152,8 @@ const Engine = {
                             deudores:     data.deudores     || [],
                             cierres:      data.cierres      || [],
                             liberaciones: data.liberaciones || [],
-                            anticipos:    data.anticipos    || []
+                            anticipos:    data.anticipos    || [],
+                            pedidos:      data.pedidos      || []
                         };
                         // Restaurar estado de caja
                         this.db.stock.forEach(s => { if (!s.minStock) s.minStock = 3; });
@@ -2207,6 +2228,7 @@ const Engine = {
                 cierres:      this.db.cierres,
                 liberaciones: this.db.liberaciones,
                 anticipos:    this.db.anticipos || [],
+                pedidos:      this.db.pedidos   || [],
                 updatedAt:    new Date().toISOString()
             });
         } catch(e) {
@@ -2231,6 +2253,7 @@ const Engine = {
                 cierres:      this.db.cierres,
                 liberaciones: this.db.liberaciones,
                 anticipos:    this.db.anticipos || [],
+                pedidos:      this.db.pedidos   || [],
                 updatedAt:    new Date().toISOString()
             });
             setStatus('● Sincronizado', '#10b981');
@@ -2253,7 +2276,7 @@ const Engine = {
         this.renderPosCart();
         this.renderPosHistory();
         this.renderDeudores();
-        this.renderLib();
+        this.renderPedidos();
         this.renderCaja();
         this.updateNavDots();
         lucide.createIcons();
@@ -2298,10 +2321,10 @@ const Engine = {
         const deudDot = document.getElementById('deudores-dot');
         if(deudDot) deudDot.style.display = vencidos > 0 ? 'block' : 'none';
 
-        // Liberaciones listas no entregadas
-        const libListas = (this.db.liberaciones||[]).filter(l => l.status==='listo').length;
-        const libDot = document.getElementById('lib-dot');
-        if(libDot) libDot.style.display = libListas > 0 ? 'block' : 'none';
+        // Pedidos listos no entregados
+        const pedListas = (this.db.pedidos||[]).filter(p => p.status==='listo').length;
+        const pedDot = document.getElementById('pedidos-dot');
+        if(pedDot) pedDot.style.display = pedListas > 0 ? 'block' : 'none';
     },
 
     // ── LABORATORIO ──
@@ -2958,6 +2981,325 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         Engine.toast(`Cierre del día registrado — Balance: ${this.formatMoney(ingresos-egresos)}`, 'success', 4000);
         this.renderCaja();
         this.renderCierres();
+    },
+
+    // ══════════════════════════════
+    //  PEDIDOS
+    // ══════════════════════════════
+    _pedFilter: 'all',
+    _pedEditId: null,
+
+    updatePedAnticipoBadge() {
+        const price    = parseFloat(document.getElementById('ped-price')?.value)||0;
+        const anticipo = parseFloat(document.getElementById('ped-anticipo')?.value)||0;
+        const preview  = document.getElementById('ped-anticipo-preview');
+        if (!preview) return;
+        if (price <= 0) { preview.innerText=''; return; }
+        if (anticipo > price) {
+            preview.innerHTML = `<span style="color:var(--danger)">⚠ Anticipo mayor al precio</span>`;
+        } else if (anticipo === price) {
+            preview.innerHTML = `<span style="color:var(--success)">✓ Pagado completo</span>`;
+        } else if (anticipo > 0) {
+            preview.innerHTML = `<span style="color:#f59e0b">Saldo: <strong>${this.formatMoney(price-anticipo)}</strong></span>`;
+        } else {
+            preview.innerText = '';
+        }
+    },
+
+    pedClientInput(input) {
+        const term = input.value.toLowerCase();
+        const list = document.getElementById('ped-client-autocomplete');
+        if (!list || term.length < 1) { if(list) list.style.display='none'; return; }
+        const matches = this.db.clients.filter(c=>c.name.toLowerCase().includes(term)).slice(0,6);
+        if (matches.length === 0) { list.style.display='none'; return; }
+        list.innerHTML = matches.map(c=>`<div class="autocomplete-item" onclick="document.getElementById('ped-client').value='${c.name.replace(/'/g,"\'")}';document.getElementById('ped-phone').value='${c.phone}';document.getElementById('ped-client-autocomplete').style.display='none'">${c.name} <span style="font-size:11px;color:var(--text-dim);margin-left:6px">${c.phone}</span></div>`).join('');
+        list.style.display='block';
+        setTimeout(()=>document.addEventListener('click',()=>list.style.display='none',{once:true}),0);
+    },
+
+    async processPedido() {
+        const hint = document.getElementById('ped-saving-hint');
+        if (hint) hint.style.display = 'inline';
+        const data = {
+            client:   document.getElementById('ped-client').value.trim(),
+            phone:    document.getElementById('ped-phone').value.trim(),
+            item:     document.getElementById('ped-item').value.trim(),
+            model:    document.getElementById('ped-model').value.trim(),
+            price:    parseFloat(document.getElementById('ped-price').value)||0,
+            anticipo: parseFloat(document.getElementById('ped-anticipo').value)||0,
+            anticipoMetodo: document.getElementById('ped-anticipo-metodo')?.value || 'Efectivo',
+            notas:    document.getElementById('ped-notas').value.trim(),
+            fechaLlegada: document.getElementById('ped-fecha-llegada').value || '',
+            warrantyDays: parseInt(document.getElementById('ped-warranty').value)||0,
+        };
+        if (hint) hint.style.display = 'none';
+        if (!data.client || !data.item) return Engine.toast('Completa cliente y artículo.', 'error');
+        if (data.anticipo > data.price && data.price > 0) return Engine.toast('El anticipo no puede superar el precio.', 'error');
+
+        if (!this.db.pedidos) this.db.pedidos = [];
+        const now = new Date();
+
+        if (this._pedEditId) {
+            // EDITAR
+            const idx = this.db.pedidos.findIndex(p=>p.id===this._pedEditId);
+            if (idx > -1) {
+                const existing = this.db.pedidos[idx];
+                // Si cambió el precio, actualizar deudor vinculado
+                if (data.price !== existing.price) {
+                    const totalAbonado = (existing.abonos||[]).reduce((s,a)=>s+a.monto,0);
+                    const nuevoSaldo = Math.max(0, data.price - totalAbonado);
+                    const deudIdx = (this.db.deudores||[]).findIndex(d=>d.ticketRef===this._pedEditId && !d.cobrado);
+                    if (deudIdx > -1) {
+                        if (nuevoSaldo <= 0) this.db.deudores.splice(deudIdx, 1);
+                        else { this.db.deudores[deudIdx].total = nuevoSaldo; this.db.deudores[deudIdx].nota = `Saldo pedido ${this._pedEditId} — ${data.item}`; }
+                    }
+                }
+                this.db.pedidos[idx] = { ...existing, ...data };
+            }
+        } else {
+            // CREAR
+            const pedId = 'PD-' + Date.now().toString().slice(-6);
+            const newPed = {
+                id: pedId, ...data, status: 'pendiente',
+                abonos: data.anticipo > 0 ? [{ id: Date.now(), monto: data.anticipo, metodo: data.anticipoMetodo, nota: 'Anticipo inicial', date: this.today(), time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) }] : [],
+                warrantyStart: null, deliveredAt: null,
+                createdAt: now.toISOString()
+            };
+            this.db.pedidos.unshift(newPed);
+
+            // Anticipo → bolsa temporal
+            if (data.anticipo > 0) {
+                if (!this.db.anticipos) this.db.anticipos = [];
+                this.db.anticipos.push({ id: Date.now(), ticketRef: pedId, esPedido: true, client: data.client, model: data.item, monto: data.anticipo, metodo: data.anticipoMetodo, date: this.today(), time: now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) });
+            }
+            // Deudor si hay saldo pendiente
+            const saldo = data.price - data.anticipo;
+            if (saldo > 0 && data.price > 0) {
+                if (!this.db.deudores) this.db.deudores = [];
+                const fechaPago = (() => { const d=new Date(); d.setDate(d.getDate()+30); return d.toISOString().split('T')[0]; })();
+                this.db.deudores.unshift({ id:'D-'+Date.now().toString().slice(-6), client:data.client, phone:data.phone, total:saldo, fechaPago, nota:`Saldo pedido ${pedId} — ${data.item}`, items:[{name:`Pedido ${data.item}`,qty:1,salePrice:saldo}], cobrado:false, cobradoEl:null, ticketRef:pedId, esPedido:true, createdAt:now.toISOString(), date:this.today() });
+                Engine.toast(`Saldo de ${this.formatMoney(saldo)} registrado en Deudores.`, 'info', 4000);
+            }
+            // Upsert cliente
+            const clientData = { name:data.client, phone:data.phone, lastSeen:now.toLocaleDateString('es-ES') };
+            const cIdx = this.db.clients.findIndex(c=>c.name.toLowerCase()===data.client.toLowerCase());
+            if (cIdx>-1) this.db.clients[cIdx]=clientData; else this.db.clients.unshift(clientData);
+        }
+
+        await this.save();
+        this.cancelPedido();
+        Engine.toast(this._pedEditId ? `Pedido actualizado.` : `Pedido registrado.`, 'success');
+        this._pedEditId = null;
+    },
+
+    cancelPedido() {
+        this._pedEditId = null;
+        ['ped-client','ped-phone','ped-item','ped-model','ped-price','ped-anticipo','ped-notas','ped-fecha-llegada'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+        const wEl = document.getElementById('ped-warranty'); if(wEl) wEl.value='30';
+        const mEl = document.getElementById('ped-anticipo-metodo'); if(mEl) mEl.value='Efectivo';
+        const prev = document.getElementById('ped-anticipo-preview'); if(prev) prev.innerText='';
+        const auto = document.getElementById('ped-client-autocomplete'); if(auto) auto.style.display='none';
+        document.getElementById('pedidos-panel')?.classList.remove('editing');
+        const btn = document.getElementById('btn-ped-save'); if(btn) { btn.classList.remove('update'); }
+        const txt = document.getElementById('txt-ped-btn'); if(txt) txt.innerText='REGISTRAR PEDIDO';
+        const cancel = document.getElementById('btn-ped-cancel'); if(cancel) cancel.style.display='none';
+    },
+
+    editPedido(id) {
+        const p = (this.db.pedidos||[]).find(x=>x.id===id);
+        if (!p) return;
+        if (p.status === 'entregado') return Engine.toast('No se puede editar un pedido ya entregado.', 'info');
+        this._pedEditId = id;
+        document.getElementById('ped-client').value = p.client;
+        document.getElementById('ped-phone').value  = p.phone;
+        document.getElementById('ped-item').value   = p.item;
+        document.getElementById('ped-model').value  = p.model||'';
+        document.getElementById('ped-price').value  = p.price;
+        document.getElementById('ped-anticipo').value = p.anticipo||0;
+        document.getElementById('ped-notas').value  = p.notas||'';
+        document.getElementById('ped-fecha-llegada').value = p.fechaLlegada||'';
+        document.getElementById('ped-warranty').value = p.warrantyDays||30;
+        this.updatePedAnticipoBadge();
+        document.getElementById('pedidos-panel')?.classList.add('editing');
+        const btn = document.getElementById('btn-ped-save'); if(btn) btn.classList.add('update');
+        const txt = document.getElementById('txt-ped-btn'); if(txt) txt.innerText='ACTUALIZAR PEDIDO';
+        const cancel = document.getElementById('btn-ped-cancel'); if(cancel) cancel.style.display='block';
+        document.querySelector('main')?.scrollTo({top:0,behavior:'smooth'});
+        go('pedidos', document.querySelector('.nav-item[onclick*=pedidos]'));
+    },
+
+    async setPedStatus(id, newStatus) {
+        const p = (this.db.pedidos||[]).find(x=>x.id===id);
+        if (!p || p.status === newStatus) return;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+
+        if (newStatus === 'entregado') {
+            if (p.status === 'entregado') return;
+            p.deliveredAt = now.toISOString();
+            if (p.warrantyDays > 0) p.warrantyStart = now.toISOString();
+            // Pasar anticipos retenidos a ingresos reales
+            const anticRetenidos = (this.db.anticipos||[]).filter(a=>a.ticketRef===id);
+            anticRetenidos.forEach(a => this.registrarMovimiento({ tipo:'ingreso', desc:`Anticipo pedido ${id} — ${p.client} (${p.item})`, amount:a.monto, metodo:a.metodo||'Efectivo', time:timeStr }));
+            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
+            // Registrar saldo final
+            const totalAbonado = (p.abonos||[]).reduce((s,a)=>s+a.monto,0);
+            const saldoFinal = Math.max(0, p.price - totalAbonado);
+            if (saldoFinal > 0) this.registrarMovimiento({ tipo:'ingreso', desc:`Saldo pedido ${id} — ${p.client} (${p.item})`, amount:saldoFinal, time:timeStr });
+            // Cerrar deudor
+            (this.db.deudores||[]).forEach(d=>{ if(d.ticketRef===id && !d.cobrado){ d.cobrado=true; d.cobradoEl=now.toISOString(); } });
+
+        } else if (newStatus === 'cancelado') {
+            // Limpiar anticipos sin tocar caja
+            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
+            // Eliminar deudores vinculados
+            this.db.deudores = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
+            p.warrantyStart = null; p.deliveredAt = null;
+        }
+
+        p.status = newStatus;
+        await this.save();
+        const labels = {pendiente:'Pendiente','en-camino':'En Camino',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
+        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, newStatus==='entregado'?'success':newStatus==='cancelado'?'info':'info', 2500);
+    },
+
+    async deletePedido(id) {
+        if (!await Engine.confirm('Eliminar pedido', '¿Eliminar este pedido? Los anticipos se limpiarán sin afectar la caja.')) return;
+        const p = (this.db.pedidos||[]).find(x=>x.id===id);
+        if (p && p.status !== 'entregado') {
+            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
+            this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
+        }
+        this.db.pedidos = (this.db.pedidos||[]).filter(p=>p.id!==id);
+        await this.save();
+        Engine.toast('Pedido eliminado.', 'info');
+    },
+
+    setPedFilter(filter, btn) {
+        this._pedFilter = filter;
+        document.querySelectorAll('.lab-tab').forEach(b => { if(b.id?.startsWith('ptc-')||b.onclick?.toString().includes('setPedFilter')) b.classList.remove('active'); });
+        btn.classList.add('active');
+        this.renderPedidos();
+    },
+
+    renderPedidos() {
+        const pedidos = this.db.pedidos || [];
+        const search  = (document.getElementById('pedidos-search')?.value||'').toLowerCase();
+        const filter  = this._pedFilter || 'all';
+        const clearBtn = document.getElementById('pedidos-search')?.parentElement?.querySelector('.search-clear');
+        if (clearBtn) clearBtn.classList.toggle('visible', search.length > 0);
+
+        // Counts
+        const counts = { all:0, pendiente:0, 'en-camino':0, listo:0, entregado:0, cancelado:0 };
+        pedidos.forEach(p => { counts.all++; if(counts[p.status]!==undefined) counts[p.status]++; });
+        const map = { all:'all', pendiente:'ptc-pendiente', 'en-camino':'ptc-encamino', listo:'ptc-listo', entregado:'ptc-entregado', cancelado:'ptc-cancelado' };
+        document.getElementById('ptc-all') && (document.getElementById('ptc-all').innerText=counts.all);
+        ['pendiente','en-camino','listo','entregado','cancelado'].forEach(k=>{ const el=document.getElementById(map[k]); if(el) el.innerText=counts[k]||0; });
+
+        // KPIs
+        const activos = pedidos.filter(p=>p.status!=='entregado'&&p.status!=='cancelado');
+        const el = id => document.getElementById(id);
+        if(el('ped-st-pendiente')) el('ped-st-pendiente').innerText = pedidos.filter(p=>p.status==='pendiente').length;
+        if(el('ped-st-listo'))     el('ped-st-listo').innerText     = pedidos.filter(p=>p.status==='listo').length;
+        const anticPed = (this.db.anticipos||[]).filter(a=>a.esPedido && activos.some(p=>p.id===a.ticketRef)).reduce((s,a)=>s+a.monto,0);
+        if(el('ped-st-anticipos')) el('ped-st-anticipos').innerText = this.formatMoney(anticPed);
+        const capital = activos.reduce((s,p)=>{ const ab=(p.abonos||[]).reduce((a,b)=>a+b.monto,0); return s+Math.max(0,p.price-ab); },0);
+        if(el('ped-st-capital')) el('ped-st-capital').innerText = this.formatMoney(capital);
+
+        // Filter + search
+        let filtered = filter==='all' ? pedidos : pedidos.filter(p=>p.status===filter);
+        if (search) filtered = filtered.filter(p=>p.client.toLowerCase().includes(search)||p.item.toLowerCase().includes(search)||(p.model||'').toLowerCase().includes(search)||(p.id||'').toLowerCase().includes(search));
+
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        const statusColors = { pendiente:'#f59e0b', 'en-camino':'#818cf8', listo:'#10b981', entregado:'#818cf8', cancelado:'#6b7280' };
+        const statusLabels = { pendiente:'PENDIENTE', 'en-camino':'EN CAMINO', listo:'LISTO', entregado:'ENTREGADO', cancelado:'CANCELADO' };
+
+        const cardsEl = document.getElementById('pedidos-cards');
+        if (cardsEl) {
+            if (filtered.filter(p=>p.status!=='entregado'&&p.status!=='cancelado').length === 0 && filter !== 'entregado' && filter !== 'cancelado') {
+                cardsEl.innerHTML = `<div style="color:var(--text-dim);font-size:13px;padding:28px 0;text-align:center">Sin pedidos activos${search?' para "'+search+'"':''}.</div>`;
+            } else {
+                const active = filtered.filter(p=>p.status!=='entregado'&&p.status!=='cancelado');
+                if (active.length === 0 && filter==='all') { cardsEl.innerHTML=''; }
+                else {
+                    cardsEl.innerHTML = active.map(p => {
+                        const ab = (p.abonos||[]).reduce((s,a)=>s+a.monto,0);
+                        const saldo = Math.max(0, p.price - ab);
+                        const pct = p.price>0 ? Math.min(100,(ab/p.price)*100) : 0;
+                        const col = statusColors[p.status]||'#64748b';
+                        let llegadaCell = '';
+                        if (p.fechaLlegada) {
+                            const fe = new Date(p.fechaLlegada+'T00:00:00'); fe.setHours(0,0,0,0);
+                            const diff = Math.ceil((fe-hoy)/(1000*60*60*24));
+                            llegadaCell = diff<0 ? `<span style="color:var(--danger);font-weight:700;font-size:11px">⚠ Vencido ${Math.abs(diff)}d</span>`
+                                : diff===0 ? `<span style="color:#f59e0b;font-weight:700;font-size:11px">📅 Llega hoy</span>`
+                                : `<span style="color:var(--text-dim);font-size:11px">📅 ${fe.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;
+                        }
+                        return `<div style="background:var(--panel);border:1px solid var(--border);border-radius:var(--rx);padding:18px 20px;margin-bottom:10px;position:relative;overflow:hidden;transition:.2s" onmouseover="this.style.borderColor='rgba(255,255,255,.1)'" onmouseout="this.style.borderColor='var(--border)'">
+                            <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:${col};border-radius:2px 0 0 2px"></div>
+                            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+                                <div style="flex:1;min-width:180px">
+                                    <div style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.id}</div>
+                                    <div style="font-size:15px;font-weight:800;color:#fff;margin:3px 0 1px">${p.client}</div>
+                                    <div style="font-size:12px;color:var(--text-dim)">${p.phone||''}</div>
+                                    <div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff">${p.item}</div>
+                                    ${p.model?`<div style="font-size:11px;color:var(--text-dim)">${p.model}</div>`:''}
+                                    ${p.notas?`<div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-style:italic">${p.notas}</div>`:''}
+                                    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+                                        ${llegadaCell}
+                                        <div style="background:${col}18;border:1px solid ${col}44;border-radius:8px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">
+                                            <span style="width:6px;height:6px;border-radius:50%;background:${col};flex-shrink:0"></span>
+                                            <select style="background:transparent;border:none;color:${col};font-family:var(--font);font-size:10px;font-weight:800;text-transform:uppercase;cursor:pointer;padding:0;outline:none;-webkit-appearance:none" onchange="Engine.setPedStatus('${p.id}',this.value)">
+                                                <option value="pendiente"${p.status==='pendiente'?' selected':''}>PENDIENTE</option>
+                                                <option value="en-camino"${p.status==='en-camino'?' selected':''}>EN CAMINO</option>
+                                                <option value="listo"${p.status==='listo'?' selected':''}>LISTO</option>
+                                                <option value="entregado"${p.status==='entregado'?' selected':''}>ENTREGADO</option>
+                                                <option value="cancelado"${p.status==='cancelado'?' selected':''}>CANCELADO</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+                                    <div style="font-size:20px;font-weight:800;font-family:var(--mono);color:var(--success)">${this.formatMoney(p.price)}</div>
+                                    <div style="width:140px">
+                                        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+                                            <span style="font-size:10px;color:var(--text-dim)">Abonado: <strong style="color:var(--success)">${this.formatMoney(ab)}</strong></span>
+                                            <span style="font-size:10px;color:var(--text-dim)">Saldo: <strong style="color:${saldo>0?'#f59e0b':'var(--success)'}">${this.formatMoney(saldo)}</strong></span>
+                                        </div>
+                                        <div style="width:100%;height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+                                            <div style="width:${pct}%;height:100%;background:${saldo>0?'#f59e0b':'var(--success)'};border-radius:99px;transition:.6s"></div>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;gap:5px">
+                                        <div class="action-icon wa" title="WhatsApp" onclick="window.open('https://wa.me/${(p.phone||'').replace(/[^0-9]/g,'')}?text='+encodeURIComponent('Hola ${p.client}, le informamos sobre su pedido de *${p.item}* (ID: ${p.id}). Por favor contáctenos. Tel: 7512-0282'),'_blank')"><i data-lucide="message-circle" size="13"></i></div>
+                                        <div class="action-icon edit" title="Editar" onclick="Engine.editPedido('${p.id}')"><i data-lucide="edit-2" size="13"></i></div>
+                                        <div class="action-icon del" title="Eliminar" onclick="Engine.deletePedido('${p.id}')"><i data-lucide="trash-2" size="13"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
+            }
+        }
+
+        // Historial entregados/cancelados
+        const hist = document.getElementById('ped-hist-tbody');
+        if (hist) {
+            const done = pedidos.filter(p=>p.status==='entregado'||p.status==='cancelado');
+            if (done.length === 0) {
+                hist.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--text-dim)">Sin pedidos completados aún.</td></tr>`;
+            } else {
+                hist.innerHTML = this.paginate('ped-hist-tbody', done.map(p=>`<tr>
+                    <td style="font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px">${p.id}</td>
+                    <td style="font-weight:700">${p.client}</td>
+                    <td style="font-size:13px">${p.item}${p.model?` <span style="color:var(--text-dim);font-size:11px">${p.model}</span>`:''}</td>
+                    <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(p.price)}</td>
+                    <td style="font-size:12px;color:var(--text-dim)">${p.deliveredAt?new Date(p.deliveredAt).toLocaleDateString('es-ES'):p.status==='cancelado'?'Cancelado':'—'}</td>
+                </tr>`), 10).join('');
+            }
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
     // ── GARANTÍAS ──
@@ -3786,57 +4128,40 @@ ${wi ? `
         });
         document.getElementById('dash-table').innerHTML = this.paginate('dash-table', dashRowsArr, 8).join('');
 
-        // ── LIBERACIONES en dashboard ──
-        const libs = this.db.liberaciones || [];
-        const libActivas = libs.filter(l => l.status !== 'entregado' && l.status !== 'fallido');
-        const libProceso = libs.filter(l => l.status === 'en-proceso').length;
-        const libListo   = libs.filter(l => l.status === 'listo').length;
-        const libSaldo   = libActivas.reduce((s,l) => {
-            const ab = (l.abonos||[]).reduce((a,b)=>a+b.monto,0);
-            return s + Math.max(0, l.price - ab);
-        },0);
-
-        const elT = document.getElementById('dash-lib-total');   if(elT) elT.innerText = libs.filter(l=>l.status!=='fallido').length;
-        const elP = document.getElementById('dash-lib-proceso');  if(elP) elP.innerText = libProceso;
-        const elL = document.getElementById('dash-lib-listo');    if(elL) elL.innerText = libListo;
-        const elS = document.getElementById('dash-lib-saldo');    if(elS) elS.innerText = this.formatMoney(libSaldo);
-
-        const libBox = document.getElementById('dash-lib-box');
-        if (libBox) libBox.style.display = libs.length === 0 ? 'none' : '';
-
+        // ── PEDIDOS en dashboard ──
+        const peds = this.db.pedidos || [];
+        const pedActivos = peds.filter(p=>p.status!=='entregado'&&p.status!=='cancelado');
         const hoy = new Date(); hoy.setHours(0,0,0,0);
-        const libTableBody = document.getElementById('dash-lib-table');
-        if (libTableBody) {
-            const libSorted = [...libs].filter(l=>l.status!=='entregado' && l.status!=='fallido')
-                .sort((a,b) => new Date(a.fechaEntrega||'9999') - new Date(b.fechaEntrega||'9999'));
-            if (libSorted.length === 0) {
-                libTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--text-dim)">No hay liberaciones activas.</td></tr>`;
+
+        const elPP = document.getElementById('dash-ped-pendiente'); if(elPP) elPP.innerText = peds.filter(p=>p.status==='pendiente').length;
+        const elPL = document.getElementById('dash-ped-listo');     if(elPL) elPL.innerText = peds.filter(p=>p.status==='listo').length;
+        const anticPedDash = (this.db.anticipos||[]).filter(a=>a.esPedido && pedActivos.some(p=>p.id===a.ticketRef)).reduce((s,a)=>s+a.monto,0);
+        const elPA = document.getElementById('dash-ped-anticipos'); if(elPA) elPA.innerText = this.formatMoney(anticPedDash);
+
+        const pedBox = document.getElementById('dash-ped-box');
+        if (pedBox) pedBox.style.display = peds.length===0?'none':'';
+
+        const pedTableBody = document.getElementById('dash-ped-table');
+        if (pedTableBody) {
+            const pedSorted = [...pedActivos].sort((a,b)=>new Date(a.fechaLlegada||'9999')-new Date(b.fechaLlegada||'9999'));
+            if (pedSorted.length === 0) {
+                pedTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--text-dim)">No hay pedidos activos.</td></tr>`;
             } else {
-                const statusLabel = {recibido:'RECIBIDO','en-proceso':'EN PROCESO',listo:'LISTO',entregado:'ENTREGADO'};
-                const statusColor = {recibido:'#818cf8','en-proceso':'#f59e0b',listo:'#10b981',entregado:'#64748b'};
-                const libDashRows = libSorted.map(l => {
-                    const fe = l.fechaEntrega ? new Date(l.fechaEntrega+'T00:00:00') : null;
-                    let diasCell = '—';
-                    if (fe) {
-                        fe.setHours(0,0,0,0);
-                        const diff = Math.ceil((fe-hoy)/(1000*60*60*24));
-                        diasCell = diff < 0
-                            ? `<span style="color:var(--danger);font-weight:700;font-size:12px">Vencido ${Math.abs(diff)}d</span>`
-                            : diff === 0
-                                ? `<span style="color:#f59e0b;font-weight:700;font-size:12px">Hoy</span>`
-                                : `<span style="font-size:12px">${fe.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;
-                    }
+                const sColors = {pendiente:'#f59e0b','en-camino':'#818cf8',listo:'#10b981'};
+                pedTableBody.innerHTML = this.paginate('dash-ped-table', pedSorted.map(p=>{
+                    const ab=(p.abonos||[]).reduce((s,a)=>s+a.monto,0);
+                    const col=sColors[p.status]||'#64748b';
+                    let llegada='—';
+                    if(p.fechaLlegada){const fe=new Date(p.fechaLlegada+'T00:00:00');fe.setHours(0,0,0,0);const diff=Math.ceil((fe-hoy)/(1000*60*60*24));llegada=diff<0?`<span style="color:var(--danger);font-size:11px">Vencido ${Math.abs(diff)}d</span>`:diff===0?`<span style="color:#f59e0b;font-size:11px">Hoy</span>`:`<span style="font-size:12px">${fe.toLocaleDateString('es-ES',{day:'numeric',month:'short'})}</span>`;}
                     return `<tr>
-                        <td style="font-family:var(--mono);color:#818cf8;font-weight:700;font-size:12px">${l.id}</td>
-                        <td style="font-weight:700">${l.client}</td>
-                        <td style="font-size:13px">${l.model}</td>
-                        <td style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">${l.imei}</td>
-                        <td style="font-size:12px;color:var(--text-dim)">${l.carrier}</td>
-                        <td>${diasCell}</td>
-                        <td><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;background:${statusColor[l.status]}18;color:${statusColor[l.status]}">${statusLabel[l.status]||l.status}</span></td>
+                        <td style="font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px">${p.id}</td>
+                        <td style="font-weight:700">${p.client}</td>
+                        <td style="font-size:13px">${p.item}</td>
+                        <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(ab)}</td>
+                        <td>${llegada}</td>
+                        <td><span style="font-size:10px;font-weight:800;padding:3px 8px;border-radius:7px;background:${col}18;color:${col}">${p.status.toUpperCase().replace('-',' ')}</span></td>
                     </tr>`;
-                });
-                libTableBody.innerHTML = this.paginate('dash-lib-table', libDashRows, 6).join('');
+                }), 6).join('');
             }
         }
     },
@@ -6770,7 +7095,7 @@ function go(v, el) {
     el.classList.add('active');
     if(v==='reportes') setTimeout(()=>Engine.renderReportes(),50);
     if(v==='lab')      setTimeout(()=>Engine.renderLab(),20);
-    if(v==='lib')      setTimeout(()=>Engine.renderLib(),20);
+    if(v==='pedidos')  setTimeout(()=>Engine.renderPedidos(),20);
     if(v==='caja')     setTimeout(()=>Engine.renderCaja(),20);
     if(typeof lucide !== 'undefined') lucide.createIcons();
     // Cerrar sidebar en móvil al navegar

@@ -3160,15 +3160,12 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         if (newStatus === 'listo') {
             // ── LISTO: agregar repuesto al inventario (entrada de stock) ──
             if (p.item) {
-                // Buscar si ya existe en inventario por nombre (coincidencia exacta o parcial)
                 let stockIdx = this.db.stock.findIndex(s => s.name.toLowerCase() === p.item.toLowerCase());
                 if (stockIdx > -1) {
-                    // Ya existe: sumar stock
                     this.db.stock[stockIdx].qty += qty;
                     p._stockRef = this.db.stock[stockIdx].id;
                     Engine.toast(`📦 +${qty} "${p.item}" agregado al inventario (total: ${this.db.stock[stockIdx].qty})`, 'success', 4000);
                 } else {
-                    // No existe: crear nuevo item en inventario
                     const newStockId = Date.now();
                     this.db.stock.unshift({
                         id: newStockId,
@@ -3182,24 +3179,21 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
                     p._stockRef = newStockId;
                     Engine.toast(`📦 "${p.item}" creado en inventario con ${qty} unidad(es)`, 'success', 4000);
                 }
-                // ── Crear entrada en Lab si el pedido está vinculado a un ticket ──
-                // O crear orden nueva de lab si no tiene referencia
-                if (p.labTicketRef) {
-                    // Ya hay un ticket de lab vinculado — no crear duplicado
-                } else if (p.client) {
-                    // Crear orden en lab automáticamente como LISTO
+
+                // ── Crear ticket en Lab (solo una vez, vinculado al pedido) ──
+                if (!p.labTicketRef && p.client) {
                     const labId = 'TK-PD-' + id.slice(-6);
                     const alreadyExists = (this.db.orders||[]).some(o => o.id === labId);
                     if (!alreadyExists) {
                         if (!this.db.orders) this.db.orders = [];
-                        const labOrder = {
+                        this.db.orders.unshift({
                             id: labId,
                             client: p.client,
                             phone: p.phone || '',
                             model: p.model || p.item,
                             pin: '',
                             price: p.price,
-                            fail: `Pedido especial: ${p.item}${p.notas ? ' — ' + p.notas : ''}`,
+                            fail: `Pedido especial: ${p.item}${p.qty > 1 ? ` x${p.qty}` : ''}${p.notas ? ' — ' + p.notas : ''}`,
                             warrantyDays: p.warrantyDays || 0,
                             anticipo: p.anticipo || 0,
                             anticipoMetodo: p.anticipoMetodo || 'Efectivo',
@@ -3208,14 +3202,17 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
                             status: 'LISTO',
                             warrantyStart: null,
                             deliveredAt: null,
-                            pedidoRef: id,
+                            pedidoRef: id,   // <-- marca que viene de un pedido
                             createdAt: now.toISOString(),
                             statusLog: [{ from: 'PENDIENTE', to: 'LISTO', date: this.today(), time: timeStr }]
-                        };
-                        this.db.orders.unshift(labOrder);
+                        });
                         p.labTicketRef = labId;
-                        Engine.toast(`🔧 Ticket de Lab ${labId} creado automáticamente`, 'info', 4000);
+                        Engine.toast(`🔧 Ticket Lab ${labId} creado — visible en Laboratorio`, 'info', 4000);
                     }
+                } else if (p.labTicketRef) {
+                    // Ya existe: solo sincronizar estado
+                    const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
+                    if (labOrder && labOrder.status !== 'LISTO') labOrder.status = 'LISTO';
                 }
             }
 
@@ -3245,11 +3242,15 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
                 Engine.toast(`🛡 Garantía de ${p.warrantyDays} días activada para ${p.client}`, 'success', 4000);
             }
 
-            // ── Marcar ticket de Lab vinculado como ENTREGADO ──
+            // ── Sincronizar estado del ticket de Lab vinculado (solo el estado, sin cobros) ──
             if (p.labTicketRef) {
                 const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
                 if (labOrder && labOrder.status !== 'ENTREGADO') {
-                    await this.setOrderStatus(p.labTicketRef, 'ENTREGADO');
+                    if (!labOrder.statusLog) labOrder.statusLog = [];
+                    labOrder.statusLog.push({ from: labOrder.status, to: 'ENTREGADO', date: this.today(), time: timeStr });
+                    labOrder.status = 'ENTREGADO';
+                    if (p.warrantyDays > 0) labOrder.warrantyStart = now.toISOString();
+                    labOrder.deliveredAt = now.toISOString();
                 }
             }
 
@@ -3266,10 +3267,18 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
 
         } else if (newStatus === 'cancelado') {
             // ── CANCELADO: NO tocar inventario (el repuesto queda para futuras reparaciones) ──
-            // Solo limpiar anticipos y deudores
             this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
             this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
             p.warrantyStart = null; p.deliveredAt = null;
+            // Sincronizar ticket de Lab como FALLIDO
+            if (p.labTicketRef) {
+                const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
+                if (labOrder && labOrder.status !== 'FALLIDO') {
+                    if (!labOrder.statusLog) labOrder.statusLog = [];
+                    labOrder.statusLog.push({ from: labOrder.status, to: 'FALLIDO', date: this.today(), time: timeStr });
+                    labOrder.status = 'FALLIDO';
+                }
+            }
             if (p._stockRef) {
                 Engine.toast(`ℹ El repuesto "${p.item}" se mantiene en inventario para futuras reparaciones`, 'info', 4000);
             }
@@ -4396,36 +4405,49 @@ ${wi ? `
             const selColor = statusColors[x.status] || '#64748b';
             const isTerminal = x.status==='ENTREGADO' || x.status==='FALLIDO';
 
+            const esDePedido = !!x.pedidoRef;
+            const pedidoBadge = esDePedido
+                ? `<span title="Generado desde Pedido ${x.pedidoRef}" style="font-size:9px;font-weight:800;background:rgba(79,70,229,.18);color:var(--accent);border-radius:5px;padding:2px 6px;margin-left:5px;text-transform:uppercase;letter-spacing:.5px;vertical-align:middle">PEDIDO</span>`
+                : '';
+
             return `<tr class="status-${sc}" id="row-${x.id}">
                 <td style="font-family:var(--mono);font-weight:700;font-size:12px">
-                    <span style="cursor:pointer;color:var(--accent)" onclick="Engine.expandRow('${x.id}')" title="Ver diagnóstico">${x.id}</span>
+                    <span style="cursor:pointer;color:var(--accent)" onclick="Engine.expandRow('${x.id}')" title="Ver diagnóstico">${x.id}</span>${pedidoBadge}
                 </td>
                 <td style="font-weight:700">${x.client}<div style="font-size:11px;color:var(--text-dim);font-weight:500;font-family:var(--mono)">${x.phone||''}</div></td>
                 <td>${x.model}</td>
                 <td style="font-weight:800">${this.formatMoney(x.price)}</td>
                 <td>${wCell}</td>
                 <td>
-                    <div style="background:${selColor}18;border:1px solid ${selColor}44;border-radius:8px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px">
-                        <span style="width:6px;height:6px;border-radius:50%;background:${selColor};flex-shrink:0${x.status==='URGENTE'?';animation:blink 1s infinite':''}"></span>
-                        <select class="status-select" style="color:${selColor}" onchange="Engine.setOrderStatus('${x.id}',this.value)">
-                            <option value="PENDIENTE"${x.status==='PENDIENTE'?' selected':''}>PENDIENTE</option>
-                            <option value="URGENTE"${x.status==='URGENTE'?' selected':''}>URGENTE</option>
-                            <option value="LISTO"${x.status==='LISTO'?' selected':''}>LISTO</option>
-                            <option value="ENTREGADO"${x.status==='ENTREGADO'?' selected':''}>ENTREGADO</option>
-                            <option value="FALLIDO"${x.status==='FALLIDO'?' selected':''}>FALLIDO</option>
-                        </select>
-                    </div>
+                    ${esDePedido
+                        ? `<div style="background:${selColor}18;border:1px solid ${selColor}44;border-radius:8px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px">
+                               <span style="width:6px;height:6px;border-radius:50%;background:${selColor};flex-shrink:0${x.status==='URGENTE'?';animation:blink 1s infinite':''}"></span>
+                               <span style="font-size:10px;font-weight:800;color:${selColor};text-transform:uppercase;letter-spacing:.5px">${x.status}</span>
+                           </div>
+                           <div style="font-size:10px;color:var(--text-dim);margin-top:4px">Gestionar desde <span style="color:var(--accent);cursor:pointer;font-weight:700" onclick="go('pedidos',document.querySelector('.nav-item[onclick*=pedidos]'))">Pedidos</span></div>`
+                        : `<div style="background:${selColor}18;border:1px solid ${selColor}44;border-radius:8px;padding:4px 8px;display:inline-flex;align-items:center;gap:5px">
+                               <span style="width:6px;height:6px;border-radius:50%;background:${selColor};flex-shrink:0${x.status==='URGENTE'?';animation:blink 1s infinite':''}"></span>
+                               <select class="status-select" style="color:${selColor}" onchange="Engine.setOrderStatus('${x.id}',this.value)">
+                                   <option value="PENDIENTE"${x.status==='PENDIENTE'?' selected':''}>PENDIENTE</option>
+                                   <option value="URGENTE"${x.status==='URGENTE'?' selected':''}>URGENTE</option>
+                                   <option value="LISTO"${x.status==='LISTO'?' selected':''}>LISTO</option>
+                                   <option value="ENTREGADO"${x.status==='ENTREGADO'?' selected':''}>ENTREGADO</option>
+                                   <option value="FALLIDO"${x.status==='FALLIDO'?' selected':''}>FALLIDO</option>
+                               </select>
+                           </div>`
+                    }
                 </td>
                 <td style="color:var(--text-dim);font-size:12px;white-space:nowrap">${dateStr}</td>
                 <td style="white-space:nowrap">${promCell}</td>
                 <td><div style="display:flex;gap:4px">
-                    ${x.status!=='ENTREGADO'?`
-                    <div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>`:''}
-                    ${!isTerminal?`
-                    <div class="action-icon" title="Registrar Abono" style="color:var(--success)" onclick="Engine.abrirAbono('${x.id}')"><i data-lucide="banknote" size="13"></i></div>
-                    <div class="action-icon wa" title="WhatsApp" onclick="Engine.quickWa('${x.id}')"><i data-lucide="message-circle" size="13"></i></div>`:''}
-                    <div class="action-icon" title="Imprimir Ticket" style="color:var(--cash)" onclick="Engine.printTicketRep('${x.id}')"><i data-lucide="printer" size="13"></i></div>
-                    <div class="action-icon" title="Descargar PDF" style="color:var(--text-dim)" onclick="Engine.downloadTicketPDF('${x.id}')"><i data-lucide="file-down" size="13"></i></div>
+                    ${esDePedido
+                        ? `<div class="action-icon" title="Ver Pedido" style="color:var(--accent)" onclick="go('pedidos',document.querySelector('.nav-item[onclick*=pedidos]'))"><i data-lucide="shopping-bag" size="13"></i></div>`
+                        : `${x.status!=='ENTREGADO'?`<div class="action-icon edit" title="Editar" onclick="Engine.editOrder('${x.id}')"><i data-lucide="edit-2" size="13"></i></div>`:''}
+                           ${!isTerminal?`<div class="action-icon" title="Registrar Abono" style="color:var(--success)" onclick="Engine.abrirAbono('${x.id}')"><i data-lucide="banknote" size="13"></i></div>
+                           <div class="action-icon wa" title="WhatsApp" onclick="Engine.quickWa('${x.id}')"><i data-lucide="message-circle" size="13"></i></div>`:''}
+                           <div class="action-icon" title="Imprimir Ticket" style="color:var(--cash)" onclick="Engine.printTicketRep('${x.id}')"><i data-lucide="printer" size="13"></i></div>
+                           <div class="action-icon" title="Descargar PDF" style="color:var(--text-dim)" onclick="Engine.downloadTicketPDF('${x.id}')"><i data-lucide="file-down" size="13"></i></div>`
+                    }
                     <div class="action-icon del" title="Eliminar" onclick="Engine.deleteItem('lab','${x.id}')"><i data-lucide="trash-2" size="13"></i></div>
                 </div></td>
             </tr>

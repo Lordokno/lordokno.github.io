@@ -1171,10 +1171,15 @@ small{font-size:10px;text-transform:uppercase;color:var(--text-dim);margin-left:
                 <input type="text" id="ped-model" placeholder="iPhone 14 Pro">
             </div>
         </div>
-        <div class="input-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
+        <div class="input-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr">
             <div class="field">
                 <label>Precio del servicio</label>
                 <input type="number" id="ped-price" placeholder="0.00" min="0" oninput="Engine.updatePedAnticipoBadge()">
+            </div>
+            <div class="field">
+                <label>Cantidad a pedir</label>
+                <input type="number" id="ped-qty" placeholder="1" min="1" value="1">
+                <span class="warranty-input-hint">📦 Unidades a conseguir</span>
             </div>
             <div class="field">
                 <label>Anticipo recibido</label>
@@ -2301,10 +2306,24 @@ const Engine = {
     getWarrantyBarColor(s) { return s==='expired'?'#ef4444':s==='expiring'?'#f59e0b':'var(--warranty)'; },
 
     getWarrantiesWithInfo() {
-        return this.db.orders
+        // Garantías de lab
+        const labW = this.db.orders
             .filter(o => o.warrantyDays>0 && o.warrantyStart)
             .map(o => ({...o, wInfo: this.getWarrantyInfo(o)}))
             .filter(o => o.wInfo !== null);
+        // Garantías de pedidos entregados
+        const pedW = (this.db.pedidos||[])
+            .filter(p => p.warrantyDays>0 && p.warrantyStart)
+            .map(p => ({
+                ...p,
+                // Normalizar campos para que el renderizado sea compatible
+                model: p.model || p.item,
+                fail: `Pedido: ${p.item}`,
+                _esPedido: true,
+                wInfo: this.getWarrantyInfo(p)
+            }))
+            .filter(p => p.wInfo !== null);
+        return [...labW, ...pedW];
     },
 
     getLowStock() { return this.db.stock.filter(s => s.qty <= (s.minStock||3)); },
@@ -3026,6 +3045,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
             item:     document.getElementById('ped-item').value.trim(),
             model:    document.getElementById('ped-model').value.trim(),
             price:    parseFloat(document.getElementById('ped-price').value)||0,
+            qty:      parseInt(document.getElementById('ped-qty')?.value)||1,
             anticipo: parseFloat(document.getElementById('ped-anticipo').value)||0,
             anticipoMetodo: document.getElementById('ped-anticipo-metodo')?.value || 'Efectivo',
             notas:    document.getElementById('ped-notas').value.trim(),
@@ -3095,6 +3115,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
     cancelPedido() {
         this._pedEditId = null;
         ['ped-client','ped-phone','ped-item','ped-model','ped-price','ped-anticipo','ped-notas','ped-fecha-llegada'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+        const qtyEl = document.getElementById('ped-qty'); if(qtyEl) qtyEl.value='1';
         const wEl = document.getElementById('ped-warranty'); if(wEl) wEl.value='30';
         const mEl = document.getElementById('ped-anticipo-metodo'); if(mEl) mEl.value='Efectivo';
         const prev = document.getElementById('ped-anticipo-preview'); if(prev) prev.innerText='';
@@ -3115,6 +3136,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         document.getElementById('ped-item').value   = p.item;
         document.getElementById('ped-model').value  = p.model||'';
         document.getElementById('ped-price').value  = p.price;
+        document.getElementById('ped-qty').value    = p.qty||1;
         document.getElementById('ped-anticipo').value = p.anticipo||0;
         document.getElementById('ped-notas').value  = p.notas||'';
         document.getElementById('ped-fecha-llegada').value = p.fechaLlegada||'';
@@ -3133,12 +3155,105 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         if (!p || p.status === newStatus) return;
         const now = new Date();
         const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        const qty = p.qty || 1;
 
-        if (newStatus === 'entregado') {
+        if (newStatus === 'listo') {
+            // ── LISTO: agregar repuesto al inventario (entrada de stock) ──
+            if (p.item) {
+                // Buscar si ya existe en inventario por nombre (coincidencia exacta o parcial)
+                let stockIdx = this.db.stock.findIndex(s => s.name.toLowerCase() === p.item.toLowerCase());
+                if (stockIdx > -1) {
+                    // Ya existe: sumar stock
+                    this.db.stock[stockIdx].qty += qty;
+                    p._stockRef = this.db.stock[stockIdx].id;
+                    Engine.toast(`📦 +${qty} "${p.item}" agregado al inventario (total: ${this.db.stock[stockIdx].qty})`, 'success', 4000);
+                } else {
+                    // No existe: crear nuevo item en inventario
+                    const newStockId = Date.now();
+                    this.db.stock.unshift({
+                        id: newStockId,
+                        name: p.item + (p.model ? ` (${p.model})` : ''),
+                        qty: qty,
+                        cost: p.price || 0,
+                        salePrice: 0,
+                        minStock: 1,
+                        fromPedido: id
+                    });
+                    p._stockRef = newStockId;
+                    Engine.toast(`📦 "${p.item}" creado en inventario con ${qty} unidad(es)`, 'success', 4000);
+                }
+                // ── Crear entrada en Lab si el pedido está vinculado a un ticket ──
+                // O crear orden nueva de lab si no tiene referencia
+                if (p.labTicketRef) {
+                    // Ya hay un ticket de lab vinculado — no crear duplicado
+                } else if (p.client) {
+                    // Crear orden en lab automáticamente como LISTO
+                    const labId = 'TK-PD-' + id.slice(-6);
+                    const alreadyExists = (this.db.orders||[]).some(o => o.id === labId);
+                    if (!alreadyExists) {
+                        if (!this.db.orders) this.db.orders = [];
+                        const labOrder = {
+                            id: labId,
+                            client: p.client,
+                            phone: p.phone || '',
+                            model: p.model || p.item,
+                            pin: '',
+                            price: p.price,
+                            fail: `Pedido especial: ${p.item}${p.notas ? ' — ' + p.notas : ''}`,
+                            warrantyDays: p.warrantyDays || 0,
+                            anticipo: p.anticipo || 0,
+                            anticipoMetodo: p.anticipoMetodo || 'Efectivo',
+                            abonos: p.abonos ? [...p.abonos] : [],
+                            repuestos: [],
+                            status: 'LISTO',
+                            warrantyStart: null,
+                            deliveredAt: null,
+                            pedidoRef: id,
+                            createdAt: now.toISOString(),
+                            statusLog: [{ from: 'PENDIENTE', to: 'LISTO', date: this.today(), time: timeStr }]
+                        };
+                        this.db.orders.unshift(labOrder);
+                        p.labTicketRef = labId;
+                        Engine.toast(`🔧 Ticket de Lab ${labId} creado automáticamente`, 'info', 4000);
+                    }
+                }
+            }
+
+        } else if (newStatus === 'entregado') {
             if (p.status === 'entregado') return;
             p.deliveredAt = now.toISOString();
-            if (p.warrantyDays > 0) p.warrantyStart = now.toISOString();
-            // Pasar anticipos retenidos a ingresos reales
+
+            // ── ENTREGADO: descontar del inventario (mantiene el item, baja qty) ──
+            if (p._stockRef) {
+                const sIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
+                if (sIdx > -1) {
+                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - qty);
+                    Engine.toast(`📦 -${qty} "${p.item}" descontado del inventario (restante: ${this.db.stock[sIdx].qty})`, 'info', 3500);
+                }
+            } else {
+                // Intentar encontrar por nombre si no hay referencia directa
+                const sIdx = this.db.stock.findIndex(s => s.name.toLowerCase().includes(p.item.toLowerCase()));
+                if (sIdx > -1) {
+                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - qty);
+                    Engine.toast(`📦 -${qty} "${p.item}" descontado del inventario`, 'info', 3000);
+                }
+            }
+
+            // ── Activar garantía ──
+            if (p.warrantyDays > 0) {
+                p.warrantyStart = now.toISOString();
+                Engine.toast(`🛡 Garantía de ${p.warrantyDays} días activada para ${p.client}`, 'success', 4000);
+            }
+
+            // ── Marcar ticket de Lab vinculado como ENTREGADO ──
+            if (p.labTicketRef) {
+                const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
+                if (labOrder && labOrder.status !== 'ENTREGADO') {
+                    await this.setOrderStatus(p.labTicketRef, 'ENTREGADO');
+                }
+            }
+
+            // ── Pasar anticipos retenidos a ingresos reales ──
             const anticRetenidos = (this.db.anticipos||[]).filter(a=>a.ticketRef===id);
             anticRetenidos.forEach(a => this.registrarMovimiento({ tipo:'ingreso', desc:`Anticipo pedido ${id} — ${p.client} (${p.item})`, amount:a.monto, metodo:a.metodo||'Efectivo', time:timeStr }));
             this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
@@ -3150,15 +3265,19 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
             (this.db.deudores||[]).forEach(d=>{ if(d.ticketRef===id && !d.cobrado){ d.cobrado=true; d.cobradoEl=now.toISOString(); } });
 
         } else if (newStatus === 'cancelado') {
-            // Limpiar anticipos sin tocar caja
+            // ── CANCELADO: NO tocar inventario (el repuesto queda para futuras reparaciones) ──
+            // Solo limpiar anticipos y deudores
             this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
-            // Eliminar deudores vinculados
-            this.db.deudores = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
+            this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
             p.warrantyStart = null; p.deliveredAt = null;
+            if (p._stockRef) {
+                Engine.toast(`ℹ El repuesto "${p.item}" se mantiene en inventario para futuras reparaciones`, 'info', 4000);
+            }
         }
 
         p.status = newStatus;
         await this.save();
+        this.renderPedidos();
         const labels = {pendiente:'Pendiente','en-camino':'En Camino',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
         Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, newStatus==='entregado'?'success':newStatus==='cancelado'?'info':'info', 2500);
     },
@@ -3166,9 +3285,25 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
     async deletePedido(id) {
         if (!await Engine.confirm('Eliminar pedido', '¿Eliminar este pedido? Los anticipos se limpiarán sin afectar la caja.')) return;
         const p = (this.db.pedidos||[]).find(x=>x.id===id);
-        if (p && p.status !== 'entregado') {
-            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
-            this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
+        if (p) {
+            // Si estaba en LISTO y tiene stock asignado, devolver el stock al inventario
+            if (p.status === 'listo' && p._stockRef) {
+                const sIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
+                if (sIdx > -1) {
+                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - (p.qty||1));
+                }
+            }
+            if (p.status !== 'entregado') {
+                this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
+                this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
+            }
+            // Eliminar ticket de lab vinculado si existe y no fue entregado
+            if (p.labTicketRef) {
+                const labOrder = (this.db.orders||[]).find(o=>o.id===p.labTicketRef);
+                if (labOrder && labOrder.status !== 'ENTREGADO') {
+                    this.db.orders = (this.db.orders||[]).filter(o=>o.id!==p.labTicketRef);
+                }
+            }
         }
         this.db.pedidos = (this.db.pedidos||[]).filter(p=>p.id!==id);
         await this.save();
@@ -3242,7 +3377,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
                                     <div style="font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:700">${p.id}</div>
                                     <div style="font-size:15px;font-weight:800;color:#fff;margin:3px 0 1px">${p.client}</div>
                                     <div style="font-size:12px;color:var(--text-dim)">${p.phone||''}</div>
-                                    <div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff">${p.item}</div>
+                                    <div style="margin-top:8px;font-size:13px;font-weight:700;color:#fff">${p.item}${p.qty && p.qty > 1 ? ` <span style="font-size:11px;background:rgba(79,70,229,.15);color:var(--accent);border-radius:6px;padding:2px 7px;font-family:var(--mono)">x${p.qty}</span>` : ''}</div>
                                     ${p.model?`<div style="font-size:11px;color:var(--text-dim)">${p.model}</div>`:''}
                                     ${p.notas?`<div style="font-size:11px;color:var(--text-dim);margin-top:4px;font-style:italic">${p.notas}</div>`:''}
                                     <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
@@ -3293,7 +3428,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
                 hist.innerHTML = this.paginate('ped-hist-tbody', done.map(p=>`<tr>
                     <td style="font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px">${p.id}</td>
                     <td style="font-weight:700">${p.client}</td>
-                    <td style="font-size:13px">${p.item}${p.model?` <span style="color:var(--text-dim);font-size:11px">${p.model}</span>`:''}</td>
+                    <td style="font-size:13px">${p.item}${p.qty && p.qty > 1 ? ` <span style="font-size:10px;color:var(--accent);font-family:var(--mono)">x${p.qty}</span>` : ''}${p.model?` <span style="color:var(--text-dim);font-size:11px">${p.model}</span>`:''}</td>
                     <td style="font-weight:800;color:var(--success);font-family:var(--mono)">${this.formatMoney(p.price)}</td>
                     <td style="font-size:12px;color:var(--text-dim)">${p.deliveredAt?new Date(p.deliveredAt).toLocaleDateString('es-ES'):p.status==='cancelado'?'Cancelado':'—'}</td>
                 </tr>`), 10).join('');
@@ -4406,10 +4541,13 @@ ${wi ? `
         if (filtered.length===0) {
             document.getElementById('warranty-table').innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">Sin garantías en este filtro</td></tr>`;
         } else {
-            const warRows = filtered.map(w=>{
+                const warRows = filtered.map(w=>{
                 const wi=w.wInfo, color=this.getWarrantyBarColor(wi.statusKey);
                 const tl=wi.statusKey==='expired'?`<span style="color:var(--danger);font-weight:800">VENCIDA</span>`:`<div class="days-cell"><span style="color:${color};font-weight:700;font-size:12px">${wi.daysRemaining} días</span><div class="warranty-bar-wrap"><div class="warranty-bar-fill" style="width:${wi.progressPct}%;background:${color}"></div></div></div>`;
-                return `<tr><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${w.id}</td><td style="font-weight:700">${w.client}</td><td>${w.model}</td><td style="color:var(--text-dim);font-size:12px">${wi.start}</td><td style="color:var(--text-dim);font-size:12px">${wi.end}</td><td>${tl}</td><td><span class="wbadge wbadge-${wi.statusKey}">${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}</span></td><td><div class="action-icon" title="Imprimir Garantia" style="color:var(--warranty)" onclick="Engine.printWarranty('${w.id}')"><i data-lucide="printer" size="13"></i></div>
+                const origenBadge = w._esPedido
+                    ? `<span style="font-size:9px;font-weight:800;background:rgba(79,70,229,.15);color:var(--accent);border-radius:5px;padding:2px 6px;margin-left:4px;text-transform:uppercase">PEDIDO</span>`
+                    : '';
+                return `<tr><td style="font-family:var(--mono);color:var(--accent);font-weight:700">${w.id}${origenBadge}</td><td style="font-weight:700">${w.client}</td><td>${w.model}</td><td style="color:var(--text-dim);font-size:12px">${wi.start}</td><td style="color:var(--text-dim);font-size:12px">${wi.end}</td><td>${tl}</td><td><span class="wbadge wbadge-${wi.statusKey}">${wi.statusKey==='expired'?'VENCIDA':wi.statusKey==='expiring'?'POR VENCER':'VIGENTE'}</span></td><td><div class="action-icon" title="Imprimir Garantia" style="color:var(--warranty)" onclick="Engine.printWarranty('${w.id}')"><i data-lucide="printer" size="13"></i></div>
 <div class="action-icon" title="Descargar PDF" style="color:var(--cash)" onclick="Engine.downloadWarrantyPDF('${w.id}')"><i data-lucide="file-down" size="13"></i></div></td></tr>`;
             });
             document.getElementById('warranty-table').innerHTML = this.paginate('warranty-table', warRows, 10).join('');

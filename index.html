@@ -1241,13 +1241,15 @@ body.light-mode #theme-toggle            { background:rgba(255,255,255,.9); }
             <div class="field"><label>WhatsApp</label><input type="text" id="ped-phone" placeholder="7788-9900"></div>
         </div>
         <div class="input-row" style="grid-template-columns:2fr 1fr">
-            <div class="field">
+            <div class="field field-relative">
                 <label>Artículo a conseguir</label>
-                <input type="text" id="ped-item" placeholder="Ej: Pantalla iPhone 14 Pro, Batería Samsung S21...">
+                <input type="text" id="ped-item" placeholder="Ej: Pantalla iPhone 14 Pro, Batería Samsung S21..." autocomplete="off" oninput="Engine.pedItemInput(this)">
+                <div class="autocomplete-list" id="ped-item-autocomplete" style="display:none"></div>
             </div>
-            <div class="field">
+            <div class="field field-relative">
                 <label>Modelo del equipo</label>
-                <input type="text" id="ped-model" placeholder="iPhone 14 Pro">
+                <input type="text" id="ped-model" placeholder="iPhone 14 Pro" autocomplete="off" oninput="Engine.pedModelInput(this)">
+                <div class="autocomplete-list" id="ped-model-autocomplete" style="display:none"></div>
             </div>
         </div>
         <div class="input-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr">
@@ -2644,8 +2646,11 @@ const Engine = {
             o.warrantyStart = null;
 
         } else if (newStatus === 'ENTREGADO') {
-            // Garantía activa desde hoy
-            if (o.warrantyDays>0) o.warrantyStart = now.toISOString();
+            // Garantía activa desde hoy — SOLO si este ticket NO viene de un pedido.
+            // Si viene de un pedido, la garantía ya fue activada en setPedStatus para evitar duplicados.
+            if (o.warrantyDays > 0 && !o.pedidoRef) {
+                o.warrantyStart = now.toISOString();
+            }
             // Guardar deliveredAt solo la primera vez que se entrega
             const yaEntregado = !!o.deliveredAt;
             if (!o.deliveredAt) o.deliveredAt = now.toISOString();
@@ -3123,6 +3128,53 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         setTimeout(()=>document.addEventListener('click',()=>list.style.display='none',{once:true}),0);
     },
 
+    // Autocomplete para "Artículo a conseguir" — busca en stock existente para evitar duplicados
+    pedItemInput(input) {
+        const term = input.value.toLowerCase();
+        const list = document.getElementById('ped-item-autocomplete');
+        if (!list || term.length < 1) { if(list) list.style.display='none'; return; }
+        // Buscar en stock por nombre
+        const stockMatches = this.db.stock
+            .filter(s => s.name.toLowerCase().includes(term))
+            .slice(0, 8);
+        if (stockMatches.length === 0) { list.style.display='none'; return; }
+        list.innerHTML = stockMatches.map(s => {
+            const alerta = s.qty <= (s.minStock||3)
+                ? `<span style="color:var(--danger);font-size:10px;font-weight:800;margin-left:6px">⚠ stock bajo (${s.qty})</span>`
+                : `<span style="color:var(--text-dim);font-size:10px;margin-left:6px">en stock: ${s.qty}</span>`;
+            return `<div class="autocomplete-item" onclick="Engine.selectPedItem('${s.name.replace(/'/g,"\\'")}',${s.id})">${s.name}${alerta}</div>`;
+        }).join('');
+        list.style.display = 'block';
+        setTimeout(()=>document.addEventListener('click',()=>list.style.display='none',{once:true}),0);
+    },
+
+    selectPedItem(name, stockId) {
+        const itemEl = document.getElementById('ped-item');
+        const listEl = document.getElementById('ped-item-autocomplete');
+        if (itemEl) itemEl.value = name;
+        if (listEl) listEl.style.display = 'none';
+        // Guardar referencia al stock item para que al llegar en estado LISTO se sume al mismo
+        this._pedStockHint = stockId;
+        Engine.toast(`📦 "${name}" ya existe en inventario — al llegar se sumará al mismo ítem`, 'info', 4000);
+    },
+
+    // Autocomplete para "Modelo del equipo" — busca en pedidos y órdenes previas
+    pedModelInput(input) {
+        const term = input.value.toLowerCase();
+        const list = document.getElementById('ped-model-autocomplete');
+        if (!list || term.length < 1) { if(list) list.style.display='none'; return; }
+        const fromOrders  = this.db.orders.map(o => o.model).filter(Boolean);
+        const fromPedidos = (this.db.pedidos||[]).map(p => p.model).filter(Boolean);
+        const all = [...new Set([...fromOrders, ...fromPedidos])];
+        const matches = all.filter(m => m.toLowerCase().includes(term)).slice(0, 6);
+        if (matches.length === 0) { list.style.display='none'; return; }
+        list.innerHTML = matches.map(m =>
+            `<div class="autocomplete-item" onclick="document.getElementById('ped-model').value='${m.replace(/'/g,"\\'")}';document.getElementById('ped-model-autocomplete').style.display='none'">${m}</div>`
+        ).join('');
+        list.style.display = 'block';
+        setTimeout(()=>document.addEventListener('click',()=>list.style.display='none',{once:true}),0);
+    },
+
     async processPedido() {
         const hint = document.getElementById('ped-saving-hint');
         if (hint) hint.style.display = 'inline';
@@ -3139,7 +3191,10 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
             notas:    document.getElementById('ped-notas').value.trim(),
             fechaLlegada: document.getElementById('ped-fecha-llegada').value || '',
             warrantyDays: parseInt(document.getElementById('ped-warranty').value)||0,
+            // Si el artículo fue seleccionado desde inventario existente, guardar referencia
+            _stockRef: this._pedStockHint || null,
         };
+        this._pedStockHint = null; // limpiar siempre después de leer
         if (hint) hint.style.display = 'none';
         if (!data.client || !data.item) return Engine.toast('Completa cliente y artículo.', 'error');
         if (data.anticipo > data.price && data.price > 0) return Engine.toast('El anticipo no puede superar el precio.', 'error');
@@ -3202,6 +3257,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
 
     cancelPedido() {
         this._pedEditId = null;
+        this._pedStockHint = null;
         ['ped-client','ped-phone','ped-item','ped-model','ped-price','ped-anticipo','ped-notas','ped-fecha-llegada'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
         const qtyEl = document.getElementById('ped-qty'); if(qtyEl) qtyEl.value='1';
         const qtyExtraEl = document.getElementById('ped-qty-extra'); if(qtyExtraEl) qtyExtraEl.value='0';
@@ -3257,11 +3313,22 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         // ─────────────────────────────────────────────────────────
         if (newStatus === 'listo') {
             if (p.item) {
-                // 1. Inventario: buscar por nombre o por _stockRef previo
-                let stockIdx = p._stockRef
-                    ? this.db.stock.findIndex(s => s.id === p._stockRef)
-                    : this.db.stock.findIndex(s => s.name.toLowerCase() === (p.item + (p.model ? ` (${p.model})` : '')).toLowerCase()
-                        || s.name.toLowerCase() === p.item.toLowerCase());
+                // 1. Inventario: prioridad → stockHint (seleccionado por autocomplete) → _stockRef previo → búsqueda por nombre
+                let stockIdx = -1;
+                if (this._pedStockHint) {
+                    stockIdx = this.db.stock.findIndex(s => s.id === this._pedStockHint);
+                    this._pedStockHint = null;
+                }
+                if (stockIdx === -1 && p._stockRef) {
+                    stockIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
+                }
+                if (stockIdx === -1) {
+                    const stockName = p.item + (p.model ? ` (${p.model})` : '');
+                    stockIdx = this.db.stock.findIndex(s =>
+                        s.name.toLowerCase() === stockName.toLowerCase() ||
+                        s.name.toLowerCase() === p.item.toLowerCase()
+                    );
+                }
 
                 if (stockIdx > -1) {
                     this.db.stock[stockIdx].qty += totalQty;

@@ -1261,6 +1261,11 @@ body.light-mode #theme-toggle            { background:rgba(255,255,255,.9); }
                 <span class="warranty-input-hint">📦 Unidades a conseguir</span>
             </div>
             <div class="field">
+                <label>Unidades extra</label>
+                <input type="number" id="ped-qty-extra" placeholder="0" min="0" value="0">
+                <span class="warranty-input-hint">➕ Repuestos adicionales para stock</span>
+            </div>
+            <div class="field">
                 <label>Anticipo recibido</label>
                 <input type="number" id="ped-anticipo" placeholder="0.00" min="0" oninput="Engine.updatePedAnticipoBadge()">
             </div>
@@ -1272,6 +1277,9 @@ body.light-mode #theme-toggle            { background:rgba(255,255,255,.9); }
                     <option value="Tarjeta">Tarjeta</option>
                 </select>
             </div>
+        </div>
+        <div class="input-row" style="grid-template-columns:2fr auto">
+            <div></div>
             <div class="field" style="justify-content:flex-end;padding-top:22px">
                 <div id="ped-anticipo-preview" style="font-size:12px;color:var(--text-dim);font-weight:600"></div>
             </div>
@@ -3125,6 +3133,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
             model:    document.getElementById('ped-model').value.trim(),
             price:    parseFloat(document.getElementById('ped-price').value)||0,
             qty:      parseInt(document.getElementById('ped-qty')?.value)||1,
+            qtyExtra: parseInt(document.getElementById('ped-qty-extra')?.value)||0,
             anticipo: parseFloat(document.getElementById('ped-anticipo').value)||0,
             anticipoMetodo: document.getElementById('ped-anticipo-metodo')?.value || 'Efectivo',
             notas:    document.getElementById('ped-notas').value.trim(),
@@ -3195,6 +3204,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         this._pedEditId = null;
         ['ped-client','ped-phone','ped-item','ped-model','ped-price','ped-anticipo','ped-notas','ped-fecha-llegada'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
         const qtyEl = document.getElementById('ped-qty'); if(qtyEl) qtyEl.value='1';
+        const qtyExtraEl = document.getElementById('ped-qty-extra'); if(qtyExtraEl) qtyExtraEl.value='0';
         const wEl = document.getElementById('ped-warranty'); if(wEl) wEl.value='30';
         const mEl = document.getElementById('ped-anticipo-metodo'); if(mEl) mEl.value='Efectivo';
         const prev = document.getElementById('ped-anticipo-preview'); if(prev) prev.innerText='';
@@ -3216,6 +3226,7 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
         document.getElementById('ped-model').value  = p.model||'';
         document.getElementById('ped-price').value  = p.price;
         document.getElementById('ped-qty').value    = p.qty||1;
+        const qtyExtraEl2 = document.getElementById('ped-qty-extra'); if(qtyExtraEl2) qtyExtraEl2.value = p.qtyExtra||0;
         document.getElementById('ped-anticipo').value = p.anticipo||0;
         document.getElementById('ped-notas').value  = p.notas||'';
         document.getElementById('ped-fecha-llegada').value = p.fechaLlegada||'';
@@ -3232,160 +3243,217 @@ Balance: ${this.formatMoney(ingresos-egresos)}`
     async setPedStatus(id, newStatus) {
         const p = (this.db.pedidos||[]).find(x=>x.id===id);
         if (!p || p.status === newStatus) return;
-        const now = new Date();
+        const now     = new Date();
         const timeStr = now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-        const qty = p.qty || 1;
+        const qty      = p.qty      || 1;
+        const qtyExtra = p.qtyExtra || 0;
+        const totalQty = qty + qtyExtra; // Total que entra al inventario al llegar
 
+        // ─────────────────────────────────────────────────────────
+        // ESTADO → LISTO
+        // Reglas:
+        //   1. Agrega (qty + qtyExtra) unidades al inventario
+        //   2. Crea ticket en Lab con estado LISTO (entrada al laboratorio)
+        // ─────────────────────────────────────────────────────────
         if (newStatus === 'listo') {
-            // ── LISTO: agregar repuesto al inventario (entrada de stock) ──
             if (p.item) {
-                let stockIdx = this.db.stock.findIndex(s => s.name.toLowerCase() === p.item.toLowerCase());
+                // 1. Inventario: buscar por nombre o por _stockRef previo
+                let stockIdx = p._stockRef
+                    ? this.db.stock.findIndex(s => s.id === p._stockRef)
+                    : this.db.stock.findIndex(s => s.name.toLowerCase() === (p.item + (p.model ? ` (${p.model})` : '')).toLowerCase()
+                        || s.name.toLowerCase() === p.item.toLowerCase());
+
                 if (stockIdx > -1) {
-                    this.db.stock[stockIdx].qty += qty;
+                    this.db.stock[stockIdx].qty += totalQty;
                     p._stockRef = this.db.stock[stockIdx].id;
-                    Engine.toast(`📦 +${qty} "${p.item}" agregado al inventario (total: ${this.db.stock[stockIdx].qty})`, 'success', 4000);
+                    Engine.toast(`📦 +${totalQty} "${this.db.stock[stockIdx].name}" en inventario (stock: ${this.db.stock[stockIdx].qty})`, 'success', 4500);
                 } else {
                     const newStockId = Date.now();
+                    const stockName  = p.item + (p.model ? ` (${p.model})` : '');
                     this.db.stock.unshift({
                         id: newStockId,
-                        name: p.item + (p.model ? ` (${p.model})` : ''),
-                        qty: qty,
-                        cost: p.price || 0,
+                        name: stockName,
+                        qty: totalQty,
+                        cost: 0,
                         salePrice: 0,
                         minStock: 1,
                         fromPedido: id
                     });
                     p._stockRef = newStockId;
-                    Engine.toast(`📦 "${p.item}" creado en inventario con ${qty} unidad(es)`, 'success', 4000);
+                    Engine.toast(`📦 "${stockName}" creado en inventario con ${totalQty} unidad(es)${qtyExtra > 0 ? ` (${qty} para cliente + ${qtyExtra} extra para stock)` : ''}`, 'success', 5000);
                 }
 
-                // ── Crear ticket en Lab (solo una vez, vinculado al pedido) ──
-                if (!p.labTicketRef && p.client) {
+                // 2. Crear ticket en Lab (solo si no existe ya)
+                if (!p.labTicketRef) {
                     const labId = 'TK-PD-' + id.slice(-6);
                     const alreadyExists = (this.db.orders||[]).some(o => o.id === labId);
                     if (!alreadyExists) {
                         if (!this.db.orders) this.db.orders = [];
                         this.db.orders.unshift({
-                            id: labId,
+                            id:    labId,
                             client: p.client,
-                            phone: p.phone || '',
-                            model: p.model || p.item,
-                            pin: '',
-                            price: p.price,
-                            fail: `Pedido especial: ${p.item}${p.qty > 1 ? ` x${p.qty}` : ''}${p.notas ? ' — ' + p.notas : ''}`,
-                            warrantyDays: p.warrantyDays || 0,
-                            anticipo: p.anticipo || 0,
-                            anticipoMetodo: p.anticipoMetodo || 'Efectivo',
-                            abonos: p.abonos ? [...p.abonos] : [],
-                            repuestos: [],
-                            status: 'LISTO',
-                            warrantyStart: null,
-                            deliveredAt: null,
-                            pedidoRef: id,   // <-- marca que viene de un pedido
-                            createdAt: now.toISOString(),
-                            statusLog: [{ from: 'PENDIENTE', to: 'LISTO', date: this.today(), time: timeStr }]
+                            phone:  p.phone || '',
+                            model:  p.model || p.item,
+                            pin:    '',
+                            price:  p.price,
+                            fail:   `Pedido especial: ${p.item}${qty > 1 ? ` x${qty}` : ''}${qtyExtra > 0 ? ` (+${qtyExtra} extra para stock)` : ''}${p.notas ? ' — ' + p.notas : ''}`,
+                            warrantyDays:    p.warrantyDays || 0,
+                            anticipo:        p.anticipo || 0,
+                            anticipoMetodo:  p.anticipoMetodo || 'Efectivo',
+                            abonos:          p.abonos ? [...p.abonos] : [],
+                            repuestos:       [],
+                            status:          'LISTO',
+                            warrantyStart:   null,
+                            deliveredAt:     null,
+                            pedidoRef:       id,
+                            createdAt:       now.toISOString(),
+                            statusLog:       [{ from:'PENDIENTE', to:'LISTO', date:this.today(), time:timeStr }]
                         });
                         p.labTicketRef = labId;
                         Engine.toast(`🔧 Ticket Lab ${labId} creado — visible en Laboratorio`, 'info', 4000);
                     }
-                } else if (p.labTicketRef) {
-                    // Ya existe: solo sincronizar estado
+                } else {
+                    // Ya existe: sincronizar estado a LISTO
                     const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
-                    if (labOrder && labOrder.status !== 'LISTO') labOrder.status = 'LISTO';
+                    if (labOrder && labOrder.status !== 'LISTO' && labOrder.status !== 'ENTREGADO') {
+                        if (!labOrder.statusLog) labOrder.statusLog = [];
+                        labOrder.statusLog.push({ from: labOrder.status, to:'LISTO', date:this.today(), time:timeStr });
+                        labOrder.status = 'LISTO';
+                    }
                 }
             }
 
+        // ─────────────────────────────────────────────────────────
+        // ESTADO → ENTREGADO
+        // Reglas:
+        //   1. Descuenta SOLO qty (las unidades del cliente) del inventario — qtyExtra se queda
+        //   2. Activa la garantía (warrantyStart = ahora)
+        //   3. Sincroniza ticket de Lab a ENTREGADO + activa garantía ahí también
+        //   4. Mueve anticipos retenidos a ingresos reales
+        // ─────────────────────────────────────────────────────────
         } else if (newStatus === 'entregado') {
-            if (p.status === 'entregado') return;
             p.deliveredAt = now.toISOString();
 
-            // ── ENTREGADO: descontar del inventario (mantiene el item, baja qty) ──
-            if (p._stockRef) {
-                const sIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
-                if (sIdx > -1) {
-                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - qty);
-                    Engine.toast(`📦 -${qty} "${p.item}" descontado del inventario (restante: ${this.db.stock[sIdx].qty})`, 'info', 3500);
-                }
-            } else {
-                // Intentar encontrar por nombre si no hay referencia directa
-                const sIdx = this.db.stock.findIndex(s => s.name.toLowerCase().includes(p.item.toLowerCase()));
-                if (sIdx > -1) {
-                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - qty);
-                    Engine.toast(`📦 -${qty} "${p.item}" descontado del inventario`, 'info', 3000);
-                }
+            // 1. Descontar SOLO qty del cliente (qtyExtra queda en stock)
+            const stockRef = p._stockRef
+                ? this.db.stock.findIndex(s => s.id === p._stockRef)
+                : this.db.stock.findIndex(s => s.name.toLowerCase().includes(p.item.toLowerCase()));
+
+            if (stockRef > -1) {
+                const antes  = this.db.stock[stockRef].qty;
+                this.db.stock[stockRef].qty = Math.max(0, antes - qty);
+                const despues = this.db.stock[stockRef].qty;
+                Engine.toast(
+                    `📦 -${qty} "${this.db.stock[stockRef].name}" entregado al cliente` +
+                    (qtyExtra > 0 ? ` · ${despues} unidades restantes en stock (${qtyExtra} extra retenida${qtyExtra>1?'s':''})` : ` · ${despues} restantes`),
+                    'info', 5000
+                );
             }
 
-            // ── Activar garantía ──
+            // 2. Activar garantía
             if (p.warrantyDays > 0) {
                 p.warrantyStart = now.toISOString();
                 Engine.toast(`🛡 Garantía de ${p.warrantyDays} días activada para ${p.client}`, 'success', 4000);
             }
 
-            // ── Sincronizar estado del ticket de Lab vinculado (solo el estado, sin cobros) ──
+            // 3. Sincronizar ticket de Lab → ENTREGADO + garantía
             if (p.labTicketRef) {
                 const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
                 if (labOrder && labOrder.status !== 'ENTREGADO') {
                     if (!labOrder.statusLog) labOrder.statusLog = [];
-                    labOrder.statusLog.push({ from: labOrder.status, to: 'ENTREGADO', date: this.today(), time: timeStr });
-                    labOrder.status = 'ENTREGADO';
-                    if (p.warrantyDays > 0) labOrder.warrantyStart = now.toISOString();
+                    labOrder.statusLog.push({ from: labOrder.status, to:'ENTREGADO', date:this.today(), time:timeStr });
+                    labOrder.status      = 'ENTREGADO';
                     labOrder.deliveredAt = now.toISOString();
+                    if (p.warrantyDays > 0) labOrder.warrantyStart = now.toISOString();
                 }
             }
 
-            // ── Pasar anticipos retenidos a ingresos reales ──
-            const anticRetenidos = (this.db.anticipos||[]).filter(a=>a.ticketRef===id);
-            anticRetenidos.forEach(a => this.registrarMovimiento({ tipo:'ingreso', desc:`Anticipo pedido ${id} — ${p.client} (${p.item})`, amount:a.monto, metodo:a.metodo||'Efectivo', time:timeStr }));
-            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
-            // Registrar saldo final
-            const totalAbonado = (p.abonos||[]).reduce((s,a)=>s+a.monto,0);
-            const saldoFinal = Math.max(0, p.price - totalAbonado);
-            if (saldoFinal > 0) this.registrarMovimiento({ tipo:'ingreso', desc:`Saldo pedido ${id} — ${p.client} (${p.item})`, amount:saldoFinal, time:timeStr });
-            // Cerrar deudor
-            (this.db.deudores||[]).forEach(d=>{ if(d.ticketRef===id && !d.cobrado){ d.cobrado=true; d.cobradoEl=now.toISOString(); } });
+            // 4. Pasar anticipos retenidos a ingresos reales
+            const anticRetenidos = (this.db.anticipos||[]).filter(a => a.ticketRef === id);
+            anticRetenidos.forEach(a => this.registrarMovimiento({
+                tipo:'ingreso',
+                desc:`Anticipo pedido ${id} — ${p.client} (${p.item})`,
+                amount: a.monto,
+                metodo: a.metodo || 'Efectivo',
+                time:   timeStr
+            }));
+            this.db.anticipos = (this.db.anticipos||[]).filter(a => a.ticketRef !== id);
 
+            // Registrar saldo final si queda pendiente
+            const totalAbonado = (p.abonos||[]).reduce((s,a) => s + a.monto, 0);
+            const saldoFinal   = Math.max(0, p.price - totalAbonado);
+            if (saldoFinal > 0) {
+                this.registrarMovimiento({
+                    tipo:'ingreso',
+                    desc:`Saldo pedido ${id} — ${p.client} (${p.item})`,
+                    amount: saldoFinal,
+                    time:   timeStr
+                });
+            }
+
+            // Cerrar deudor vinculado
+            (this.db.deudores||[]).forEach(d => {
+                if (d.ticketRef === id && !d.cobrado) {
+                    d.cobrado   = true;
+                    d.cobradoEl = now.toISOString();
+                }
+            });
+
+        // ─────────────────────────────────────────────────────────
+        // ESTADO → CANCELADO
+        // Reglas:
+        //   1. NO tocar inventario — el repuesto queda para futuras reparaciones
+        //   2. Limpiar anticipos y deudores
+        //   3. Sincronizar ticket de Lab a FALLIDO
+        // ─────────────────────────────────────────────────────────
         } else if (newStatus === 'cancelado') {
-            // ── CANCELADO: NO tocar inventario (el repuesto queda para futuras reparaciones) ──
-            this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
-            this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
-            p.warrantyStart = null; p.deliveredAt = null;
-            // Sincronizar ticket de Lab como FALLIDO
+            // NO descontar inventario — el stock ya entró (si estaba en listo) y se queda
+            this.db.anticipos = (this.db.anticipos||[]).filter(a => a.ticketRef !== id);
+            this.db.deudores  = (this.db.deudores||[]).filter(d => d.ticketRef !== id);
+            p.warrantyStart   = null;
+            p.deliveredAt     = null;
+
             if (p.labTicketRef) {
                 const labOrder = (this.db.orders||[]).find(o => o.id === p.labTicketRef);
-                if (labOrder && labOrder.status !== 'FALLIDO') {
+                if (labOrder && labOrder.status !== 'FALLIDO' && labOrder.status !== 'ENTREGADO') {
                     if (!labOrder.statusLog) labOrder.statusLog = [];
-                    labOrder.statusLog.push({ from: labOrder.status, to: 'FALLIDO', date: this.today(), time: timeStr });
+                    labOrder.statusLog.push({ from: labOrder.status, to:'FALLIDO', date:this.today(), time:timeStr });
                     labOrder.status = 'FALLIDO';
                 }
             }
+
             if (p._stockRef) {
-                Engine.toast(`ℹ El repuesto "${p.item}" se mantiene en inventario para futuras reparaciones`, 'info', 4000);
+                const sIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
+                const stockName = sIdx > -1 ? this.db.stock[sIdx].name : p.item;
+                const stockQty  = sIdx > -1 ? this.db.stock[sIdx].qty  : '?';
+                Engine.toast(`ℹ Pedido cancelado — "${stockName}" se mantiene en inventario (${stockQty} ud.) para futuras reparaciones`, 'info', 5000);
+            } else {
+                Engine.toast(`ℹ Pedido ${id} cancelado`, 'info', 3000);
             }
         }
 
         p.status = newStatus;
         await this.save();
         this.renderPedidos();
-        const labels = {pendiente:'Pendiente','en-camino':'En Camino',listo:'Listo',entregado:'Entregado',cancelado:'Cancelado'};
-        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`, newStatus==='entregado'?'success':newStatus==='cancelado'?'info':'info', 2500);
+        this.updateNavDots();
+        const labels = { pendiente:'Pendiente', 'en-camino':'En Camino', listo:'Listo ✓', entregado:'Entregado ✓', cancelado:'Cancelado' };
+        Engine.toast(`${id} → ${labels[newStatus]||newStatus}`,
+            newStatus==='entregado' ? 'success' : newStatus==='cancelado' ? 'info' : 'info', 2500);
     },
 
     async deletePedido(id) {
         if (!await Engine.confirm('Eliminar pedido', '¿Eliminar este pedido? Los anticipos se limpiarán sin afectar la caja.')) return;
         const p = (this.db.pedidos||[]).find(x=>x.id===id);
         if (p) {
-            // Si estaba en LISTO y tiene stock asignado, devolver el stock al inventario
-            if (p.status === 'listo' && p._stockRef) {
-                const sIdx = this.db.stock.findIndex(s => s.id === p._stockRef);
-                if (sIdx > -1) {
-                    this.db.stock[sIdx].qty = Math.max(0, this.db.stock[sIdx].qty - (p.qty||1));
-                }
-            }
+            // Si estaba en LISTO y tiene stock asignado:
+            // El repuesto ya entró al inventario — lo dejamos ahí (igual que cancelado),
+            // solo quitamos la referencia del pedido al stock.
+            // NO devolvemos ni quitamos cantidad.
             if (p.status !== 'entregado') {
                 this.db.anticipos = (this.db.anticipos||[]).filter(a=>a.ticketRef!==id);
                 this.db.deudores  = (this.db.deudores||[]).filter(d=>d.ticketRef!==id);
             }
-            // Eliminar ticket de lab vinculado si existe y no fue entregado
+            // Eliminar ticket de lab vinculado solo si no fue entregado
             if (p.labTicketRef) {
                 const labOrder = (this.db.orders||[]).find(o=>o.id===p.labTicketRef);
                 if (labOrder && labOrder.status !== 'ENTREGADO') {

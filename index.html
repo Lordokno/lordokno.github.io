@@ -1,581 +1,1074 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NEXTCOM Multiservicios | Sistema de Gestión</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* ================= ESTILOS MINIMIZADOS PARA BREVEDAD ================= */
     :root{--bg-primary:#0f172a;--bg-secondary:#1e293b;--bg-card:#1e293b;--bg-hover:#334155;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--primary:#3b82f6;--primary-hover:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#06b6d4;--purple:#8b5cf6;--border:#334155;--shadow:0 4px 6px -1px rgba(0,0,0,0.3);--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.4);--radius:12px;--radius-sm:8px;--transition:all 0.3s ease}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;min-height:100vh}
-    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s}
+    html{scroll-behavior:smooth}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;min-height:100vh}
+    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s}
     .loading-overlay.hidden{opacity:0;pointer-events:none}
-    .loading-overlay.error{background:linear-gradient(135deg,#1e1e2e,#2a1e2e)}
-    .spinner{width:50px;height:50px;border:4px solid var(--bg-secondary);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:1rem}
+    .spinner{width:60px;height:60px;border:4px solid var(--bg-secondary);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:1rem}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .error-message{background:rgba(239,68,68,0.2);border:1px solid var(--danger);border-radius:var(--radius);padding:1.5rem;max-width:500px;text-align:center;color:var(--text-primary)}
-    .error-message h3{color:var(--danger);margin-bottom:0.5rem}
-    .error-message code{background:var(--bg-secondary);padding:0.25rem 0.5rem;border-radius:4px;font-size:0.85rem;display:block;margin:0.5rem 0;text-align:left;overflow-x:auto}
-    .error-message .btn{margin-top:1rem}
-    .sidebar{width:260px;background:var(--bg-secondary);border-right:1px solid var(--border);padding:1.5rem 1rem;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:var(--transition)}
-    .sidebar-header{padding:1rem;text-align:center;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
-    .sidebar-header h2{color:var(--primary);font-size:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.5rem}
-    .sidebar-header p{color:var(--text-secondary);font-size:0.875rem}
-    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:0.25rem}
-    .nav-link{display:flex;align-items:center;gap:0.75rem;padding:0.875rem 1rem;color:var(--text-secondary);text-decoration:none;border-radius:var(--radius-sm);transition:var(--transition);font-weight:500}
+    #loadingText{color:var(--text-secondary);font-size:1.1rem}
+    .sidebar{width:260px;background:var(--bg-secondary);border-right:1px solid var(--border);padding:1rem 0;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:transform 0.3s ease}
+    .sidebar-header{padding:1.5rem 1rem;text-align:center;border-bottom:1px solid var(--border);margin-bottom:0.5rem}
+    .sidebar-header h2{color:var(--primary);font-size:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.5rem}
+    .sidebar-header p{color:var(--text-secondary);font-size:0.85rem;margin-top:0.2rem}
+    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:0.15rem;padding:0.5rem}
+    .nav-link{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;color:var(--text-secondary);text-decoration:none;border-radius:var(--radius-sm);transition:var(--transition);font-weight:500;cursor:pointer}
     .nav-link:hover,.nav-link.active{background:var(--primary);color:white}
-    .nav-link i{width:20px;text-align:center}
+    .nav-link i{width:20px;text-align:center;font-size:1rem}
     .sidebar-footer{padding:1rem;text-align:center;border-top:1px solid var(--border);color:var(--text-muted);font-size:0.75rem}
-    .main-content{flex:1;margin-left:260px;padding:1.5rem 2rem;transition:var(--transition)}
-    .main-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;margin-bottom:2rem;border-bottom:1px solid var(--border)}
-    .menu-toggle{display:none;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:0.5rem 1rem;border-radius:var(--radius-sm);cursor:pointer;font-size:1.25rem}
-    .header-actions{display:flex;align-items:center;gap:1rem}
-    .search-box{display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem 1rem;gap:0.5rem}
-    .search-box input{background:transparent;border:none;color:var(--text-primary);width:200px;outline:none}
+    .main-content{margin-left:260px;padding:1.5rem 2rem;transition:margin-left 0.3s ease}
+    .main-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;margin-bottom:2rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:1rem}
+    .menu-toggle{display:none;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:0.5rem 0.8rem;border-radius:var(--radius-sm);cursor:pointer;font-size:1.2rem}
+    .header-actions{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .search-box{display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem 0.75rem;gap:0.5rem}
+    .search-box input{background:transparent;border:none;color:var(--text-primary);width:180px;outline:none;font-size:0.9rem}
     .search-box input::placeholder{color:var(--text-muted)}
-    .search-box button{background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.25rem}
-    .user-info{display:flex;align-items:center;gap:0.5rem;color:var(--text-secondary);font-size:0.9rem}
+    .search-box button{background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.2rem}
+    .user-info{display:flex;align-items:center;gap:0.5rem;color:var(--text-secondary);font-size:0.85rem}
     .section{display:none;animation:fadeIn 0.3s ease}.section.active{display:block}
     @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.5rem;overflow:hidden;border:1px solid var(--border)}
-    .card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-    .card-header h3{display:flex;align-items:center;gap:0.5rem;font-size:1.1rem}
+    .card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.5rem;border:1px solid var(--border)}
+    .card-header{padding:1.15rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
+    .card-header h3{display:flex;align-items:center;gap:0.5rem;font-size:1.05rem}
     .card-body{padding:1.5rem}
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem}
     .stat-card{background:var(--bg-card);border-radius:var(--radius);padding:1.25rem;display:flex;align-items:center;gap:1rem;box-shadow:var(--shadow);border:1px solid var(--border);transition:var(--transition)}
     .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-    .stat-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;color:white}
+    .stat-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:white;flex-shrink:0}
     .stat-icon.bg-blue{background:var(--primary)}.stat-icon.bg-green{background:var(--success)}.stat-icon.bg-orange{background:var(--warning)}.stat-icon.bg-purple{background:var(--purple)}
-    .stat-info h3{font-size:1.5rem;font-weight:700}.stat-info p{color:var(--text-secondary);font-size:0.875rem}
-    .table-responsive{overflow-x:auto}.data-table{width:100%;border-collapse:collapse;font-size:0.9rem}
-    .data-table th,.data-table td{padding:1rem;text-align:left;border-bottom:1px solid var(--border)}
-    .data-table th{background:var(--bg-secondary);font-weight:600;color:var(--text-secondary);text-transform:uppercase;font-size:0.75rem;letter-spacing:0.05em}
+    .stat-info h3{font-size:1.5rem;font-weight:700}.stat-info p{color:var(--text-secondary);font-size:0.85rem}
+    .table-responsive{overflow-x:auto}.data-table{width:100%;border-collapse:collapse;font-size:0.88rem}
+    .data-table th,.data-table td{padding:0.85rem 0.75rem;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+    .data-table th{background:var(--bg-secondary);font-weight:600;color:var(--text-secondary);text-transform:uppercase;font-size:0.72rem;letter-spacing:0.05em}
     .data-table tbody tr:hover{background:var(--bg-hover)}
-    .status-badge{padding:0.35rem 0.75rem;border-radius:20px;font-size:0.75rem;font-weight:500;display:inline-flex;align-items:center;gap:0.35rem}
-    .status-badge[data-status="recibido"]{background:rgba(59,130,246,0.2);color:var(--primary)}
-    .status-badge[data-status="revision"]{background:rgba(245,158,11,0.2);color:var(--warning)}
+    .status-badge{padding:0.3rem 0.7rem;border-radius:20px;font-size:0.72rem;font-weight:600;display:inline-block}
+    .status-badge[data-status="recibido"]{background:rgba(59,130,246,0.2);color:#60a5fa}
+    .status-badge[data-status="revision"]{background:rgba(245,158,11,0.2);color:#fbbf24}
     .status-badge[data-status="reparacion"]{background:rgba(249,115,22,0.2);color:#fb923c}
-    .status-badge[data-status="listo"]{background:rgba(16,185,129,0.2);color:var(--success)}
-    .status-badge[data-status="entregado"]{background:rgba(100,116,139,0.2);color:var(--text-secondary)}
-    .btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.625rem 1.25rem;border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;transition:var(--transition);font-size:0.9rem}
+    .status-badge[data-status="listo"]{background:rgba(16,185,129,0.2);color:#34d399}
+    .status-badge[data-status="entregado"]{background:rgba(100,116,139,0.2);color:#94a3b8}
+    .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;transition:var(--transition);font-size:0.88rem;white-space:nowrap}
     .btn-primary{background:var(--primary);color:white}.btn-primary:hover{background:var(--primary-hover)}
     .btn-secondary{background:var(--bg-hover);color:var(--text-primary)}.btn-secondary:hover{background:var(--border)}
     .btn-success{background:var(--success);color:white}.btn-success:hover{background:#059669}
     .btn-danger{background:var(--danger);color:white}.btn-danger:hover{background:#dc2626}
-    .btn-sm{padding:0.375rem 0.75rem;font-size:0.8rem}.btn-icon{padding:0.5rem;border-radius:8px}
-    .form-group{margin-bottom:1rem}.form-group label{display:block;margin-bottom:0.375rem;font-weight:500;color:var(--text-secondary);font-size:0.9rem}
-    .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.75rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.95rem;transition:var(--transition)}
-    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,0.2)}
-    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+    .btn-sm{padding:0.35rem 0.7rem;font-size:0.78rem}.btn-icon{padding:0.45rem 0.55rem;border-radius:6px}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;margin-bottom:0.3rem;font-weight:500;color:var(--text-secondary);font-size:0.85rem}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.7rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.9rem;transition:var(--transition)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+    .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
     .form-section{border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin:1rem 0;background:var(--bg-secondary)}
-    .form-section legend{padding:0 0.5rem;color:var(--primary);font-weight:600}
-    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:1rem;animation:fadeIn 0.2s ease}
-    .modal.active{display:flex}.modal-content{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:slideUp 0.3s ease}
-    .modal-lg .modal-content{max-width:900px}.modal-sm .modal-content{max-width:400px}
+    .form-section legend{padding:0 0.5rem;color:var(--primary);font-weight:600;font-size:0.95rem}
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+    .modal.active{display:flex}
+    .modal-content{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:slideUp 0.25s ease}
+    .modal-lg .modal-content{max-width:850px}.modal-sm .modal-content{max-width:400px}
     @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-    .modal-header h3{font-size:1.2rem}.modal-close{background:none;border:none;color:var(--text-secondary);font-size:1.5rem;cursor:pointer;padding:0.25rem;line-height:1;transition:var(--transition)}
-    .modal-close:hover{color:var(--danger)}.modal-body{padding:1.5rem}.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.75rem}
-    .photo-preview{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem}
-    .photo-preview img{width:80px;height:80px;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border);cursor:pointer}
+    .modal-header{padding:1.15rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-header h3{font-size:1.15rem}.modal-close{background:none;border:none;color:var(--text-secondary);font-size:1.4rem;cursor:pointer;padding:0.2rem}
+    .modal-close:hover{color:var(--danger)}.modal-body{padding:1.5rem}.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.7rem;flex-wrap:wrap}
+    .photo-preview{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem}
+    .photo-preview img{width:70px;height:70px;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border);cursor:pointer;transition:transform 0.2s}
+    .photo-preview img:hover{transform:scale(1.1)}
+    .photo-item{position:relative;display:inline-block}.photo-remove{position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .repuesto-item{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap}
-    .repuesto-item select,.repuesto-item input{flex:1;min-width:150px}
-    .toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg-card);color:var(--text-primary);padding:1rem 1.5rem;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);border-left:4px solid var(--success);z-index:2000;display:flex;align-items:center;gap:0.75rem;transform:translateX(400px);transition:transform 0.3s ease}
+    .repuesto-item select,.repuesto-item input{flex:1;min-width:120px}
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg-card);color:var(--text-primary);padding:0.9rem 1.3rem;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);border-left:4px solid var(--success);z-index:2000;transform:translateX(120%);transition:transform 0.35s ease;font-size:0.9rem;max-width:350px}
     .toast.show{transform:translateX(0)}.toast.error{border-left-color:var(--danger)}.toast.warning{border-left-color:var(--warning)}
-    .filters{display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
-    .filters select,.filters input{padding:0.5rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary)}
-    .alert-list{list-style:none;display:flex;flex-direction:column;gap:0.5rem}
-    .alert-list li{padding:0.75rem 1rem;background:rgba(239,68,68,0.1);border-left:3px solid var(--danger);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:0.9rem}
-    .chart-list{list-style:none}.chart-list li{padding:0.75rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
-    .chart-list li:last-child{border-bottom:none}.chart-bar{height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;margin-left:1rem;flex:1;max-width:150px}
-    .chart-bar-fill{height:100%;background:var(--primary);border-radius:4px}
-    @media print{.sidebar,.main-header,.btn,.modal,.toast{display:none!important}.main-content{margin-left:0;padding:0}.card{box-shadow:none;border:1px solid #000}body{background:white;color:black}}
-    @media (max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.active{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:block}.search-box input{width:150px}}
-    @media (max-width:768px){.main-header{flex-direction:column;align-items:flex-start;gap:1rem}.header-actions{width:100%;justify-content:space-between}.search-box{flex:1}.search-box input{width:100%}.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.card-header{flex-direction:column;align-items:flex-start}}
-    @media (max-width:480px){.stats-grid{grid-template-columns:1fr}.data-table{font-size:0.8rem}.data-table th,.data-table td{padding:0.75rem 0.5rem}.modal-content{margin:0.5rem;max-height:calc(100vh - 1rem)}}
-    .text-center{text-align:center}.text-right{text-align:right}.text-success{color:var(--success)}.text-warning{color:var(--warning)}.text-danger{color:var(--danger)}.text-primary{color:var(--primary)}.text-muted{color:var(--text-muted)}.hidden{display:none!important}
-    ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:var(--bg-secondary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+    .filters{display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+    .filters select,.filters input{padding:0.5rem 0.8rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem}
+    .alert-list{list-style:none;display:flex;flex-direction:column;gap:0.4rem}
+    .alert-list li{padding:0.65rem 1rem;background:rgba(239,68,68,0.1);border-left:3px solid var(--danger);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:0.88rem}
+    .alert-list li.ok{background:rgba(16,185,129,0.1);border-left-color:var(--success)}
+    .chart-list{list-style:none}.chart-list li{padding:0.6rem 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);font-size:0.9rem}
+    .chart-list li:last-child{border-bottom:none}.chart-bar{height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden;margin-left:1rem;flex:1;max-width:120px}
+    .chart-bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:width 0.5s ease}
+    .badge{background:var(--bg-hover);padding:0.2rem 0.6rem;border-radius:12px;font-size:0.78rem;color:var(--text-secondary)}
+    .order-detail .section{background:none;border:none;margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+    .order-detail .section-title{font-weight:600;color:var(--primary);margin-bottom:0.4rem;font-size:0.95rem}
+    .order-detail p{margin:0.2rem 0;color:var(--text-secondary);font-size:0.9rem}
+    .order-detail table{width:100%;border-collapse:collapse;margin:0.5rem 0;font-size:0.85rem}
+    .order-detail table th,.order-detail table td{border:1px solid var(--border);padding:0.5rem;text-align:left}
+    .order-detail table th{background:var(--bg-secondary);color:var(--text-secondary)}
+    .no-data{text-align:center;padding:2rem;color:var(--text-muted)}
+    @media print{.sidebar,.main-header,.btn,.modal,.toast{display:none!important}.main-content{margin-left:0!important;padding:0!important}.card{box-shadow:none;border:1px solid #000}body{background:white!important;color:black!important}}
+    @media(max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.active{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:block}}
+    @media(max-width:768px){.main-header{flex-direction:column;align-items:flex-start;gap:0.75rem}.header-actions{width:100%}.search-box{flex:1}.search-box input{width:100%}.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.card-header{flex-direction:column;align-items:flex-start}}
+    @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.data-table{font-size:0.8rem}.data-table th,.data-table td{padding:0.6rem 0.4rem}.modal-content{margin:0.25rem;max-height:calc(100vh - 0.5rem)}}
+    .text-center{text-align:center}.text-success{color:var(--success)}.text-warning{color:var(--warning)}.text-danger{color:var(--danger)}.text-primary{color:var(--primary)}.text-muted{color:var(--text-muted)}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-secondary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>
 </head>
 <body>
-  <!-- Loading con mensaje de error -->
-  <div id="loading-overlay" class="loading-overlay">
-    <div class="spinner"></div>
-    <p id="loadingText">Cargando NEXTCOM...</p>
-    <div id="errorContainer" class="error-message hidden">
-      <h3><i class="fas fa-exclamation-triangle"></i> Error de Conexión</h3>
-      <p id="errorMsg">No se pudo conectar con Firebase.</p>
-      <code id="errorDetails"></code>
-      <button class="btn btn-primary" onclick="location.reload()"><i class="fas fa-redo"></i> Reintentar</button>
-      <br><br>
-      <small class="text-muted">💡 ¿Abriste el archivo directamente? Usa un servidor local.</small>
+
+<!-- Loading -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="spinner"></div>
+  <p id="loadingText">Iniciando NEXTCOM Multiservicios...</p>
+</div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h2><i class="fas fa-mobile-alt"></i> NEXTCOM</h2>
+    <p>Multiservicios</p>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Dashboard</a>
+    <a class="nav-link" data-section="clientes"><i class="fas fa-users"></i> Clientes</a>
+    <a class="nav-link" data-section="ordenes"><i class="fas fa-clipboard-list"></i> Órdenes</a>
+    <a class="nav-link" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
+    <a class="nav-link" data-section="reportes"><i class="fas fa-chart-bar"></i> Reportes</a>
+    <a class="nav-link" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
+  </nav>
+  <div class="sidebar-footer"><p>© 2026 NEXTCOM Multiservicios<br>Almacenamiento Local</p></div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+  <header class="main-header">
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <h1 id="pageTitle">Dashboard</h1>
+    <div class="header-actions">
+      <div class="search-box">
+        <input type="text" id="globalSearch" placeholder="Buscar nombre, teléfono, IMEI, orden...">
+        <button id="searchBtn"><i class="fas fa-search"></i></button>
+      </div>
+      <div class="user-info"><i class="fas fa-user-circle"></i> <span>Administrador</span></div>
+    </div>
+  </header>
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="section active">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon bg-blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3 id="totalClientes">0</h3><p>Clientes</p></div></div>
+      <div class="stat-card"><div class="stat-icon bg-green"><i class="fas fa-clipboard-check"></i></div><div class="stat-info"><h3 id="ordenesActivas">0</h3><p>Órdenes Activas</p></div></div>
+      <div class="stat-card"><div class="stat-icon bg-orange"><i class="fas fa-tools"></i></div><div class="stat-info"><h3 id="enReparacion">0</h3><p>En Reparación</p></div></div>
+      <div class="stat-card"><div class="stat-icon bg-purple"><i class="fas fa-dollar-sign"></i></div><div class="stat-info"><h3 id="ingresosHoy">$0</h3><p>Ingresos Hoy</p></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-clock"></i> Órdenes Recientes</h3><button class="btn btn-primary btn-sm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Nueva Orden</button></div>
+      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="tbodyRecientes"><tr><td colspan="6" class="no-data">Cargando...</td></tr></tbody></table></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h3></div>
+      <div class="card-body"><ul id="listaStockBajo" class="alert-list"><li>Cargando inventario...</li></ul></div>
+    </div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="clientes" class="section">
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-users"></i> Gestión de Clientes</h3><button class="btn btn-primary" onclick="abrirModalCliente()"><i class="fas fa-plus"></i> Nuevo Cliente</button></div>
+      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Dirección</th><th>Órdenes</th><th>Acciones</th></tr></thead><tbody id="tbodyClientes"><tr><td colspan="5" class="no-data">Cargando...</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- ÓRDENES -->
+  <section id="ordenes" class="section">
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-clipboard-list"></i> Órdenes de Trabajo</h3><button class="btn btn-primary" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Crear Orden</button></div>
+      <div class="card-body">
+        <div class="filters">
+          <select id="filtroEstado"><option value="">Todos los estados</option><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select>
+        </div>
+        <div class="table-responsive"><table class="data-table"><thead><tr><th># Orden</th><th>Cliente</th><th>Equipo / IMEI</th><th>Problema</th><th>Estado</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody id="tbodyOrdenes"><tr><td colspan="7" class="no-data">Cargando...</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INVENTARIO -->
+  <section id="inventario" class="section">
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-boxes"></i> Inventario de Repuestos</h3><button class="btn btn-primary" onclick="abrirModalRepuesto()"><i class="fas fa-plus"></i> Nuevo Repuesto</button></div>
+      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Repuesto</th><th>Stock</th><th>P. Compra</th><th>P. Venta</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbodyInventario"><tr><td colspan="6" class="no-data">Cargando...</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- REPORTES -->
+  <section id="reportes" class="section">
+    <div class="stats-grid">
+      <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-day"></i> Ingresos Diarios</h3></div><div class="card-body"><h2 id="ingresosDiarios">$0</h2><p id="fechaReporteDiario" class="text-muted"></p></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-alt"></i> Ingresos Mensuales</h3></div><div class="card-body"><h2 id="ingresosMensuales">$0</h2><p id="mesReporte" class="text-muted"></p></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fas fa-wrench"></i> Reparaciones Comunes</h3></div><div class="card-body"><ul id="listaReparaciones" class="chart-list"></ul></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-file-export"></i> Exportar</h3></div>
+      <div class="card-body">
+        <button class="btn btn-secondary" onclick="exportarCSV()"><i class="fas fa-file-csv"></i> Exportar Órdenes CSV</button>
+        <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-file-pdf"></i> Imprimir como PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIGURACIÓN -->
+  <section id="configuracion" class="section">
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-cog"></i> Configuración del Sistema</h3></div>
+      <div class="card-body">
+        <form id="formConfig" onsubmit="guardarConfig(event)">
+          <div class="form-group"><label>Nombre del Taller</label><input type="text" value="NEXTCOM Multiservicios" disabled></div>
+          <div class="form-group"><label>Teléfono de Contacto</label><input type="tel" id="cfgTelefono" placeholder="+57 300 123 4567"></div>
+          <div class="form-group"><label>Dirección</label><input type="text" id="cfgDireccion" placeholder="Dirección del taller"></div>
+          <div class="form-group"><label>Stock Mínimo para Alertas</label><input type="number" id="cfgStockMin" value="5" min="1"></div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Configuración</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= MODALES ================= -->
+
+<!-- Modal Cliente -->
+<div id="modalCliente" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tituloCliente">Nuevo Cliente</h3><button class="modal-close" onclick="cerrarModal('modalCliente')">&times;</button></div>
+    <form id="formCliente" onsubmit="guardarCliente(event)">
+      <input type="hidden" id="clienteId">
+      <div class="form-group"><label>Nombre Completo *</label><input type="text" id="cNombre" required></div>
+      <div class="form-group"><label>Teléfono *</label><input type="tel" id="cTelefono" required></div>
+      <div class="form-group"><label>Dirección (opcional)</label><input type="text" id="cDireccion"></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalCliente')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Orden -->
+<div id="modalOrden" class="modal modal-lg">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tituloOrden">Nueva Orden de Trabajo</h3><button class="modal-close" onclick="cerrarModal('modalOrden')">&times;</button></div>
+    <form id="formOrden" onsubmit="guardarOrden(event)">
+      <input type="hidden" id="ordenId">
+      <div class="form-row">
+        <div class="form-group"><label>Cliente *</label><select id="oCliente" required onchange="cargarTelefonoCliente()"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" id="oTelefono" readonly></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Marca *</label><input type="text" id="oMarca" required list="dlMarcas"><datalist id="dlMarcas"><option value="Samsung"><option value="Apple"><option value="Xiaomi"><option value="Motorola"><option value="Huawei"><option value="Oppo"><option value="Realme"><option value="Otro"></datalist></div>
+        <div class="form-group"><label>Modelo *</label><input type="text" id="oModelo" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>IMEI (15 dígitos)</label><input type="text" id="oImei" pattern="[0-9]{15}" title="15 dígitos" maxlength="17"></div>
+        <div class="form-group"><label>Fecha Ingreso *</label><input type="date" id="oFechaIngreso" required></div>
+      </div>
+      <div class="form-group"><label>Problema Reportado *</label><textarea id="oProblema" rows="2" required></textarea></div>
+      <div class="form-group"><label>Estado Físico</label><textarea id="oEstadoFisico" rows="2" placeholder="Rayones, golpes, pantalla rota, etc."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Fecha Estimada</label><input type="date" id="oFechaEst"></div>
+        <div class="form-group"><label>Estado *</label><select id="oEstado" required><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select></div>
+      </div>
+      <fieldset class="form-section"><legend><i class="fas fa-stethoscope"></i> Diagnóstico</legend>
+        <div class="form-group"><label>Diagnóstico Técnico</label><textarea id="oDiagnostico" rows="2"></textarea></div>
+        <div class="form-group"><label>Repuestos Usados</label>
+          <div id="contRepuestos"><div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="agregarFilaRepuesto()" style="margin-top:0.3rem"><i class="fas fa-plus"></i> Agregar repuesto</button>
+        </div>
+        <div class="form-group"><label>Notas Internas</label><textarea id="oNotas" rows="2"></textarea></div>
+      </fieldset>
+      <fieldset class="form-section"><legend><i class="fas fa-money-bill-wave"></i> Pagos</legend>
+        <div class="form-row">
+          <div class="form-group"><label>Total ($) *</label><input type="number" id="oTotal" step="0.01" min="0" required oninput="calcSaldo()"></div>
+          <div class="form-group"><label>Abono ($)</label><input type="number" id="oAbono" step="0.01" min="0" value="0" oninput="calcSaldo()"></div>
+          <div class="form-group"><label>Saldo ($)</label><input type="number" id="oSaldo" step="0.01" readonly></div>
+        </div>
+        <div class="form-group"><label>Método de Pago</label><select id="oMetodo"><option value="efectivo">💵 Efectivo</option><option value="transferencia">🏦 Transferencia</option><option value="tarjeta">💳 Tarjeta</option><option value="nequi">📱 Nequi/Daviplata</option></select></div>
+      </fieldset>
+      <fieldset class="form-section"><legend><i class="fas fa-camera"></i> Fotos</legend>
+        <div class="form-group"><label>Subir Fotos</label><input type="file" id="oFotos" accept="image/*" multiple onchange="previewFotos(this)"><div id="previewFotos" class="photo-preview"></div></div>
+      </fieldset>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalOrden')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Orden</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Detalle Orden -->
+<div id="modalDetalle" class="modal modal-lg">
+  <div class="modal-content">
+    <div class="modal-header"><h3>Detalle Orden #<span id="detNumero"></span></h3><button class="modal-close" onclick="cerrarModal('modalDetalle')">&times;</button></div>
+    <div class="modal-body order-detail" id="detContenido"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="imprimirOrden()"><i class="fas fa-print"></i> Imprimir</button>
+      <button class="btn btn-success" onclick="notificarWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+      <button class="btn btn-primary" onclick="editarDesdeDetalle()"><i class="fas fa-edit"></i> Editar</button>
     </div>
   </div>
+</div>
 
-  <!-- Sidebar -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h2><i class="fas fa-mobile-alt"></i> NEXTCOM</h2><p>Multiservicios</p>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="#dashboard" class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Dashboard</a>
-      <a href="#clientes" class="nav-link" data-section="clientes"><i class="fas fa-users"></i> Clientes</a>
-      <a href="#ordenes" class="nav-link" data-section="ordenes"><i class="fas fa-clipboard-list"></i> Órdenes</a>
-      <a href="#inventario" class="nav-link" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
-      <a href="#reportes" class="nav-link" data-section="reportes"><i class="fas fa-chart-bar"></i> Reportes</a>
-      <a href="#configuracion" class="nav-link" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
-    </nav>
-    <div class="sidebar-footer"><p><small>© 2026 NEXTCOM</small></p></div>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="main-content">
-    <header class="main-header">
-      <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
-      <h1 id="pageTitle">Dashboard</h1>
-      <div class="header-actions">
-        <div class="search-box">
-          <input type="text" id="globalSearch" placeholder="Buscar por nombre, teléfono, IMEI, orden...">
-          <button id="searchBtn"><i class="fas fa-search"></i></button>
-        </div>
-        <div class="user-info"><span><i class="fas fa-user-circle"></i> Administrador</span></div>
+<!-- Modal Repuesto -->
+<div id="modalRepuesto" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tituloRepuesto">Nuevo Repuesto</h3><button class="modal-close" onclick="cerrarModal('modalRepuesto')">&times;</button></div>
+    <form id="formRepuesto" onsubmit="guardarRepuesto(event)">
+      <input type="hidden" id="repuestoId">
+      <div class="form-group"><label>Nombre *</label><input type="text" id="rNombre" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>Cantidad *</label><input type="number" id="rCantidad" min="0" required></div>
+        <div class="form-group"><label>Mínimo</label><input type="number" id="rMinimo" min="1" value="5"></div>
       </div>
-    </header>
-
-    <!-- Dashboard -->
-    <section id="dashboard" class="section active">
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon bg-blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3 id="totalClientes">0</h3><p>Clientes</p></div></div>
-        <div class="stat-card"><div class="stat-icon bg-green"><i class="fas fa-clipboard-check"></i></div><div class="stat-info"><h3 id="ordenesActivas">0</h3><p>Órdenes Activas</p></div></div>
-        <div class="stat-card"><div class="stat-icon bg-orange"><i class="fas fa-tools"></i></div><div class="stat-info"><h3 id="enReparacion">0</h3><p>En Reparación</p></div></div>
-        <div class="stat-card"><div class="stat-icon bg-purple"><i class="fas fa-dollar-sign"></i></div><div class="stat-info"><h3 id="ingresosHoy">$0</h3><p>Ingresos Hoy</p></div></div>
+      <div class="form-row">
+        <div class="form-group"><label>P. Compra</label><input type="number" id="rPCompra" step="0.01" min="0"></div>
+        <div class="form-group"><label>P. Venta</label><input type="number" id="rPVenta" step="0.01" min="0"></div>
       </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-clock"></i> Órdenes Recientes</h3><button class="btn btn-primary btn-sm" id="btnNuevaOrden"><i class="fas fa-plus"></i> Nueva Orden</button></div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="data-table"><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="tbodyOrdenesRecientes"><tr><td colspan="6" class="text-center">Cargando...</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h3></div>
-        <div class="card-body"><ul id="listaStockBajo" class="alert-list"><li class="text-center">Cargando inventario...</li></ul></div>
-      </div>
-    </section>
-
-    <!-- Clientes -->
-    <section id="clientes" class="section">
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-users"></i> Gestión de Clientes</h3><button class="btn btn-primary" id="btnNuevoCliente"><i class="fas fa-plus"></i> Nuevo Cliente</button></div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="data-table" id="tablaClientes"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Dirección</th><th>Órdenes</th><th>Acciones</th></tr></thead><tbody id="tbodyClientes"><tr><td colspan="5" class="text-center">Cargando clientes...</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Órdenes -->
-    <section id="ordenes" class="section">
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-clipboard-list"></i> Órdenes de Trabajo</h3><button class="btn btn-primary" id="btnCrearOrden"><i class="fas fa-plus"></i> Crear Orden</button></div>
-        <div class="card-body">
-          <div class="filters">
-            <select id="filtroEstado"><option value="">Todos los estados</option><option value="recibido">Recibido</option><option value="revision">En Revisión</option><option value="reparacion">En Reparación</option><option value="listo">Listo</option><option value="entregado">Entregado</option></select>
-            <input type="date" id="filtroFecha">
-          </div>
-          <div class="table-responsive">
-            <table class="data-table" id="tablaOrdenes"><thead><tr><th># Orden</th><th>Cliente</th><th>Equipo/IMEI</th><th>Problema</th><th>Estado</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody id="tbodyOrdenes"><tr><td colspan="7" class="text-center">Cargando órdenes...</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Inventario -->
-    <section id="inventario" class="section">
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-boxes"></i> Inventario de Repuestos</h3><button class="btn btn-primary" id="btnNuevoRepuesto"><i class="fas fa-plus"></i> Nuevo Repuesto</button></div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="data-table" id="tablaInventario"><thead><tr><th>Repuesto</th><th>Stock</th><th>P. Compra</th><th>P. Venta</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbodyInventario"><tr><td colspan="6" class="text-center">Cargando inventario...</td></tr></tbody></table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Reportes -->
-    <section id="reportes" class="section">
-      <div class="stats-grid">
-        <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-day"></i> Ingresos Diarios</h3></div><div class="card-body"><h2 id="ingresosDiarios">$0.00</h2><p id="fechaReporteDiario">--</p></div></div>
-        <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-alt"></i> Ingresos Mensuales</h3></div><div class="card-body"><h2 id="ingresosMensuales">$0.00</h2><p id="mesReporte">--</p></div></div>
-        <div class="card"><div class="card-header"><h3><i class="fas fa-wrench"></i> Reparaciones Comunes</h3></div><div class="card-body"><ul id="listaReparacionesComunes" class="chart-list"></ul></div></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-file-export"></i> Exportar Reporte</h3></div>
-        <div class="card-body">
-          <button class="btn btn-secondary" id="btnExportarPDF"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-          <button class="btn btn-secondary" id="btnExportarCSV"><i class="fas fa-file-csv"></i> Exportar CSV</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Configuración -->
-    <section id="configuracion" class="section">
-      <div class="card">
-        <div class="card-header"><h3><i class="fas fa-cog"></i> Configuración del Sistema</h3></div>
-        <div class="card-body">
-          <form id="formConfig">
-            <div class="form-group"><label>Nombre del Taller</label><input type="text" value="NEXTCOM Multiservicios" disabled></div>
-            <div class="form-group"><label>Teléfono de Contacto</label><input type="tel" id="configTelefono" placeholder="+57 300 123 4567"></div>
-            <div class="form-group"><label>Dirección</label><input type="text" id="configDireccion" placeholder="Dirección del taller"></div>
-            <div class="form-group"><label>Stock Mínimo para Alertas</label><input type="number" id="configStockMinimo" value="5" min="1"></div>
-            <button type="submit" class="btn btn-primary">Guardar Configuración</button>
-          </form>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- ================= MODALES (MISMOS QUE ANTES, RESUMIDOS) ================= -->
-  <!-- Modal Cliente -->
-  <div id="modalCliente" class="modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3 id="modalClienteTitle">Nuevo Cliente</h3><button class="modal-close">&times;</button></div>
-      <form id="formCliente">
-        <input type="hidden" id="clienteId">
-        <div class="form-group"><label>Nombre Completo *</label><input type="text" id="clienteNombre" required></div>
-        <div class="form-group"><label>Teléfono *</label><input type="tel" id="clienteTelefono" required></div>
-        <div class="form-group"><label>Dirección (opcional)</label><input type="text" id="clienteDireccion"></div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Cliente</button></div>
-      </form>
-    </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalRepuesto')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
+    </form>
   </div>
+</div>
 
-  <!-- Modal Orden (simplificado para brevedad - mantener estructura completa en uso real) -->
-  <div id="modalOrden" class="modal modal-lg">
-    <div class="modal-content">
-      <div class="modal-header"><h3 id="modalOrdenTitle">Nueva Orden de Trabajo</h3><button class="modal-close">&times;</button></div>
-      <form id="formOrden">
-        <input type="hidden" id="ordenId">
-        <div class="form-row">
-          <div class="form-group"><label>Cliente *</label><select id="ordenCliente" required><option value="">Seleccionar cliente...</option></select></div>
-          <div class="form-group"><label>Teléfono</label><input type="tel" id="ordenTelefono" readonly></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Marca *</label><input type="text" id="ordenMarca" required list="marcasList"><datalist id="marcasList"><option value="Samsung"><option value="Apple"><option value="Xiaomi"><option value="Motorola"><option value="Huawei"><option value="Otro"></datalist></div>
-          <div class="form-group"><label>Modelo *</label><input type="text" id="ordenModelo" required></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>IMEI</label><input type="text" id="ordenImei" pattern="[0-9]{15,17}"></div>
-          <div class="form-group"><label>Fecha de Ingreso *</label><input type="date" id="ordenFechaIngreso" required></div>
-        </div>
-        <div class="form-group"><label>Problema Reportado *</label><textarea id="ordenProblema" rows="3" required></textarea></div>
-        <div class="form-group"><label>Estado Físico</label><textarea id="ordenEstadoFisico" rows="2"></textarea></div>
-        <div class="form-row">
-          <div class="form-group"><label>Fecha Estimada</label><input type="date" id="ordenFechaEstimada"></div>
-          <div class="form-group"><label>Estado *</label><select id="ordenEstado" required><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select></div>
-        </div>
-        <fieldset class="form-section"><legend><i class="fas fa-stethoscope"></i> Diagnóstico</legend>
-          <div class="form-group"><label>Diagnóstico Técnico</label><textarea id="ordenDiagnostico" rows="3"></textarea></div>
-          <div class="form-group"><label>Repuestos Usados</label><div id="repuestosUsadosContainer"><div class="repuesto-item"><select class="repuesto-select"><option value="">Seleccionar...</option></select><input type="number" class="repuesto-cantidad" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm remove-repuesto">×</button></div></div><button type="button" class="btn btn-secondary btn-sm" id="btnAddRepuesto">+ Agregar</button></div>
-        </fieldset>
-        <fieldset class="form-section"><legend><i class="fas fa-money-bill-wave"></i> Pagos</legend>
-          <div class="form-row">
-            <div class="form-group"><label>Total ($)</label><input type="number" id="ordenTotal" step="0.01" min="0" required></div>
-            <div class="form-group"><label>Abono ($)</label><input type="number" id="ordenAbono" step="0.01" min="0" value="0"></div>
-            <div class="form-group"><label>Saldo ($)</label><input type="number" id="ordenSaldo" step="0.01" readonly></div>
-          </div>
-          <div class="form-group"><label>Método de Pago</label><select id="ordenMetodoPago"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="nequi">Nequi/Daviplata</option></select></div>
-        </fieldset>
-        <fieldset class="form-section"><legend><i class="fas fa-camera"></i> Fotos</legend>
-          <div class="form-group"><label>Fotos del Equipo</label><input type="file" id="ordenFotos" accept="image/*" multiple><div id="previewFotos" class="photo-preview"></div></div>
-        </fieldset>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Guardar Orden</button></div>
-      </form>
-    </div>
+<!-- Modal Confirmar -->
+<div id="modalConfirmar" class="modal">
+  <div class="modal-content modal-sm">
+    <div class="modal-header"><h3>Confirmar</h3><button class="modal-close" onclick="cerrarModal('modalConfirmar')">&times;</button></div>
+    <div class="modal-body"><p id="confMsg">¿Está seguro?</p></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="cerrarModal('modalConfirmar')">Cancelar</button><button class="btn btn-danger" id="btnConfEliminar">Eliminar</button></div>
   </div>
+</div>
 
-  <!-- Modal Detalle Orden -->
-  <div id="modalDetalleOrden" class="modal modal-lg">
-    <div class="modal-content">
-      <div class="modal-header"><h3>Detalle de Orden #<span id="detalleOrdenNumero"></span></h3><button class="modal-close">&times;</button></div>
-      <div class="modal-body" id="detalleOrdenContent"></div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="btnImprimirOrden"><i class="fas fa-print"></i> Imprimir</button>
-        <button class="btn btn-success" id="btnWhatsAppNotificacion"><i class="fab fa-whatsapp"></i> WhatsApp</button>
-        <button class="btn btn-primary" id="btnEditarOrdenDetalle"><i class="fas fa-edit"></i> Editar</button>
-      </div>
-    </div>
-  </div>
+<!-- Toast -->
+<div id="toast" class="toast"><span id="toastMsg"></span></div>
 
-  <!-- Modal Repuesto -->
-  <div id="modalRepuesto" class="modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3 id="modalRepuestoTitle">Nuevo Repuesto</h3><button class="modal-close">&times;</button></div>
-      <form id="formRepuesto">
-        <input type="hidden" id="repuestoId">
-        <div class="form-group"><label>Nombre *</label><input type="text" id="repuestoNombre" required></div>
-        <div class="form-row">
-          <div class="form-group"><label>Stock *</label><input type="number" id="repuestoCantidad" min="0" required></div>
-          <div class="form-group"><label>Mínimo</label><input type="number" id="repuestoMinimo" min="1" value="5"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>P. Compra</label><input type="number" id="repuestoPrecioCompra" step="0.01" min="0"></div>
-          <div class="form-group"><label>P. Venta</label><input type="number" id="repuestoPrecioVenta" step="0.01" min="0"></div>
-        </div>
-        <div class="modal-footer"><button type="button" class="btn btn-secondary modal-close">Cancelar</button><button type="submit" class="btn btn-primary">Guardar</button></div>
-      </form>
-    </div>
-  </div>
+<!-- ================= LÓGICA COMPLETA ================= -->
+<script>
+// =============================================
+// NEXTCOM MULTISERVICIOS - SISTEMA LOCAL
+// Base de datos: localStorage (sin servidor)
+// =============================================
 
-  <!-- Toast y Confirmación -->
-  <div id="toast" class="toast"><span id="toastMessage"></span></div>
-  <div id="modalConfirmar" class="modal">
-    <div class="modal-content modal-sm">
-      <div class="modal-header"><h3>Confirmar</h3><button class="modal-close">&times;</button></div>
-      <div class="modal-body"><p id="confirmarMensaje">¿Está seguro?</p></div>
-      <div class="modal-footer"><button class="btn btn-secondary modal-close">Cancelar</button><button class="btn btn-danger" id="btnConfirmarEliminar">Eliminar</button></div>
-    </div>
-  </div>
+// ---- BASE DE DATOS LOCAL ----
+const DB = {
+  get(key) {
+    try { return JSON.parse(localStorage.getItem('nextcom_' + key)) || []; }
+    catch { return []; }
+  },
+  set(key, data) {
+    localStorage.setItem('nextcom_' + key, JSON.stringify(data));
+  },
+  getObj(key) {
+    try { return JSON.parse(localStorage.getItem('nextcom_' + key)) || {}; }
+    catch { return {}; }
+  },
+  setObj(key, data) {
+    localStorage.setItem('nextcom_' + key, JSON.stringify(data));
+  }
+};
 
-  <!-- ================= FIREBASE CONFIG CORREGIDA ================= -->
-  <script type="module">
-    // ✅ SDK VERSION CORREGIDA: 10.8.0 (estable y funcional)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-    
-    // Configuración EXACTA del usuario (sin cambios)
-    const firebaseConfig = {
-      apiKey: "AIzaSyCPdvXiBKQxFmxNJdqov1CSbNe16WWIXm8",
-      authDomain: "nextcom--multiservicos-server.firebaseapp.com",
-      projectId: "nextcom--multiservicos-server",
-      storageBucket: "nextcom--multiservicios-server.firebasestorage.app",
-      messagingSenderId: "1011344400777",
-      appId: "1:1011344400777:web:e40a1a66d9f77046bd8158",
-      measurementId: "G-YJZYPHRXZ6"
+// ---- UTILIDADES ----
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+function genOrdenNum() {
+  const d = new Date();
+  return 'ORD-' + d.toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(1000 + Math.random()*9000);
+}
+function hoy() { return new Date().toISOString().split('T')[0]; }
+function fmtMon(n) { return '$' + Number(n||0).toLocaleString('es-CO'); }
+function fmtTel(t) { return t || '-'; }
+function fmtFecha(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts);
+  return d.toLocaleDateString('es-CO', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function fmtFechaCorta(f) {
+  if (!f) return '-';
+  return new Date(f).toLocaleDateString('es-CO', {year:'numeric',month:'short',day:'numeric'});
+}
+function badgeEstado(e) {
+  const m = {recibido:'🔵 Recibido', revision:'🟡 En Revisión', reparacion:'🟠 En Reparación', listo:'🟢 Listo', entregado:'⚫ Entregado'};
+  return `<span class="status-badge" data-status="${e}">${m[e]||e}</span>`;
+}
+function toast(msg, tipo='success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = 'toast show ' + tipo;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.className='toast', 4000);
+}
+function abrirModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow='hidden'; }
+function cerrarModal(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
+function resetForm(id) { document.getElementById(id).reset(); }
+
+function confirmar(msg) {
+  return new Promise(resolve => {
+    document.getElementById('confMsg').textContent = msg;
+    const btn = document.getElementById('btnConfEliminar');
+    abrirModal('modalConfirmar');
+    btn.onclick = () => { cerrarModal('modalConfirmar'); resolve(true); };
+    document.querySelector('#modalConfirmar .modal-close').onclick = () => { cerrarModal('modalConfirmar'); resolve(false); };
+  });
+}
+
+// ---- NAVEGACIÓN ----
+function navegar(sec) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(sec).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.querySelector(`.nav-link[data-section="${sec}"]`).classList.add('active');
+  const tit = {dashboard:'Dashboard', clientes:'Clientes', ordenes:'Órdenes de Trabajo', inventario:'Inventario', reportes:'Reportes', configuracion:'Configuración'};
+  document.getElementById('pageTitle').textContent = tit[sec] || 'NEXTCOM';
+  if(sec==='clientes') renderClientes();
+  if(sec==='ordenes') renderOrdenes();
+  if(sec==='inventario') renderInventario();
+  if(sec==='reportes') renderReportes();
+  if(sec==='configuracion') cargarConfig();
+  if(innerWidth<=1024) document.getElementById('sidebar').classList.remove('active');
+}
+
+// ---- DASHBOARD ----
+function cargarDashboard() {
+  const clientes = DB.get('clientes');
+  const ordenes = DB.get('ordenes');
+  const repuestos = DB.get('repuestos');
+  const config = DB.getObj('config');
+  const stockMin = config.stockMin || 5;
+
+  document.getElementById('totalClientes').textContent = clientes.length;
+  document.getElementById('ordenesActivas').textContent = ordenes.filter(o=>o.estado!=='entregado').length;
+  document.getElementById('enReparacion').textContent = ordenes.filter(o=>o.estado==='reparacion').length;
+
+  // Ingresos hoy
+  const hoyStr = hoy();
+  const totalHoy = ordenes.filter(o=>o.fechaIngreso===hoyStr).reduce((s,o)=>s+(Number(o.abono)||0),0);
+  document.getElementById('ingresosHoy').textContent = fmtMon(totalHoy);
+
+  // Órdenes recientes
+  const rec = [...ordenes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,8);
+  const tb = document.getElementById('tbodyRecientes');
+  if(!rec.length) { tb.innerHTML='<tr><td colspan="6" class="no-data">No hay órdenes aún</td></tr>'; }
+  else {
+    tb.innerHTML = rec.map(o=>`<tr>
+      <td><strong>${o.numero}</strong></td>
+      <td>${o.clienteNombre||'-'}</td>
+      <td>${o.marca||''} ${o.modelo||''}</td>
+      <td>${badgeEstado(o.estado)}</td>
+      <td>${fmtFechaCorta(o.fechaIngreso)}</td>
+      <td>
+        <button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="editarOrden('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+      </td></tr>`).join('');
+  }
+
+  // Stock bajo
+  const bajos = repuestos.filter(r => (r.cantidad||0) <= (r.minimo||stockMin));
+  const lst = document.getElementById('listaStockBajo');
+  if(!bajos.length) { lst.innerHTML='<li class="ok">✅ Todo el inventario está OK</li>'; }
+  else { lst.innerHTML = bajos.map(r=>`<li>⚠️ <strong>${r.nombre}</strong>: ${r.cantidad} unidades (mín: ${r.minimo||stockMin})</li>`).join(''); }
+}
+
+// ---- CLIENTES ----
+function abrirModalCliente(id) {
+  resetForm('formCliente');
+  document.getElementById('clienteId').value = '';
+  document.getElementById('tituloCliente').textContent = 'Nuevo Cliente';
+  if(id) {
+    const c = DB.get('clientes').find(x=>x.id===id);
+    if(c) {
+      document.getElementById('clienteId').value = c.id;
+      document.getElementById('cNombre').value = c.nombre;
+      document.getElementById('cTelefono').value = c.telefono;
+      document.getElementById('cDireccion').value = c.direccion||'';
+      document.getElementById('tituloCliente').textContent = 'Editar Cliente';
+    }
+  }
+  abrirModal('modalCliente');
+}
+
+function guardarCliente(e) {
+  e.preventDefault();
+  const id = document.getElementById('clienteId').value;
+  const data = {
+    nombre: document.getElementById('cNombre').value.trim(),
+    telefono: document.getElementById('cTelefono').value.trim(),
+    direccion: document.getElementById('cDireccion').value.trim()
+  };
+  if(!data.nombre||!data.telefono) { toast('Nombre y teléfono obligatorios','error'); return; }
+
+  let clientes = DB.get('clientes');
+  if(id) {
+    const idx = clientes.findIndex(x=>x.id===id);
+    if(idx>=0) clientes[idx] = {...clientes[idx], ...data, updatedAt:Date.now()};
+    toast('Cliente actualizado');
+  } else {
+    data.id = genId();
+    data.createdAt = Date.now();
+    clientes.push(data);
+    toast('Cliente creado');
+  }
+  DB.set('clientes', clientes);
+  cerrarModal('modalCliente');
+  renderClientes();
+  cargarDashboard();
+}
+
+function renderClientes() {
+  const clientes = DB.get('clientes');
+  const ordenes = DB.get('ordenes');
+  const tb = document.getElementById('tbodyClientes');
+  if(!clientes.length) { tb.innerHTML='<tr><td colspan="5" class="no-data">No hay clientes</td></tr>'; return; }
+
+  const counts = {};
+  ordenes.forEach(o => { counts[o.clienteId] = (counts[o.clienteId]||0)+1; });
+
+  tb.innerHTML = clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<tr>
+    <td><strong>${c.nombre}</strong></td>
+    <td>${fmtTel(c.telefono)}</td>
+    <td>${c.direccion||'-'}</td>
+    <td><span class="badge">${counts[c.id]||0} órdenes</span></td>
+    <td>
+      <button class="btn btn-sm btn-primary btn-icon" onclick="abrirModalCliente('${c.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+      <button class="btn btn-sm btn-danger btn-icon" onclick="eliminarCliente('${c.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+    </td></tr>`).join('');
+}
+
+async function eliminarCliente(id) {
+  if(!await confirmar('¿Eliminar este cliente?')) return;
+  let clientes = DB.get('clientes').filter(x=>x.id!==id);
+  DB.set('clientes', clientes);
+  toast('Cliente eliminado');
+  renderClientes();
+  cargarDashboard();
+}
+
+// ---- ÓRDENES ----
+function abrirModalOrden(id) {
+  resetForm('formOrden');
+  document.getElementById('ordenId').value = '';
+  document.getElementById('oFechaIngreso').value = hoy();
+  document.getElementById('tituloOrden').textContent = 'Nueva Orden de Trabajo';
+  document.getElementById('previewFotos').innerHTML = '';
+  document.getElementById('contRepuestos').innerHTML = `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+  cargarSelectClientes();
+  cargarSelectRepuestos();
+  calcSaldo();
+
+  if(id) {
+    const o = DB.get('ordenes').find(x=>x.id===id);
+    if(o) {
+      document.getElementById('ordenId').value = o.id;
+      document.getElementById('oCliente').value = o.clienteId;
+      document.getElementById('oTelefono').value = o.telefono||'';
+      document.getElementById('oMarca').value = o.marca||'';
+      document.getElementById('oModelo').value = o.modelo||'';
+      document.getElementById('oImei').value = o.imei||'';
+      document.getElementById('oProblema').value = o.problema||'';
+      document.getElementById('oEstadoFisico').value = o.estadoFisico||'';
+      document.getElementById('oFechaIngreso').value = o.fechaIngreso||hoy();
+      document.getElementById('oFechaEst').value = o.fechaEstimada||'';
+      document.getElementById('oEstado').value = o.estado||'recibido';
+      document.getElementById('oDiagnostico').value = o.diagnostico||'';
+      document.getElementById('oNotas').value = o.notas||'';
+      document.getElementById('oTotal').value = o.total||0;
+      document.getElementById('oAbono').value = o.abono||0;
+      document.getElementById('oSaldo').value = o.saldo||0;
+      document.getElementById('oMetodo').value = o.metodo||'efectivo';
+      document.getElementById('tituloOrden').textContent = 'Editar Orden #'+o.numero;
+
+      // Repuestos
+      if(o.repuestosUsados && o.repuestosUsados.length) {
+        const cont = document.getElementById('contRepuestos');
+        cont.innerHTML = '';
+        o.repuestosUsados.forEach(ru => {
+          cont.innerHTML += `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="${ru.cantidad}"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+        });
+        cargarSelectRepuestos();
+        cont.querySelectorAll('.rep-select').forEach((sel,i) => {
+          if(o.repuestosUsados[i]) sel.value = o.repuestosUsados[i].repuestoId;
+        });
+      }
+
+      // Fotos
+      if(o.fotos && o.fotos.length) {
+        const pv = document.getElementById('previewFotos');
+        pv.innerHTML = '';
+        o.fotos.forEach((f,i) => {
+          pv.innerHTML += `<div class="photo-item"><img src="${f}" onclick="window.open(this.src)"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`;
+        });
+      }
+    }
+  }
+  abrirModal('modalOrden');
+}
+
+function cargarSelectClientes() {
+  const sel = document.getElementById('oCliente');
+  const clientes = DB.get('clientes').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + clientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
+}
+
+function cargarTelefonoCliente() {
+  const cid = document.getElementById('oCliente').value;
+  const c = DB.get('clientes').find(x=>x.id===cid);
+  document.getElementById('oTelefono').value = c ? c.telefono : '';
+}
+
+function cargarSelectRepuestos() {
+  const repuestos = DB.get('repuestos').filter(r=>r.cantidad>0);
+  document.querySelectorAll('.rep-select').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Seleccionar...</option>' + repuestos.map(r=>`<option value="${r.id}">${r.nombre} - ${fmtMon(r.precioVenta)} (Stock: ${r.cantidad})</option>`).join('');
+    sel.value = cur;
+  });
+}
+
+function agregarFilaRepuesto() {
+  const cont = document.getElementById('contRepuestos');
+  cont.innerHTML += `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+  cargarSelectRepuestos();
+}
+
+function calcSaldo() {
+  const t = Number(document.getElementById('oTotal').value)||0;
+  const a = Number(document.getElementById('oAbono').value)||0;
+  document.getElementById('oSaldo').value = Math.max(0, t-a).toFixed(2);
+}
+
+function previewFotos(input) {
+  const pv = document.getElementById('previewFotos');
+  pv.innerHTML = '';
+  const files = input.files;
+  for(let i=0;i<files.length;i++) {
+    if(i>=5) break;
+    const reader = new FileReader();
+    reader.onload = e => {
+      pv.innerHTML += `<div class="photo-item"><img src="${e.target.result}"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`;
     };
+    reader.readAsDataURL(files[i]);
+  }
+}
 
-    try {
-      const app = initializeApp(firebaseConfig);
-      const analytics = getAnalytics(app);
-      window.firebaseApp = app;
-      window.firebaseAnalytics = analytics;
-      console.log('✅ Firebase initialized correctly');
-    } catch (e) {
-      console.error('❌ Firebase init error:', e);
-      showError('Error inicializando Firebase: ' + e.message);
+function guardarOrden(e) {
+  e.preventDefault();
+  const id = document.getElementById('ordenId').value;
+  const cid = document.getElementById('oCliente').value;
+  if(!cid) { toast('Seleccione un cliente','error'); return; }
+
+  const cli = DB.get('clientes').find(x=>x.id===cid);
+
+  // Recopilar repuestos
+  const repuestosUsados = [];
+  document.querySelectorAll('#contRepuestos .repuesto-item').forEach(item => {
+    const rid = item.querySelector('.rep-select').value;
+    const cant = parseInt(item.querySelector('.rep-cant').value)||1;
+    if(rid && cant>0) repuestosUsados.push({repuestoId:rid, cantidad:cant});
+  });
+
+  // Recopilar fotos existentes
+  const fotos = [];
+  document.querySelectorAll('#previewFotos img').forEach(img => fotos.push(img.src));
+
+  const data = {
+    clienteId: cid,
+    clienteNombre: cli ? cli.nombre : '',
+    telefono: cli ? cli.telefono : document.getElementById('oTelefono').value,
+    marca: document.getElementById('oMarca').value.trim(),
+    modelo: document.getElementById('oModelo').value.trim(),
+    imei: document.getElementById('oImei').value.trim(),
+    problema: document.getElementById('oProblema').value.trim(),
+    estadoFisico: document.getElementById('oEstadoFisico').value.trim(),
+    fechaIngreso: document.getElementById('oFechaIngreso').value,
+    fechaEstimada: document.getElementById('oFechaEst').value,
+    estado: document.getElementById('oEstado').value,
+    diagnostico: document.getElementById('oDiagnostico').value.trim(),
+    notas: document.getElementById('oNotas').value.trim(),
+    total: Number(document.getElementById('oTotal').value)||0,
+    abono: Number(document.getElementById('oAbono').value)||0,
+    saldo: Number(document.getElementById('oSaldo').value)||0,
+    metodo: document.getElementById('oMetodo').value,
+    repuestosUsados,
+    fotos
+  };
+
+  let ordenes = DB.get('ordenes');
+
+  if(id) {
+    // EDITAR
+    const idx = ordenes.findIndex(x=>x.id===id);
+    if(idx>=0) {
+      const oldOrden = ordenes[idx];
+      ordenes[idx] = {...oldOrden, ...data, updatedAt:Date.now()};
+
+      // Revertir stock anterior y aplicar nuevo
+      if(oldOrden.repuestosUsados) {
+        revertirStock(oldOrden.repuestosUsados);
+      }
+      aplicarStock(repuestosUsados, id);
     }
+    toast('Orden actualizada');
+  } else {
+    // NUEVA
+    data.id = genId();
+    data.numero = genOrdenNum();
+    data.createdAt = Date.now();
+    data.updatedAt = Date.now();
+    ordenes.push(data);
+    aplicarStock(repuestosUsados, data.id);
+    toast('Orden creada: ' + data.numero);
+  }
 
-    // Función para mostrar error en pantalla
-    function showError(msg, details = '') {
-      const overlay = document.getElementById('loading-overlay');
-      const errorContainer = document.getElementById('errorContainer');
-      const errorMsg = document.getElementById('errorMsg');
-      const errorDetails = document.getElementById('errorDetails');
-      const loadingText = document.getElementById('loadingText');
-      
-      loadingText.textContent = 'Error de conexión';
-      errorMsg.textContent = msg;
-      errorDetails.textContent = details || 'Revisa la consola (F12) para más detalles.';
-      errorContainer.classList.remove('hidden');
-      overlay.classList.add('error');
-      // NO ocultar el overlay para que el usuario vea el error
+  DB.set('ordenes', ordenes);
+  cerrarModal('modalOrden');
+  renderOrdenes();
+  cargarDashboard();
+}
+
+function revertirStock(repuestosUsados) {
+  let repuestos = DB.get('repuestos');
+  repuestosUsados.forEach(ru => {
+    const r = repuestos.find(x=>x.id===ru.repuestoId);
+    if(r) r.cantidad = (r.cantidad||0) + ru.cantidad;
+  });
+  DB.set('repuestos', repuestos);
+}
+
+function aplicarStock(repuestosUsados, ordenId) {
+  let repuestos = DB.get('repuestos');
+  repuestosUsados.forEach(ru => {
+    const r = repuestos.find(x=>x.id===ru.repuestoId);
+    if(r) {
+      r.cantidad = Math.max(0, (r.cantidad||0) - ru.cantidad);
+      r.lastOrder = ordenId;
+      r.lastUsed = Date.now();
     }
+  });
+  DB.set('repuestos', repuestos);
+}
 
-    // Verificar si Firebase está disponible antes de continuar
-    if (!window.firebaseApp) {
-      showError('Firebase no se cargó correctamente.', 'Verifica que:\n1. Tienes conexión a internet\n2. El proyecto existe en Firebase Console\n3. No estás abriendo el archivo con file://');
-    } else {
-      // Continuar con la carga de la app solo si Firebase está listo
-      initApp();
+function renderOrdenes() {
+  const ordenes = DB.get('ordenes');
+  const filtro = document.getElementById('filtroEstado').value;
+  let lista = ordenes;
+  if(filtro) lista = lista.filter(o=>o.estado===filtro);
+  lista = [...lista].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+  const tb = document.getElementById('tbodyOrdenes');
+  if(!lista.length) { tb.innerHTML='<tr><td colspan="7" class="no-data">No hay órdenes</td></tr>'; return; }
+
+  tb.innerHTML = lista.map(o=>`<tr>
+    <td><strong>${o.numero}</strong></td>
+    <td>${o.clienteNombre||'-'}</td>
+    <td>${o.marca||''} ${o.modelo||''}<br><small class="text-muted">${o.imei||'Sin IMEI'}</small></td>
+    <td>${(o.problema||'').substring(0,35)}${(o.problema||'').length>35?'...':''}</td>
+    <td>${badgeEstado(o.estado)}</td>
+    <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fmtMon(o.saldo)}</strong></td>
+    <td>
+      <button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button>
+      <button class="btn btn-sm btn-secondary btn-icon" onclick="editarOrden('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+    </td></tr>`).join('');
+}
+
+async function editarOrden(id) {
+  cerrarModal('modalDetalle');
+  abrirModalOrden(id);
+}
+
+let ordenActual = null;
+
+function verDetalle(id) {
+  const o = DB.get('ordenes').find(x=>x.id===id);
+  if(!o) return;
+  ordenActual = o;
+
+  document.getElementById('detNumero').textContent = o.numero;
+
+  // Construir tabla de repuestos
+  let repHTML = '';
+  if(o.repuestosUsados && o.repuestosUsados.length) {
+    const repuestos = DB.get('repuestos');
+    repHTML = '<table><tr><th>Repuesto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr>';
+    o.repuestosUsados.forEach(ru => {
+      const r = repuestos.find(x=>x.id===ru.repuestoId);
+      if(r) {
+        const sub = (r.precioVenta||0)*ru.cantidad;
+        repHTML += `<tr><td>${r.nombre}</td><td>${ru.cantidad}</td><td>${fmtMon(r.precioVenta)}</td><td>${fmtMon(sub)}</td></tr>`;
+      }
+    });
+    repHTML += '</table>';
+  }
+
+  // Fotos
+  let fotosHTML = '';
+  if(o.fotos && o.fotos.length) {
+    fotosHTML = '<div class="photo-preview">' + o.fotos.map(f=>`<img src="${f}" onclick="window.open(this.src)">`).join('') + '</div>';
+  }
+
+  document.getElementById('detContenido').innerHTML = `
+    <div class="form-row">
+      <div><p><strong>Cliente:</strong> ${o.clienteNombre||'-'}</p><p><strong>Teléfono:</strong> ${fmtTel(o.telefono)}</p></div>
+      <div><p><strong>Equipo:</strong> ${o.marca||''} ${o.modelo||''}</p><p><strong>IMEI:</strong> ${o.imei||'N/A'}</p></div>
+    </div>
+    <div class="section"><div class="section-title">Problema Reportado</div><p>${o.problema||'-'}</p></div>
+    <div class="section"><div class="section-title">Estado Físico</div><p>${o.estadoFisico||'No especificado'}</p></div>
+    <div class="form-row">
+      <div><p><strong>Ingreso:</strong> ${fmtFechaCorta(o.fechaIngreso)}</p><p><strong>Estimada:</strong> ${fmtFechaCorta(o.fechaEstimada)}</p></div>
+      <div><p><strong>Estado:</strong> ${badgeEstado(o.estado)}</p></div>
+    </div>
+    ${o.diagnostico?`<div class="section"><div class="section-title">Diagnóstico</div><p>${o.diagnostico}</p></div>`:''}
+    ${repHTML?`<div class="section"><div class="section-title">Repuestos Usados</div>${repHTML}</div>`:''}
+    ${o.notas?`<div class="section"><div class="section-title">Notas</div><p>${o.notas}</p></div>`:''}
+    <div class="section"><div class="section-title">Pagos</div>
+      <p>Total: <strong>${fmtMon(o.total)}</strong></p>
+      <p>Abono: ${fmtMon(o.abono)}</p>
+      <p style="font-size:1.1rem;color:var(--warning)">Saldo: <strong>${fmtMon(o.saldo)}</strong></p>
+      <p><small class="text-muted">Método: ${o.metodo}</small></p>
+    </div>
+    ${fotosHTML?`<div class="section"><div class="section-title">Fotos</div>${fotosHTML}</div>`:''}
+  `;
+  abrirModal('modalDetalle');
+}
+
+function imprimirOrden() {
+  if(!ordenActual) return;
+  const o = ordenActual;
+  const config = DB.getObj('config');
+  const contenido = `
+    <div class="header"><h1>NEXTCOM Multiservicios</h1><p>${config.direccion||'Dirección no configurada'} | ${config.telefono||'Teléfono no configurado'}</p></div>
+    <h2>Orden de Trabajo #${o.numero}</h2>
+    <p><strong>Fecha:</strong> ${fmtFecha(o.createdAt)}</p>
+    <p><strong>Cliente:</strong> ${o.clienteNombre} | <strong>Tel:</strong> ${o.telefono}</p>
+    <p><strong>Equipo:</strong> ${o.marca} ${o.modelo} ${o.imei?'(IMEI: '+o.imei+')':''}</p>
+    <div class="section"><div class="section-title">Problema</div><p>${o.problema}</p></div>
+    <div class="section"><div class="section-title">Estado Físico</div><p>${o.estadoFisico||'No especificado'}</p></div>
+    <div class="section"><div class="section-title">Diagnóstico</div><p>${o.diagnostico||'Pendiente'}</p></div>
+    <div class="section"><div class="section-title">Pagos</div>
+      <table><tr><td>Total:</td><td>${fmtMon(o.total)}</td></tr><tr><td>Abono:</td><td>${fmtMon(o.abono)}</td></tr><tr><td><strong>Saldo:</strong></td><td><strong>${fmtMon(o.saldo)}</strong></td></tr></table>
+    </div>
+    <p><strong>Estado:</strong> ${o.estado.toUpperCase()}</p>
+    <p style="margin-top:30px">Firma Técnico: _________________ &nbsp;&nbsp;&nbsp;&nbsp; Firma Cliente: _________________</p>
+    <div style="margin-top:30px;text-align:center;font-size:0.85rem;color:#666">Gracias por confiar en NEXTCOM Multiservicios</div>
+  `;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Orden ${o.numero}</title><style>body{font-family:Arial;padding:20px;color:#000}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px}.section{margin:12px 0}.section-title{font-weight:bold;border-bottom:1px solid #999;padding-bottom:4px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin:5px 0}th,td{border:1px solid #999;padding:6px;text-align:left}p{margin:3px 0}@media print{body{padding:0}}</style></head><body>${contenido}</body></html>`);
+  w.document.close();
+  setTimeout(()=>{w.print();},300);
+}
+
+function notificarWhatsApp() {
+  if(!ordenActual) return;
+  const o = ordenActual;
+  const msg = `¡Hola ${o.clienteNombre}! 👋\n\nSu equipo ${o.marca} ${o.modelo} está ${o.estado==='listo'?'LISTO para ser retirado':'en proceso'} en NEXTCOM Multiservicios. 📱\n\n🔧 Orden: ${o.numero}\n💰 Saldo pendiente: ${fmtMon(o.saldo)}\n\n📍 ¡Gracias por confiar en nosotros!`;
+  const phone = (o.telefono||'').replace(/[^\d+]/g,'');
+  if(!phone||phone.length<7) { toast('Teléfono no válido para WhatsApp','error'); return; }
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function editarDesdeDetalle() {
+  if(ordenActual) editarOrden(ordenActual.id);
+}
+
+// Filtro de órdenes
+document.getElementById('filtroEstado').addEventListener('change', renderOrdenes);
+
+// ---- INVENTARIO ----
+function abrirModalRepuesto(id) {
+  resetForm('formRepuesto');
+  document.getElementById('repuestoId').value = '';
+  document.getElementById('tituloRepuesto').textContent = 'Nuevo Repuesto';
+  if(id) {
+    const r = DB.get('repuestos').find(x=>x.id===id);
+    if(r) {
+      document.getElementById('repuestoId').value = r.id;
+      document.getElementById('rNombre').value = r.nombre;
+      document.getElementById('rCantidad').value = r.cantidad;
+      document.getElementById('rMinimo').value = r.minimo||5;
+      document.getElementById('rPCompra').value = r.precioCompra||0;
+      document.getElementById('rPVenta').value = r.precioVenta||0;
+      document.getElementById('tituloRepuesto').textContent = 'Editar Repuesto';
     }
+  }
+  abrirModal('modalRepuesto');
+}
 
-    // ================= UTILS =================
-    const Utils = {
-      formatDate: (ts) => ts ? (ts.toDate ? ts.toDate() : new Date(ts)).toLocaleDateString('es-CO',{year:'numeric',month:'short',day:'numeric'}) : '-',
-      getTodayDate: () => new Date().toISOString().split('T')[0],
-      generateOrderNumber: () => `ORD-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(1000+Math.random()*9000)}`,
-      formatCurrency: (amt) => amt==null?'$0':new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',minimumFractionDigits:0}).format(amt),
-      formatPhone: (p) => p?p.replace(/[^\d+]/g,''):'-',
-      showToast: (msg,type='success',dur=4000) => { const t=document.getElementById('toast'),m=document.getElementById('toastMessage'); m.textContent=msg; t.className=`toast ${type} show`; setTimeout(()=>t.classList.remove('show'),dur); },
-      setLoading: (show) => { if(!show) document.getElementById('loading-overlay')?.classList.add('hidden'); },
-      openModal: (id) => { document.getElementById(id)?.classList.add('active'); document.body.style.overflow='hidden'; },
-      closeModal: (id) => { document.getElementById(id)?.classList.remove('active'); document.body.style.overflow=''; },
-      confirmAction: (msg='¿Está seguro?') => new Promise(res=>{ const modal=document.getElementById('modalConfirmar'),btn=document.getElementById('btnConfirmarEliminar'),close=modal.querySelector('.modal-close'),docMsg=document.getElementById('confirmarMensaje'); docMsg.textContent=msg; Utils.openModal('modalConfirmar'); const clean=()=>{btn.onclick=null;close.onclick=null}; btn.onclick=()=>{clean();Utils.closeModal('modalConfirmar');res(true)}; close.onclick=()=>{clean();Utils.closeModal('modalConfirmar');res(false)}; }),
-      getStatusBadge: (s) => { const l={'recibido':'🔵 Recibido','revision':'🟡 En Revisión','reparacion':'🟠 En Reparación','listo':'🟢 Listo','entregado':'⚫ Entregado'}; return `<span class="status-badge" data-status="${s}">${l[s]||s}</span>`; },
-      fileToBase64: (f) => new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);}),
-      getWhatsAppLink: (ph,msg) => `https://wa.me/${ph.replace(/[^\d]/g,'')}?text=${encodeURIComponent(msg)}`,
-      printContent: (c) => { const w=window.open('','_blank'); w.document.write(`<!DOCTYPE html><html><head><title>Comprobante</title><style>body{font-family:Arial;padding:20px}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px}.section{margin:15px 0}.section-title{font-weight:bold;border-bottom:1px solid #ccc;padding-bottom:5px}</style></head><body>${c}</body></html>`); w.document.close(); setTimeout(()=>{w.print();w.close();},250); }
-    };
+function guardarRepuesto(e) {
+  e.preventDefault();
+  const id = document.getElementById('repuestoId').value;
+  const data = {
+    nombre: document.getElementById('rNombre').value.trim(),
+    cantidad: parseInt(document.getElementById('rCantidad').value)||0,
+    minimo: parseInt(document.getElementById('rMinimo').value)||5,
+    precioCompra: Number(document.getElementById('rPCompra').value)||0,
+    precioVenta: Number(document.getElementById('rPVenta').value)||0
+  };
+  if(!data.nombre) { toast('Nombre obligatorio','error'); return; }
 
-    // ================= FIREBASE IMPORTS (solo si está disponible) =================
-    let db, storage, CONFIG, AppState;
-    
-    function initApp() {
-      // Imports dinámicos para evitar errores si Firebase falla
-      import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js")
-        .then(firestore => {
-          import("https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js")
-            .then(storageMod => {
-              db = firestore.getFirestore(window.firebaseApp);
-              storage = storageMod.getStorage(window.firebaseApp);
-              
-              CONFIG = { COLLECTIONS: { CLIENTES:'clientes', ORDENES:'ordenes', REPUESTOS:'repuestos', PAGOS:'pagos', CONFIG:'config' }, STOCK_MINIMO_DEFAULT: 5, MAX_FOTOS: 5 };
-              AppState = { currentSection:'dashboard', editingOrder:null, config:{telefono:'',direccion:'',stockMinimo:CONFIG.STOCK_MINIMO_DEFAULT} };
-              
-              // Ahora sí, inicializar la app completa
-              document.addEventListener('DOMContentLoaded', async () => {
-                try {
-                  await loadConfig();
-                  setupEventListeners();
-                  await Promise.all([loadDashboardStats(), loadClientes(), loadOrdenesRecientes(), loadInventarioAlertas()]);
-                  Utils.setLoading(false);
-                  console.log('🚀 NEXTCOM System ready!');
-                } catch(e) {
-                  console.error('❌ App init error:', e);
-                  showError('Error cargando la aplicación', e.message);
-                }
-              });
-            })
-            .catch(e => showError('Error cargando Storage: ' + e.message));
-        })
-        .catch(e => showError('Error cargando Firestore: ' + e.message));
+  let repuestos = DB.get('repuestos');
+  if(id) {
+    const idx = repuestos.findIndex(x=>x.id===id);
+    if(idx>=0) repuestos[idx] = {...repuestos[idx], ...data, updatedAt:Date.now()};
+    toast('Repuesto actualizado');
+  } else {
+    data.id = genId();
+    data.createdAt = Date.now();
+    repuestos.push(data);
+    toast('Repuesto creado');
+  }
+  DB.set('repuestos', repuestos);
+  cerrarModal('modalRepuesto');
+  renderInventario();
+  cargarDashboard();
+}
+
+function renderInventario() {
+  const repuestos = DB.get('repuestos');
+  const config = DB.getObj('config');
+  const stockMin = config.stockMin||5;
+  const tb = document.getElementById('tbodyInventario');
+  if(!repuestos.length) { tb.innerHTML='<tr><td colspan="6" class="no-data">No hay repuestos</td></tr>'; return; }
+
+  tb.innerHTML = repuestos.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(r=>{
+    const bajo = (r.cantidad||0) <= (r.minimo||stockMin);
+    return `<tr>
+      <td><strong>${r.nombre}</strong></td>
+      <td>${r.cantidad}</td>
+      <td>${fmtMon(r.precioCompra)}</td>
+      <td>${fmtMon(r.precioVenta)}</td>
+      <td class="${bajo?'text-danger':'text-success'}">${bajo?'⚠️ Bajo':'✅ OK'}</td>
+      <td>
+        <button class="btn btn-sm btn-primary btn-icon" onclick="abrirModalRepuesto('${r.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="eliminarRepuesto('${r.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+      </td></tr>`;
+  }).join('');
+}
+
+async function eliminarRepuesto(id) {
+  if(!await confirmar('¿Eliminar este repuesto?')) return;
+  let repuestos = DB.get('repuestos').filter(x=>x.id!==id);
+  DB.set('repuestos', repuestos);
+  toast('Repuesto eliminado');
+  renderInventario();
+  cargarDashboard();
+}
+
+// ---- REPORTES ----
+function renderReportes() {
+  const ordenes = DB.get('ordenes');
+  const hoyStr = hoy();
+  const hoyDate = new Date();
+  const mesActual = hoyDate.getMonth();
+  const anioActual = hoyDate.getFullYear();
+
+  // Ingresos diarios
+  const totalDia = ordenes.filter(o=>o.fechaIngreso===hoyStr).reduce((s,o)=>s+(Number(o.abono)||0),0);
+  document.getElementById('ingresosDiarios').textContent = fmtMon(totalDia);
+  document.getElementById('fechaReporteDiario').textContent = hoyDate.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // Ingresos mensuales
+  const totalMes = ordenes.filter(o => {
+    if(!o.fechaIngreso) return false;
+    const d = new Date(o.fechaIngreso);
+    return d.getMonth()===mesActual && d.getFullYear()===anioActual;
+  }).reduce((s,o)=>s+(Number(o.abono)||0),0);
+  document.getElementById('ingresosMensuales').textContent = fmtMon(totalMes);
+  document.getElementById('mesReporte').textContent = hoyDate.toLocaleDateString('es-CO',{month:'long',year:'numeric'});
+
+  // Reparaciones comunes
+  const probs = {};
+  ordenes.forEach(o => {
+    if(o.problema) {
+      const key = o.problema.toLowerCase().split(/\s+/).slice(0,3).join(' ');
+      probs[key] = (probs[key]||0)+1;
     }
+  });
+  const top = Object.entries(probs).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const mx = top[0]?top[0][1]:1;
+  const lst = document.getElementById('listaReparaciones');
+  if(!top.length) { lst.innerHTML='<li class="text-muted">Sin datos suficientes</li>'; return; }
+  lst.innerHTML = top.map(([p,c])=>`<li><span>${p}</span><span class="badge">${c}</span><div class="chart-bar"><div class="chart-bar-fill" style="width:${(c/mx)*100}%"></div></div></li>`).join('');
+}
 
-    // ================= FUNCIONES FIREBASE (simplificadas para el ejemplo) =================
-    const getDocData = async (col,id) => { try { const d=await firestore.getDoc(firestore.doc(db,col,id)); return d.exists()?{id:d.id,...d.data()}:null; } catch(e){console.error(e);return null;} };
-    const getCollectionData = async (col,filters={}) => { try { let q=firestore.query(firestore.collection(db,col)); if(filters.orderBy)q=firestore.query(q,firestore.orderBy(filters.orderBy.field,filters.orderBy.dir||'desc')); if(filters.where)q=firestore.query(q,firestore.where(filters.where.field,filters.where.op,filters.where.value)); if(filters.limit)q=firestore.query(q,firestore.limit(filters.limit)); const snap=await firestore.getDocs(q); return snap.docs.map(d=>({id:d.id,...d.data()})); } catch(e){console.error(e);return [];} };
-    const createDoc = async (col,data) => { const ref=await firestore.addDoc(firestore.collection(db,col),{...data,createdAt:firestore.serverTimestamp(),updatedAt:firestore.serverTimestamp()}); return ref.id; };
-    const updateDocData = async (col,id,data) => await firestore.updateDoc(firestore.doc(db,col,id),{...data,updatedAt:firestore.serverTimestamp()});
-    const deleteDocData = async (col,id) => await firestore.deleteDoc(firestore.doc(db,col,id));
-    const uploadImage = async (file,path) => { const ref=storageMod.ref(storage,`${path}/${Date.now()}_${file.name}`); await storageMod.uploadBytes(ref,file); return await storageMod.getDownloadURL(ref); };
+function exportarCSV() {
+  const ordenes = DB.get('ordenes');
+  if(!ordenes.length) { toast('No hay órdenes para exportar','warning'); return; }
+  const headers = ['Orden','Cliente','Teléfono','Marca','Modelo','IMEI','Problema','Estado','Total','Abono','Saldo','Fecha'];
+  const rows = ordenes.map(o => [o.numero, o.clienteNombre, o.telefono, o.marca, o.modelo, o.imei||'', o.problema||'', o.estado, o.total, o.abono, o.saldo, o.fechaIngreso]);
+  let csv = headers.join(',') + '\n';
+  rows.forEach(r => { csv += r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',') + '\n'; });
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `ordenes-nextcom-${hoy()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado');
+}
 
-    // ================= FUNCIONES DE LA APP (resumidas - mantener lógica completa en producción) =================
-    
-    // Navegación
-    function navigateTo(sec){
-      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(sec)?.classList.add('active');
-      document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));document.querySelector(`.nav-link[data-section="${sec}"]`)?.classList.add('active');
-      const titles={'dashboard':'Dashboard','clientes':'Clientes','ordenes':'Órdenes','inventario':'Inventario','reportes':'Reportes','configuracion':'Config'};
-      document.getElementById('pageTitle').textContent=titles[sec]||'NEXTCOM';
-      if(sec==='clientes')loadClientes();if(sec==='ordenes')loadOrdenes();if(sec==='inventario')loadInventario();if(sec==='reportes')loadReportes();
-      if(window.innerWidth<=1024)document.getElementById('sidebar').classList.remove('active');
-    }
+// ---- CONFIGURACIÓN ----
+function cargarConfig() {
+  const c = DB.getObj('config');
+  document.getElementById('cfgTelefono').value = c.telefono||'';
+  document.getElementById('cfgDireccion').value = c.direccion||'';
+  document.getElementById('cfgStockMin').value = c.stockMin||5;
+}
 
-    // Dashboard Stats (simplificado)
-    async function loadDashboardStats(){
-      try{
-        const cs=await getCollectionData(CONFIG.COLLECTIONS.CLIENTES);document.getElementById('totalClientes').textContent=cs.length;
-        const oa=await getCollectionData(CONFIG.COLLECTIONS.ORDENES,{where:{field:'estado',op:'!=',value:'entregado'}});document.getElementById('ordenesActivas').textContent=oa.length;
-        const er=await getCollectionData(CONFIG.COLLECTIONS.ORDENES,{where:{field:'estado',op:'==',value:'reparacion'}});document.getElementById('enReparacion').textContent=er.length;
-        document.getElementById('ingresosHoy').textContent='$0'; // Implementar lógica de pagos completa en producción
-      }catch(e){console.error('Stats error:',e)}
-    }
-    
-    async function loadOrdenesRecientes(){
-      try{
-        const os=await getCollectionData(CONFIG.COLLECTIONS.ORDENES,{orderBy:{field:'createdAt',dir:'desc'},limit:5}),tb=document.getElementById('tbodyOrdenesRecientes');
-        if(!os.length){tb.innerHTML='<tr><td colspan="6" class="text-center">Sin órdenes</td></tr>';return;}
-        tb.innerHTML=os.map(o=>`<tr><td><strong>${o.numero||'N/A'}</strong></td><td>${o.clienteNombre||'-'}</td><td>${o.marca||''} ${o.modelo||''}</td><td>${Utils.getStatusBadge(o.estado||'recibido')}</td><td>${Utils.formatDate(o.fechaIngreso)}</td><td><button class="btn btn-sm btn-primary btn-icon" onclick="verDetalleOrden('${o.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('');
-      }catch(e){console.error('Recent orders error:',e)}
-    }
-    
-    async function loadInventarioAlertas(){
-      try{
-        const rs=await getCollectionData(CONFIG.COLLECTIONS.REPUESTOS),min=AppState.config.stockMinimo||CONFIG.STOCK_MINIMO_DEFAULT,bajos=rs.filter(r=>(r.cantidad||0)<=(r.minimo||min)),lst=document.getElementById('listaStockBajo');
-        if(!bajos.length){lst.innerHTML='<li class="text-success">✅ Todo el inventario está bien</li>';return;}
-        lst.innerHTML=bajos.map(r=>`<li>⚠️ <strong>${r.nombre}</strong>: ${r.cantidad} unidades</li>`).join('');
-      }catch(e){console.error('Inventory error:',e)}
-    }
+function guardarConfig(e) {
+  e.preventDefault();
+  const c = {
+    telefono: document.getElementById('cfgTelefono').value.trim(),
+    direccion: document.getElementById('cfgDireccion').value.trim(),
+    stockMin: parseInt(document.getElementById('cfgStockMin').value)||5
+  };
+  DB.setObj('config', c);
+  toast('Configuración guardada');
+}
 
-    // Clientes
-    async function loadClientes(){
-      try{
-        const cs=await getCollectionData(CONFIG.COLLECTIONS.CLIENTES,{orderBy:{field:'nombre',dir:'asc'}}),tb=document.getElementById('tbodyClientes');
-        if(!cs.length){tb.innerHTML='<tr><td colspan="5" class="text-center">No hay clientes</td></tr>';return;}
-        tb.innerHTML=cs.map(c=>`<tr><td><strong>${c.nombre||'-'}</strong></td><td>${Utils.formatPhone(c.telefono)}</td><td>${c.direccion||'-'}</td><td>-</td><td><button class="btn btn-sm btn-primary btn-icon" onclick="editarCliente('${c.id}')"><i class="fas fa-edit"></i></button></td></tr>`).join('');
-      }catch(e){console.error('Clientes error:',e)}
-    }
-    
-    async function handleClienteSubmit(e){e.preventDefault();const id=document.getElementById('clienteId').value,d={nombre:document.getElementById('clienteNombre').value.trim(),telefono:document.getElementById('clienteTelefono').value.trim(),direccion:document.getElementById('clienteDireccion').value.trim()};if(!d.nombre||!d.telefono){Utils.showToast('Nombre y teléfono obligatorios','error');return;}try{if(id){await updateDocData(CONFIG.COLLECTIONS.CLIENTES,id,d);Utils.showToast('Actualizado');}else{await createDoc(CONFIG.COLLECTIONS.CLIENTES,d);Utils.showToast('Creado');}Utils.closeModal('modalCliente');await loadClientes();}catch(er){console.error('Cliente error:',er);Utils.showToast('Error: '+er.message,'error')}}
-    
-    async function editarCliente(id){try{const c=await getDocData(CONFIG.COLLECTIONS.CLIENTES,id);if(!c)return;document.getElementById('clienteId').value=c.id;document.getElementById('clienteNombre').value=c.nombre||'';document.getElementById('clienteTelefono').value=c.telefono||'';document.getElementById('clienteDireccion').value=c.direccion||'';document.getElementById('modalClienteTitle').textContent='Editar Cliente';Utils.openModal('modalCliente');}catch(e){console.error('Edit error:',e)}}
-    
-    // ================= EVENT LISTENERS =================
-    function setupEventListeners(){
-      document.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',e=>{e.preventDefault();navigateTo(l.dataset.section);}));
-      document.getElementById('menuToggle')?.addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('active'));
-      document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',e=>{const m=e.target.closest('.modal');if(m)Utils.closeModal(m.id);}));
-      document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)Utils.closeModal(m.id);}));
-      
-      // Clientes
-      document.getElementById('btnNuevoCliente')?.addEventListener('click',()=>{document.getElementById('formCliente').reset();document.getElementById('clienteId').value='';document.getElementById('modalClienteTitle').textContent='Nuevo Cliente';Utils.openModal('modalCliente');});
-      document.getElementById('formCliente')?.addEventListener('submit',handleClienteSubmit);
-      
-      // Órdenes (placeholders - implementar lógica completa en producción)
-      document.getElementById('btnNuevaOrden')?.addEventListener('click',()=>{Utils.openModal('modalOrden');Utils.showToast('Función completa en versión full','warning',3000);});
-      document.getElementById('btnCrearOrden')?.addEventListener('click',()=>{Utils.openModal('modalOrden');});
-      
-      // Inventario
-      document.getElementById('btnNuevoRepuesto')?.addEventListener('click',()=>{document.getElementById('formRepuesto').reset();document.getElementById('repuestoId').value='';document.getElementById('modalRepuestoTitle').textContent='Nuevo Repuesto';Utils.openModal('modalRepuesto');});
-      document.getElementById('formRepuesto')?.addEventListener('submit',async(e)=>{e.preventDefault();const id=document.getElementById('repuestoId').value,d={nombre:document.getElementById('repuestoNombre').value.trim(),cantidad:parseInt(document.getElementById('repuestoCantidad').value)||0,minimo:parseInt(document.getElementById('repuestoMinimo').value)||5,precioCompra:parseFloat(document.getElementById('repuestoPrecioCompra').value)||0,precioVenta:parseFloat(document.getElementById('repuestoPrecioVenta').value)||0};if(!d.nombre){Utils.showToast('Nombre obligatorio','error');return;}try{if(id){await updateDocData(CONFIG.COLLECTIONS.REPUESTOS,id,d);Utils.showToast('Actualizado');}else{await createDoc(CONFIG.COLLECTIONS.REPUESTOS,d);Utils.showToast('Creado');}Utils.closeModal('modalRepuesto');await loadInventario();}catch(er){Utils.showToast('Error: '+er.message,'error')}});
-      
-      // Config
-      document.getElementById('formConfig')?.addEventListener('submit',async(e)=>{e.preventDefault();const cf={telefono:document.getElementById('configTelefono').value.trim(),direccion:document.getElementById('configDireccion').value.trim(),stockMinimo:parseInt(document.getElementById('configStockMinimo').value)||5};try{await updateDocData(CONFIG.COLLECTIONS.CONFIG,'general',cf);AppState.config={...AppState.config,...cf};Utils.showToast('Guardado');}catch(er){await createDoc(CONFIG.COLLECTIONS.CONFIG,{...cf});Utils.showToast('Guardado');}});
-      
-      // Teclas rápidas
-      document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='n'){e.preventDefault();Utils.openModal('modalOrden');} if(e.key==='Escape')document.querySelectorAll('.modal.active').forEach(m=>Utils.closeModal(m.id));});
-    }
+// ---- BÚSQUEDA GLOBAL ----
+function buscarGlobal() {
+  const q = document.getElementById('globalSearch').value.trim().toLowerCase();
+  if(!q) { toast('Ingrese un término de búsqueda','warning'); return; }
 
-    // Funciones globales para HTML
-    window.verDetalleOrden = (id) => { Utils.showToast('Función completa en versión full','warning'); };
-    window.editarCliente = editarCliente;
-    
-    // Cargar config inicial
-    async function loadConfig(){try{const cf=await getDocData(CONFIG.COLLECTIONS.CONFIG,'general');if(cf)AppState.config={...AppState.config,...cf};}catch(e){console.error('Config error:',e)}}
-    function loadInventario(){ /* Implementar en versión completa */ }
-    function loadOrdenes(){ /* Implementar en versión completa */ }
-    function loadReportes(){ /* Implementar en versión completa */ }
-    
-    console.log('🔧 NEXTCOM - Versión corregida cargada');
-  </script>
-  
-  <!-- Script de diagnóstico para el usuario -->
-  <script>
-    // Mostrar ayuda si el usuario abre el archivo directamente
-    if (window.location.protocol === 'file:') {
-      setTimeout(() => {
-        const overlay = document.getElementById('loading-overlay');
-        const errorContainer = document.getElementById('errorContainer');
-        const errorMsg = document.getElementById('errorMsg');
-        const errorDetails = document.getElementById('errorDetails');
-        const loadingText = document.getElementById('loadingText');
-        
-        loadingText.textContent = '⚠️ Modo de archivo detectado';
-        errorMsg.innerHTML = 'No uses <code>file://</code> con Firebase';
-        errorDetails.innerHTML = `Para ejecutar NEXTCOM:
-        
-1️⃣ Opción RÁPIDA (Python):
-   python -m http.server 8000
-   → Abre: http://localhost:8000
+  const ordenes = DB.get('ordenes');
+  const resultados = ordenes.filter(o =>
+    (o.numero||'').toLowerCase().includes(q) ||
+    (o.clienteNombre||'').toLowerCase().includes(q) ||
+    (o.telefono||'').includes(q) ||
+    (o.imei||'').includes(q) ||
+    (o.marca||'').toLowerCase().includes(q) ||
+    (o.modelo||'').toLowerCase().includes(q) ||
+    (o.problema||'').toLowerCase().includes(q)
+  );
 
-2️⃣ Opción VS Code:
-   Instala "Live Server" extension
-   → Click derecho → "Open with Live Server"
+  if(!resultados.length) { toast('No se encontraron resultados','warning'); return; }
 
-3️⃣ Opción Node.js:
-   npx serve .
-   → Abre: http://localhost:3000
+  navegar('ordenes');
+  const tb = document.getElementById('tbodyOrdenes');
+  tb.innerHTML = resultados.map(o=>`<tr>
+    <td><strong>${o.numero}</strong></td><td>${o.clienteNombre||'-'}</td>
+    <td>${o.marca||''} ${o.modelo||''}<br><small class="text-muted">${o.imei||'-'}</small></td>
+    <td>${(o.problema||'').substring(0,30)}</td>
+    <td>${badgeEstado(o.estado)}</td>
+    <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fmtMon(o.saldo)}</strong></td>
+    <td><button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')"><i class="fas fa-eye"></i></button></td>
+  </tr>`).join('');
+  toast(`${resultados.length} resultado(s) encontrado(s)`);
+}
+document.getElementById('searchBtn').addEventListener('click', buscarGlobal);
+document.getElementById('globalSearch').addEventListener('keypress', e => { if(e.key==='Enter') buscarGlobal(); });
 
-🔗 Firebase requiere servidor HTTP por seguridad CORS.`;
-        errorContainer.classList.remove('hidden');
-        overlay.classList.add('error');
-      }, 3000);
-    }
-  </script>
+// ---- TECLADO ----
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey && e.key==='n') { e.preventDefault(); abrirModalOrden(); }
+  if(e.key==='Escape') document.querySelectorAll('.modal.active').forEach(m => cerrarModal(m.id));
+});
+
+// ---- EVENTOS GENERALES ----
+document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => navegar(l.dataset.section)));
+document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('active'));
+document.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', function(){ cerrarModal(this.closest('.modal').id); }));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', function(e){ if(e.target===this) cerrarModal(this.id); }));
+
+// ---- INICIALIZACIÓN ----
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    cargarDashboard();
+    cargarConfig();
+    document.getElementById('loading-overlay').classList.add('hidden');
+    console.log('✅ NEXTCOM Multiservicios listo - Almacenamiento local');
+  }, 600);
+});
+</script>
 </body>
 </html>

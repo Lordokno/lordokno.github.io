@@ -3,225 +3,674 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NEXTCOM Multiservicios | Sistema de Gestión</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>NEXTCOM Multiservicios | Sistema Premium</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    :root{--bg-primary:#0f172a;--bg-secondary:#1e293b;--bg-card:#1e293b;--bg-hover:#334155;--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--primary:#3b82f6;--primary-hover:#2563eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#06b6d4;--purple:#8b5cf6;--border:#334155;--shadow:0 4px 6px -1px rgba(0,0,0,0.3);--shadow-lg:0 10px 15px -3px rgba(0,0,0,0.4);--radius:12px;--radius-sm:8px;--transition:all 0.3s ease}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --bg-glass: rgba(255,255,255,0.03);
+      --bg-hover: rgba(59, 130, 246, 0.08);
+      --text-primary: #f0f4ff;
+      --text-secondary: #8892a8;
+      --text-muted: #5a6478;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59,130,246,0.3);
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --success-glow: rgba(16,185,129,0.3);
+      --warning: #f59e0b;
+      --warning-glow: rgba(245,158,11,0.3);
+      --danger: #ef4444;
+      --danger-glow: rgba(239,68,68,0.3);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139,92,246,0.3);
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 6px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 40px var(--primary-glow);
+      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
-    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;min-height:100vh}
-    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.5s}
-    .loading-overlay.hidden{opacity:0;pointer-events:none}
-    .spinner{width:60px;height:60px;border:4px solid var(--bg-secondary);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:1rem}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;min-height:100vh;overflow-x:hidden}
+
+    /* Fondo animado */
+    .bg-animation{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden;pointer-events:none}
+    .bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:0.15;animation:orbFloat 20s ease-in-out infinite}
+    .bg-orb:nth-child(1){width:600px;height:600px;background:var(--primary);top:-200px;right:-100px;animation-delay:0s}
+    .bg-orb:nth-child(2){width:500px;height:500px;background:var(--purple);bottom:-150px;left:-100px;animation-delay:-7s}
+    .bg-orb:nth-child(3){width:400px;height:400px;background:var(--cyan);top:50%;left:50%;animation-delay:-14s}
+    @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(50px,-50px) scale(1.1)}66%{transform:translate(-30px,30px) scale(0.9)}}
+
+    /* Loading */
+    .loading-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;transition:opacity 0.6s,transform 0.6s}
+    .loading-overlay.hidden{opacity:0;transform:scale(1.05);pointer-events:none}
+    .loader{width:60px;height:60px;position:relative;margin-bottom:1.5rem}
+    .loader::before,.loader::after{content:'';position:absolute;border-radius:50%}
+    .loader::before{inset:0;border:3px solid var(--border);border-top-color:var(--primary);animation:spin 0.8s linear infinite}
+    .loader::after{inset:8px;border:3px solid var(--border);border-top-color:var(--purple);animation:spin 1.2s linear infinite reverse}
     @keyframes spin{to{transform:rotate(360deg)}}
-    #loadingText{color:var(--text-secondary);font-size:1.1rem}
-    .sidebar{width:260px;background:var(--bg-secondary);border-right:1px solid var(--border);padding:1rem 0;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:transform 0.3s ease}
-    .sidebar-header{padding:1.5rem 1rem;text-align:center;border-bottom:1px solid var(--border);margin-bottom:0.5rem}
-    .sidebar-header h2{color:var(--primary);font-size:1.4rem;display:flex;align-items:center;justify-content:center;gap:0.5rem}
-    .sidebar-header p{color:var(--text-secondary);font-size:0.85rem;margin-top:0.2rem}
-    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:0.15rem;padding:0.5rem}
-    .nav-link{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1rem;color:var(--text-secondary);text-decoration:none;border-radius:var(--radius-sm);transition:var(--transition);font-weight:500;cursor:pointer}
-    .nav-link:hover,.nav-link.active{background:var(--primary);color:white}
+    .load-text{color:var(--text-secondary);font-size:0.95rem;font-weight:500;letter-spacing:2px;text-transform:uppercase}
+    .load-sub{color:var(--text-muted);font-size:0.8rem;margin-top:0.3rem}
+
+    /* Sidebar Glass */
+    .sidebar{width:270px;background:rgba(17,24,39,0.85);backdrop-filter:blur(20px);border-right:1px solid var(--border);padding:1.5rem 0;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1)}
+    .sidebar-brand{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem}
+    .brand-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--primary),var(--purple));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:white;box-shadow:0 4px 15px var(--primary-glow)}
+    .brand-text h2{font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .brand-text p{font-size:0.72rem;color:var(--text-muted);font-weight:500;letter-spacing:1px;text-transform:uppercase}
+    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:0.2rem;padding:1rem 0.75rem}
+    .nav-link{display:flex;align-items:center;gap:0.85rem;padding:0.8rem 1rem;color:var(--text-secondary);text-decoration:none;border-radius:var(--radius-sm);transition:var(--transition);font-weight:500;font-size:0.9rem;position:relative;overflow:hidden}
+    .nav-link::before{content:'';position:absolute;left:0;top:0;width:3px;height:0;background:var(--primary);transition:height 0.25s;border-radius:0 3px 3px 0}
+    .nav-link:hover{background:var(--bg-hover);color:var(--text-primary)}
+    .nav-link.active{background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.08));color:var(--primary)}
+    .nav-link.active::before{height:100%}
     .nav-link i{width:20px;text-align:center;font-size:1rem}
-    .sidebar-footer{padding:1rem;text-align:center;border-top:1px solid var(--border);color:var(--text-muted);font-size:0.75rem}
-    .main-content{margin-left:260px;padding:1.5rem 2rem;transition:margin-left 0.3s ease}
-    .main-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;margin-bottom:2rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:1rem}
-    .menu-toggle{display:none;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:0.5rem 0.8rem;border-radius:var(--radius-sm);cursor:pointer;font-size:1.2rem}
-    .header-actions{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-    .search-box{display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem 0.75rem;gap:0.5rem}
-    .search-box input{background:transparent;border:none;color:var(--text-primary);width:180px;outline:none;font-size:0.9rem}
+    .nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:0.65rem;padding:0.15rem 0.5rem;border-radius:10px;font-weight:600}
+    .sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border)}
+    .sidebar-footer .storage-info{display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem}
+    .storage-bar{height:4px;background:var(--bg-hover);border-radius:2px;overflow:hidden}
+    .storage-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--cyan));border-radius:2px;transition:width 0.5s}
+    .sidebar-footer small{font-size:0.7rem;color:var(--text-muted)}
+
+    /* Main */
+    .main-content{margin-left:270px;padding:1.5rem 2rem;transition:margin-left 0.35s;min-height:100vh}
+
+    /* Header Glass */
+    .main-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 0;margin-bottom:2rem;border-bottom:1px solid var(--border);gap:1rem;flex-wrap:wrap}
+    .header-left{display:flex;align-items:center;gap:1rem}
+    .menu-toggle{display:none;background:var(--bg-glass);backdrop-filter:blur(10px);border:1px solid var(--border);color:var(--text-primary);width:40px;height:40px;border-radius:var(--radius-xs);cursor:pointer;font-size:1.1rem;transition:var(--transition)}
+    .menu-toggle:hover{background:var(--bg-hover)}
+    .page-title h1{font-size:1.4rem;font-weight:700}
+    .page-title p{color:var(--text-secondary);font-size:0.8rem}
+    .header-right{display:flex;align-items:center;gap:0.75rem}
+    .search-box{display:flex;align-items:center;background:var(--bg-glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem 1rem;gap:0.5rem;transition:var(--transition)}
+    .search-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+    .search-box input{background:transparent;border:none;color:var(--text-primary);width:200px;outline:none;font-size:0.88rem}
     .search-box input::placeholder{color:var(--text-muted)}
-    .search-box button{background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:0.2rem}
-    .user-info{display:flex;align-items:center;gap:0.5rem;color:var(--text-secondary);font-size:0.85rem}
-    .section{display:none;animation:fadeIn 0.3s ease}.section.active{display:block}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:1.5rem;border:1px solid var(--border)}
-    .card-header{padding:1.15rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
-    .card-header h3{display:flex;align-items:center;gap:0.5rem;font-size:1.05rem}
+    .search-box button{background:none;border:none;color:var(--text-muted);cursor:pointer}
+    .header-btn{width:40px;height:40px;border-radius:var(--radius-xs);background:var(--bg-glass);backdrop-filter:blur(10px);border:1px solid var(--border);color:var(--text-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);position:relative}
+    .header-btn:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-hover)}
+    .header-btn .notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg-primary)}
+    .user-avatar{width:40px;height:40px;border-radius:var(--radius-xs);background:linear-gradient(135deg,var(--primary),var(--purple));display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.9rem}
+
+    /* Sections */
+    .section{display:none;animation:fadeUp 0.35s ease}.section.active{display:block}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Stats Premium */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1.5rem}
+    .stat-card{background:var(--bg-card);backdrop-filter:blur(15px);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;transition:var(--transition);position:relative;overflow:hidden}
+    .stat-card::after{content:'';position:absolute;top:0;right:0;width:120px;height:120px;border-radius:50%;filter:blur(50px);opacity:0.08;pointer-events:none}
+    .stat-card:hover{transform:translateY(-3px);border-color:var(--border-hover);box-shadow:var(--shadow)}
+    .stat-card.blue::after{background:var(--primary)}.stat-card.green::after{background:var(--success)}
+    .stat-card.orange::after{background:var(--warning)}.stat-card.purple::after{background:var(--purple)}
+    .stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+    .stat-icon.blue{background:rgba(59,130,246,0.12);color:var(--primary)}.stat-icon.green{background:rgba(16,185,129,0.12);color:var(--success)}
+    .stat-icon.orange{background:rgba(245,158,11,0.12);color:var(--warning)}.stat-icon.purple{background:rgba(139,92,246,0.12);color:var(--purple)}
+    .stat-change{font-size:0.75rem;font-weight:500;padding:0.2rem 0.5rem;border-radius:6px}
+    .stat-change.up{background:rgba(16,185,129,0.1);color:var(--success)}
+    .stat-change.down{background:rgba(239,68,68,0.1);color:var(--danger)}
+    .stat-value{font-size:1.8rem;font-weight:800;margin-bottom:0.2rem}
+    .stat-label{color:var(--text-secondary);font-size:0.82rem;font-weight:500}
+
+    /* Cards Premium */
+    .card{background:var(--bg-card);backdrop-filter:blur(15px);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:var(--transition)}
+    .card:hover{border-color:var(--border-hover)}
+    .card-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem}
+    .card-header h3{display:flex;align-items:center;gap:0.6rem;font-size:1rem;font-weight:600}
+    .card-header h3 i{color:var(--primary);font-size:0.95rem}
     .card-body{padding:1.5rem}
-    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.5rem}
-    .stat-card{background:var(--bg-card);border-radius:var(--radius);padding:1.25rem;display:flex;align-items:center;gap:1rem;box-shadow:var(--shadow);border:1px solid var(--border);transition:var(--transition)}
-    .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-    .stat-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:white;flex-shrink:0}
-    .stat-icon.bg-blue{background:var(--primary)}.stat-icon.bg-green{background:var(--success)}.stat-icon.bg-orange{background:var(--warning)}.stat-icon.bg-purple{background:var(--purple)}
-    .stat-info h3{font-size:1.5rem;font-weight:700}.stat-info p{color:var(--text-secondary);font-size:0.85rem}
-    .table-responsive{overflow-x:auto}.data-table{width:100%;border-collapse:collapse;font-size:0.88rem}
-    .data-table th,.data-table td{padding:0.85rem 0.75rem;text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
-    .data-table th{background:var(--bg-secondary);font-weight:600;color:var(--text-secondary);text-transform:uppercase;font-size:0.72rem;letter-spacing:0.05em}
+    .card-body.compact{padding:1rem 1.5rem}
+
+    /* Dashboard Grid */
+    .dash-grid{display:grid;grid-template-columns:2fr 1fr;gap:1.5rem}
+    .dash-grid-full{grid-column:1/-1}
+
+    /* Tables */
+    .table-wrap{overflow-x:auto}
+    .data-table{width:100%;border-collapse:collapse;font-size:0.86rem}
+    .data-table th{padding:0.85rem 0.75rem;text-align:left;background:var(--bg-glass);color:var(--text-muted);font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid var(--border)}
+    .data-table td{padding:0.85rem 0.75rem;border-bottom:1px solid var(--border);vertical-align:middle}
+    .data-table tbody tr{transition:var(--transition)}
     .data-table tbody tr:hover{background:var(--bg-hover)}
-    .status-badge{padding:0.3rem 0.7rem;border-radius:20px;font-size:0.72rem;font-weight:600;display:inline-block}
-    .status-badge[data-status="recibido"]{background:rgba(59,130,246,0.2);color:#60a5fa}
-    .status-badge[data-status="revision"]{background:rgba(245,158,11,0.2);color:#fbbf24}
-    .status-badge[data-status="reparacion"]{background:rgba(249,115,22,0.2);color:#fb923c}
-    .status-badge[data-status="listo"]{background:rgba(16,185,129,0.2);color:#34d399}
-    .status-badge[data-status="entregado"]{background:rgba(100,116,139,0.2);color:#94a3b8}
-    .btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;border:none;border-radius:var(--radius-sm);font-weight:500;cursor:pointer;transition:var(--transition);font-size:0.88rem;white-space:nowrap}
-    .btn-primary{background:var(--primary);color:white}.btn-primary:hover{background:var(--primary-hover)}
-    .btn-secondary{background:var(--bg-hover);color:var(--text-primary)}.btn-secondary:hover{background:var(--border)}
-    .btn-success{background:var(--success);color:white}.btn-success:hover{background:#059669}
-    .btn-danger{background:var(--danger);color:white}.btn-danger:hover{background:#dc2626}
-    .btn-sm{padding:0.35rem 0.7rem;font-size:0.78rem}.btn-icon{padding:0.45rem 0.55rem;border-radius:6px}
-    .form-group{margin-bottom:1rem}
-    .form-group label{display:block;margin-bottom:0.3rem;font-weight:500;color:var(--text-secondary);font-size:0.85rem}
-    .form-group input,.form-group select,.form-group textarea{width:100%;padding:0.7rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.9rem;transition:var(--transition)}
-    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+    .data-table tbody tr:last-child td{border-bottom:none}
+    .data-table .cliente-cell{display:flex;align-items:center;gap:0.6rem}
+    .data-table .avatar-sm{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600;color:white;flex-shrink:0}
+    .status-badge{padding:0.3rem 0.75rem;border-radius:20px;font-size:0.72rem;font-weight:600;display:inline-flex;align-items:center;gap:0.3rem}
+    .status-badge[data-status="recibido"]{background:rgba(59,130,246,0.12);color:#60a5fa}
+    .status-badge[data-status="revision"]{background:rgba(245,158,11,0.12);color:#fbbf24}
+    .status-badge[data-status="reparacion"]{background:rgba(249,115,22,0.12);color:#fb923c}
+    .status-badge[data-status="listo"]{background:rgba(16,185,129,0.12);color:#34d399}
+    .status-badge[data-status="entregado"]{background:rgba(100,116,139,0.12);color:#94a3b8}
+
+    /* Buttons Premium */
+    .btn{display:inline-flex;align-items:center;gap:0.45rem;padding:0.6rem 1.3rem;border:none;border-radius:var(--radius-xs);font-weight:600;cursor:pointer;transition:var(--transition);font-size:0.85rem;font-family:inherit;position:relative;overflow:hidden}
+    .btn::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,0.1),transparent);opacity:0;transition:opacity 0.25s}
+    .btn:hover::after{opacity:1}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-hover));color:white;box-shadow:0 2px 10px var(--primary-glow)}
+    .btn-primary:hover{box-shadow:0 4px 20px var(--primary-glow);transform:translateY(-1px)}
+    .btn-secondary{background:var(--bg-glass);backdrop-filter:blur(10px);border:1px solid var(--border);color:var(--text-secondary)}
+    .btn-secondary:hover{background:var(--bg-hover);color:var(--text-primary);border-color:var(--border-hover)}
+    .btn-success{background:linear-gradient(135deg,var(--success),#059669);color:white;box-shadow:0 2px 10px var(--success-glow)}
+    .btn-danger{background:linear-gradient(135deg,var(--danger),#dc2626);color:white;box-shadow:0 2px 10px var(--danger-glow)}
+    .btn-sm{padding:0.4rem 0.85rem;font-size:0.78rem;border-radius:var(--radius-xs)}
+    .btn-icon{padding:0.5rem 0.55rem;border-radius:var(--radius-xs)}
+    .btn-ghost{background:transparent;color:var(--text-secondary);padding:0.4rem 0.6rem}
+    .btn-ghost:hover{background:var(--bg-hover);color:var(--text-primary)}
+
+    /* Forms Premium */
+    .form-group{margin-bottom:1.1rem}
+    .form-group label{display:block;margin-bottom:0.35rem;font-weight:500;color:var(--text-secondary);font-size:0.82rem}
+    .form-group label .req{color:var(--danger)}
+    .form-input{width:100%;padding:0.72rem 0.85rem;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);font-size:0.9rem;transition:var(--transition);font-family:inherit}
+    .form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);background:rgba(255,255,255,0.04)}
+    .form-input::placeholder{color:var(--text-muted)}
     .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
-    .form-section{border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin:1rem 0;background:var(--bg-secondary)}
-    .form-section legend{padding:0 0.5rem;color:var(--primary);font-weight:600;font-size:0.95rem}
-    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.65);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+    .form-section{border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.1rem;margin:1rem 0;background:var(--bg-glass)}
+    .form-section legend{padding:0 0.5rem;color:var(--primary);font-weight:600;font-size:0.9rem}
+
+    /* Modals Premium */
+    .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:1000;align-items:center;justify-content:center;padding:1rem}
     .modal.active{display:flex}
-    .modal-content{background:var(--bg-card);border-radius:var(--radius);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:slideUp 0.25s ease}
-    .modal-lg .modal-content{max-width:850px}.modal-sm .modal-content{max-width:400px}
-    @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    .modal-header{padding:1.15rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-    .modal-header h3{font-size:1.15rem}.modal-close{background:none;border:none;color:var(--text-secondary);font-size:1.4rem;cursor:pointer;padding:0.2rem}
-    .modal-close:hover{color:var(--danger)}.modal-body{padding:1.5rem}.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.7rem;flex-wrap:wrap}
-    .photo-preview{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem}
-    .photo-preview img{width:70px;height:70px;object-fit:cover;border-radius:var(--radius-sm);border:2px solid var(--border);cursor:pointer;transition:transform 0.2s}
-    .photo-preview img:hover{transform:scale(1.1)}
-    .photo-item{position:relative;display:inline-block}.photo-remove{position:absolute;top:-5px;right:-5px;background:var(--danger);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .repuesto-item{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;flex-wrap:wrap}
-    .repuesto-item select,.repuesto-item input{flex:1;min-width:120px}
-    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg-card);color:var(--text-primary);padding:0.9rem 1.3rem;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);border-left:4px solid var(--success);z-index:2000;transform:translateX(120%);transition:transform 0.35s ease;font-size:0.9rem;max-width:350px}
-    .toast.show{transform:translateX(0)}.toast.error{border-left-color:var(--danger)}.toast.warning{border-left-color:var(--warning)}
-    .filters{display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
-    .filters select,.filters input{padding:0.5rem 0.8rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.85rem}
-    .alert-list{list-style:none;display:flex;flex-direction:column;gap:0.4rem}
-    .alert-list li{padding:0.65rem 1rem;background:rgba(239,68,68,0.1);border-left:3px solid var(--danger);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:0.88rem}
-    .alert-list li.ok{background:rgba(16,185,129,0.1);border-left-color:var(--success)}
-    .chart-list{list-style:none}.chart-list li{padding:0.6rem 0;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);font-size:0.9rem}
-    .chart-list li:last-child{border-bottom:none}.chart-bar{height:6px;background:var(--bg-secondary);border-radius:3px;overflow:hidden;margin-left:1rem;flex:1;max-width:120px}
-    .chart-bar-fill{height:100%;background:var(--primary);border-radius:3px;transition:width 0.5s ease}
-    .badge{background:var(--bg-hover);padding:0.2rem 0.6rem;border-radius:12px;font-size:0.78rem;color:var(--text-secondary)}
-    .order-detail .section{background:none;border:none;margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)}
-    .order-detail .section-title{font-weight:600;color:var(--primary);margin-bottom:0.4rem;font-size:0.95rem}
-    .order-detail p{margin:0.2rem 0;color:var(--text-secondary);font-size:0.9rem}
-    .order-detail table{width:100%;border-collapse:collapse;margin:0.5rem 0;font-size:0.85rem}
-    .order-detail table th,.order-detail table td{border:1px solid var(--border);padding:0.5rem;text-align:left}
-    .order-detail table th{background:var(--bg-secondary);color:var(--text-secondary)}
-    .no-data{text-align:center;padding:2rem;color:var(--text-muted)}
-    @media print{.sidebar,.main-header,.btn,.modal,.toast{display:none!important}.main-content{margin-left:0!important;padding:0!important}.card{box-shadow:none;border:1px solid #000}body{background:white!important;color:black!important}}
-    @media(max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.active{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:block}}
-    @media(max-width:768px){.main-header{flex-direction:column;align-items:flex-start;gap:0.75rem}.header-actions{width:100%}.search-box{flex:1}.search-box input{width:100%}.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.card-header{flex-direction:column;align-items:flex-start}}
-    @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.data-table{font-size:0.8rem}.data-table th,.data-table td{padding:0.6rem 0.4rem}.modal-content{margin:0.25rem;max-height:calc(100vh - 0.5rem)}}
-    .text-center{text-align:center}.text-success{color:var(--success)}.text-warning{color:var(--warning)}.text-danger{color:var(--danger)}.text-primary{color:var(--primary)}.text-muted{color:var(--text-muted)}
-    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg-secondary)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    .modal-content{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:650px;max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.5);animation:modalIn 0.3s ease}
+    .modal-lg .modal-content{max-width:900px}.modal-sm .modal-content{max-width:420px}
+    @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg-secondary);z-index:1;border-radius:var(--radius) var(--radius) 0 0}
+    .modal-header h3{font-size:1.1rem;font-weight:600}
+    .modal-close{background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;padding:0.3rem;border-radius:var(--radius-xs);transition:var(--transition)}
+    .modal-close:hover{background:var(--bg-hover);color:var(--danger)}
+    .modal-body{padding:1.5rem}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:0.6rem;flex-wrap:wrap}
+
+    /* Photos */
+    .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:0.6rem;margin-top:0.5rem}
+    .photo-item{position:relative;aspect-ratio:1;border-radius:var(--radius-xs);overflow:hidden;border:2px solid var(--border);transition:var(--transition)}
+    .photo-item:hover{border-color:var(--primary);transform:scale(1.03)}
+    .photo-item img{width:100%;height:100%;object-fit:cover;cursor:pointer}
+    .photo-remove{position:absolute;top:4px;right:4px;background:var(--danger);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s}
+    .photo-item:hover .photo-remove{opacity:1}
+
+    /* Repuestos */
+    .rep-item{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;padding:0.5rem;background:var(--bg-glass);border-radius:var(--radius-xs);border:1px solid var(--border)}
+    .rep-item select,.rep-item input{flex:1;min-width:100px}
+
+    /* Toast Premium */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--bg-secondary);backdrop-filter:blur(20px);border:1px solid var(--border);color:var(--text-primary);padding:0.85rem 1.3rem;border-radius:var(--radius-sm);box-shadow:0 10px 40px rgba(0,0,0,0.4);z-index:2000;transform:translateX(120%) scale(0.95);transition:all 0.35s cubic-bezier(0.4,0,0.2,1);max-width:380px;display:flex;align-items:flex-start;gap:0.75rem;font-size:0.88rem}
+    .toast.show{transform:translateX(0) scale(1)}
+    .toast-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+    .toast.success .toast-icon{color:var(--success)}.toast.error .toast-icon{color:var(--danger)}.toast.warning .toast-icon{color:var(--warning)}.toast.info .toast-icon{color:var(--cyan)}
+    .toast-content .toast-title{font-weight:600;margin-bottom:0.15rem}
+    .toast-content .toast-msg{color:var(--text-secondary);font-size:0.82rem}
+
+    /* Activity Log */
+    .activity-list{display:flex;flex-direction:column;gap:0}
+    .activity-item{display:flex;gap:0.85rem;padding:0.75rem 0;border-bottom:1px solid var(--border)}
+    .activity-item:last-child{border-bottom:none}
+    .activity-dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex-shrink:0}
+    .activity-dot.blue{background:var(--primary)}.activity-dot.green{background:var(--success)}.activity-dot.orange{background:var(--warning)}.activity-dot.red{background:var(--danger)}.activity-dot.purple{background:var(--purple)}
+    .activity-text{font-size:0.85rem;color:var(--text-secondary)}
+    .activity-text strong{color:var(--text-primary)}
+    .activity-time{font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem}
+
+    /* Timeline Orden */
+    .timeline{display:flex;flex-direction:column;gap:0;position:relative;padding-left:1.5rem}
+    .timeline::before{content:'';position:absolute;left:5px;top:8px;bottom:8px;width:2px;background:var(--border)}
+    .timeline-item{position:relative;padding-bottom:1.2rem}
+    .timeline-item:last-child{padding-bottom:0}
+    .timeline-dot{position:absolute;left:-1.5rem;top:2px;width:12px;height:12px;border-radius:50%;border:2px solid var(--primary);background:var(--bg-primary)}
+    .timeline-dot.done{background:var(--primary);border-color:var(--primary)}
+    .timeline-content{font-size:0.85rem}
+    .timeline-content .tl-title{font-weight:600;color:var(--text-primary)}
+    .timeline-content .tl-desc{color:var(--text-secondary);font-size:0.8rem}
+    .timeline-content .tl-time{color:var(--text-muted);font-size:0.72rem;margin-top:0.15rem}
+
+    /* Calculator */
+    .calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem}
+    .calc-display{grid-column:1/-1;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-xs);padding:0.85rem 1rem;text-align:right;font-size:1.5rem;font-weight:700;min-height:55px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden;margin-bottom:0.25rem}
+    .calc-btn{padding:0.8rem;border:1px solid var(--border);background:var(--bg-glass);color:var(--text-primary);border-radius:var(--radius-xs);cursor:pointer;font-size:1rem;font-weight:500;transition:var(--transition);font-family:inherit}
+    .calc-btn:hover{background:var(--bg-hover);border-color:var(--border-hover)}
+    .calc-btn.op{background:rgba(59,130,246,0.1);color:var(--primary);border-color:rgba(59,130,246,0.2)}
+    .calc-btn.op:hover{background:rgba(59,130,246,0.2)}
+    .calc-btn.eq{background:var(--primary);color:white;border-color:var(--primary)}
+    .calc-btn.eq:hover{background:var(--primary-hover)}
+    .calc-btn.clear{background:rgba(239,68,68,0.1);color:var(--danger);border-color:rgba(239,68,68,0.2)}
+
+    /* Notas rápidas */
+    .note-card{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:0.75rem;position:relative;transition:var(--transition)}
+    .note-card:hover{border-color:var(--border-hover)}
+    .note-card .note-text{font-size:0.9rem;color:var(--text-secondary);margin-bottom:0.4rem;min-height:40px;white-space:pre-wrap}
+    .note-card .note-footer{display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:var(--text-muted)}
+    .note-card .note-actions{display:flex;gap:0.3rem}
+    .note-colors{display:flex;gap:0.4rem;margin-bottom:0.5rem}
+    .note-color{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:var(--transition)}
+    .note-color:hover,.note-color.active{border-color:white;transform:scale(1.15)}
+
+    /* Garantías */
+    .garantia-card{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+    .garantia-info{flex:1}
+    .garantia-info h4{font-size:0.9rem;font-weight:600;margin-bottom:0.2rem}
+    .garantia-info p{font-size:0.8rem;color:var(--text-secondary)}
+    .garantia-status{padding:0.3rem 0.7rem;border-radius:20px;font-size:0.75rem;font-weight:600}
+    .garantia-status.vigente{background:rgba(16,185,129,0.12);color:var(--success)}
+    .garantia-status.vencida{background:rgba(239,68,68,0.12);color:var(--danger)}
+
+    /* Quick Actions */
+    .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem}
+    .quick-action{background:var(--bg-glass);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem;text-align:center;cursor:pointer;transition:var(--transition)}
+    .quick-action:hover{background:var(--bg-hover);border-color:var(--border-hover);transform:translateY(-2px)}
+    .quick-action i{font-size:1.5rem;margin-bottom:0.5rem;display:block}
+    .quick-action span{font-size:0.82rem;font-weight:500;color:var(--text-secondary)}
+
+    /* Profit bar */
+    .profit-bar{height:8px;background:var(--bg-glass);border-radius:4px;overflow:hidden;margin:0.5rem 0}
+    .profit-bar-fill{height:100%;border-radius:4px;transition:width 0.5s;background:linear-gradient(90deg,var(--success),var(--cyan))}
+
+    /* Responsive */
+    @media print{.sidebar,.main-header,.btn,.modal,.toast,.bg-animation{display:none!important}.main-content{margin-left:0!important;padding:0!important}.card{box-shadow:none;border:1px solid #000}body{background:white!important;color:black!important}}
+    @media(max-width:1024px){.sidebar{transform:translateX(-100%)}.sidebar.active{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:flex;align-items:center;justify-content:center}.dash-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.main-header{flex-direction:column;align-items:flex-start;gap:0.75rem}.header-right{width:100%}.search-box{flex:1}.search-box input{width:100%}.stats-grid{grid-template-columns:1fr 1fr}.form-row{grid-template-columns:1fr}.card-header{flex-direction:column;align-items:flex-start}}
+    @media(max-width:480px){.stats-grid{grid-template-columns:1fr}.data-table{font-size:0.8rem}.data-table th,.data-table td{padding:0.6rem 0.4rem}.modal-content{margin:0.25rem;max-height:calc(100vh - 0.5rem)}.header-right{gap:0.5rem}}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+    .text-center{text-align:center}.text-success{color:var(--success)}.text-warning{color:var(--warning)}.text-danger{color:var(--danger)}.text-primary{color:var(--primary)}.text-muted{color:var(--text-muted)}.text-cyan{color:var(--cyan)}
+    .mt-1{margin-top:0.5rem}.mt-2{margin-top:1rem}.mb-1{margin-bottom:0.5rem}.mb-2{margin-bottom:1rem}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .gap-1{gap:0.5rem}.no-data{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);font-size:0.9rem}
+    .badge{background:var(--bg-glass);border:1px solid var(--border);padding:0.15rem 0.5rem;border-radius:6px;font-size:0.72rem;color:var(--text-muted);font-weight:500}
+    .glow-primary{box-shadow:0 0 20px var(--primary-glow)}
+
+    /* Animación de entrada */
+    .animate-in{animation:fadeUp 0.4s ease both}
+    .animate-in:nth-child(2){animation-delay:0.05s}
+    .animate-in:nth-child(3){animation-delay:0.1s}
+    .animate-in:nth-child(4){animation-delay:0.15s}
   </style>
 </head>
 <body>
 
+<div class="bg-animation"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
+
 <!-- Loading -->
-<div id="loading-overlay" class="loading-overlay">
-  <div class="spinner"></div>
-  <p id="loadingText">Iniciando NEXTCOM Multiservicios...</p>
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loader"></div>
+  <div class="load-text">NEXTCOM</div>
+  <div class="load-sub">Sistema de Gestión Premium</div>
 </div>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <h2><i class="fas fa-mobile-alt"></i> NEXTCOM</h2>
-    <p>Multiservicios</p>
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="fas fa-mobile-screen-button"></i></div>
+    <div class="brand-text"><h2>NEXTCOM</h2><p>Multiservicios</p></div>
   </div>
   <nav class="sidebar-nav">
-    <a class="nav-link active" data-section="dashboard"><i class="fas fa-home"></i> Dashboard</a>
-    <a class="nav-link" data-section="clientes"><i class="fas fa-users"></i> Clientes</a>
-    <a class="nav-link" data-section="ordenes"><i class="fas fa-clipboard-list"></i> Órdenes</a>
-    <a class="nav-link" data-section="inventario"><i class="fas fa-boxes"></i> Inventario</a>
-    <a class="nav-link" data-section="reportes"><i class="fas fa-chart-bar"></i> Reportes</a>
-    <a class="nav-link" data-section="configuracion"><i class="fas fa-cog"></i> Configuración</a>
+    <a class="nav-link active" data-section="dashboard"><i class="fas fa-grid-2"></i> Dashboard</a>
+    <a class="nav-link" data-section="clientes"><i class="fas fa-users"></i> Clientes <span class="nav-badge" id="badgeClientes" style="display:none">0</span></a>
+    <a class="nav-link" data-section="ordenes"><i class="fas fa-clipboard-list"></i> Órdenes <span class="nav-badge" id="badgeOrdenes" style="display:none">0</span></a>
+    <a class="nav-link" data-section="inventario"><i class="fas fa-boxes-stacked"></i> Inventario</a>
+    <a class="nav-link" data-section="garantias"><i class="fas fa-shield-halved"></i> Garantías</a>
+    <a class="nav-link" data-section="notas"><i class="fas fa-note-sticky"></i> Notas</a>
+    <a class="nav-link" data-section="reportes"><i class="fas fa-chart-pie"></i> Reportes</a>
+    <a class="nav-link" data-section="herramientas"><i class="fas fa-toolbox"></i> Herramientas</a>
+    <a class="nav-link" data-section="actividad"><i class="fas fa-clock-rotate-left"></i> Actividad</a>
+    <a class="nav-link" data-section="configuracion"><i class="fas fa-gear"></i> Configuración</a>
   </nav>
-  <div class="sidebar-footer"><p>© 2026 NEXTCOM Multiservicios<br>Almacenamiento Local</p></div>
+  <div class="sidebar-footer">
+    <div class="storage-info"><i class="fas fa-database"></i> <span>Almacenamiento local</span></div>
+    <div class="storage-bar"><div class="storage-bar-fill" id="storageBar" style="width:0%"></div></div>
+    <small id="storageText">0 KB usado</small>
+  </div>
 </aside>
 
 <!-- Main Content -->
 <main class="main-content">
   <header class="main-header">
-    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
-    <h1 id="pageTitle">Dashboard</h1>
-    <div class="header-actions">
-      <div class="search-box">
-        <input type="text" id="globalSearch" placeholder="Buscar nombre, teléfono, IMEI, orden...">
-        <button id="searchBtn"><i class="fas fa-search"></i></button>
+    <div class="header-left">
+      <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+      <div class="page-title">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Resumen general del sistema</p>
       </div>
-      <div class="user-info"><i class="fas fa-user-circle"></i> <span>Administrador</span></div>
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <i class="fas fa-magnifying-glass" style="color:var(--text-muted);font-size:0.85rem"></i>
+        <input type="text" id="globalSearch" placeholder="Buscar...">
+      </div>
+      <button class="header-btn" onclick="toggleNotifPanel()" title="Notificaciones"><i class="fas fa-bell"></i><span class="notif-dot" id="notifDot" style="display:none"></span></button>
+      <button class="header-btn" onclick="window.print()" title="Imprimir"><i class="fas fa-print"></i></button>
+      <div class="user-avatar" title="Administrador">AD</div>
     </div>
   </header>
 
-  <!-- DASHBOARD -->
+  <!-- Notificaciones Panel -->
+  <div id="notifPanel" style="display:none;position:fixed;top:65px;right:1rem;width:340px;max-height:400px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 15px 40px rgba(0,0,0,0.5);z-index:500;overflow:hidden">
+    <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <strong><i class="fas fa-bell" style="color:var(--warning);margin-right:0.4rem"></i> Notificaciones</strong>
+      <button class="btn btn-ghost btn-sm" onclick="limpiarNotifs()"><i class="fas fa-check-double"></i> Limpiar</button>
+    </div>
+    <div id="notifList" style="max-height:320px;overflow-y:auto;padding:0.5rem"></div>
+  </div>
+
+  <!-- ================= DASHBOARD ================= -->
   <section id="dashboard" class="section active">
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon bg-blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3 id="totalClientes">0</h3><p>Clientes</p></div></div>
-      <div class="stat-card"><div class="stat-icon bg-green"><i class="fas fa-clipboard-check"></i></div><div class="stat-info"><h3 id="ordenesActivas">0</h3><p>Órdenes Activas</p></div></div>
-      <div class="stat-card"><div class="stat-icon bg-orange"><i class="fas fa-tools"></i></div><div class="stat-info"><h3 id="enReparacion">0</h3><p>En Reparación</p></div></div>
-      <div class="stat-card"><div class="stat-icon bg-purple"><i class="fas fa-dollar-sign"></i></div><div class="stat-info"><h3 id="ingresosHoy">$0</h3><p>Ingresos Hoy</p></div></div>
+      <div class="stat-card blue animate-in">
+        <div class="stat-top"><div class="stat-icon blue"><i class="fas fa-users"></i></div></div>
+        <div class="stat-value" id="sClientes">0</div><div class="stat-label">Clientes registrados</div>
+      </div>
+      <div class="stat-card green animate-in">
+        <div class="stat-top"><div class="stat-icon green"><i class="fas fa-clipboard-check"></i></div><span class="stat-change up" id="sOrdenesBadge">+0</span></div>
+        <div class="stat-value" id="sActivas">0</div><div class="stat-label">Órdenes activas</div>
+      </div>
+      <div class="stat-card orange animate-in">
+        <div class="stat-top"><div class="stat-icon orange"><i class="fas fa-screwdriver-wrench"></i></div></div>
+        <div class="stat-value" id="sReparacion">0</div><div class="stat-label">En reparación</div>
+      </div>
+      <div class="stat-card purple animate-in">
+        <div class="stat-top"><div class="stat-icon purple"><i class="fas fa-coins"></i></div></div>
+        <div class="stat-value" id="sIngresos">$0</div><div class="stat-label">Ingresos hoy</div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-clock"></i> Órdenes Recientes</h3><button class="btn btn-primary btn-sm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Nueva Orden</button></div>
-      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody id="tbodyRecientes"><tr><td colspan="6" class="no-data">Cargando...</td></tr></tbody></table></div></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-exclamation-triangle"></i> Stock Bajo</h3></div>
-      <div class="card-body"><ul id="listaStockBajo" class="alert-list"><li>Cargando inventario...</li></ul></div>
+
+    <div class="dash-grid">
+      <!-- Órdenes recientes -->
+      <div class="card animate-in">
+        <div class="card-header">
+          <h3><i class="fas fa-clock-rotate-left"></i> Órdenes Recientes</h3>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Nueva Orden</button>
+        </div>
+        <div class="card-body compact">
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Saldo</th><th></th></tr></thead><tbody id="tbRecientes"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Panel lateral -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <!-- Acciones rápidas -->
+        <div class="card animate-in">
+          <div class="card-header"><h3><i class="fas fa-bolt"></i> Acciones Rápidas</h3></div>
+          <div class="card-body">
+            <div class="quick-actions">
+              <div class="quick-action" onclick="abrirModalCliente()"><i class="fas fa-user-plus" style="color:var(--primary)"></i><span>Cliente</span></div>
+              <div class="quick-action" onclick="abrirModalOrden()"><i class="fas fa-file-circle-plus" style="color:var(--success)"></i><span>Orden</span></div>
+              <div class="quick-action" onclick="abrirModalRepuesto()"><i class="fas fa-box-open" style="color:var(--warning)"></i><span>Repuesto</span></div>
+              <div class="quick-action" onclick="abrirModalNota()"><i class="fas fa-sticky-note" style="color:var(--purple)"></i><span>Nota</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock bajo -->
+        <div class="card animate-in">
+          <div class="card-header"><h3><i class="fas fa-triangle-exclamation"></i> Stock Bajo</h3></div>
+          <div class="card-body compact">
+            <ul id="lstStockBajo" class="alert-list" style="list-style:none"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen financiero -->
+      <div class="card dash-grid-full animate-in">
+        <div class="card-header"><h3><i class="fas fa-chart-line"></i> Resumen Financiero del Mes</h3></div>
+        <div class="card-body">
+          <div class="form-row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+            <div><p class="text-muted" style="font-size:0.82rem">Ingresos totales</p><h3 id="mesIngresos" style="color:var(--success)">$0</h3></div>
+            <div><p class="text-muted" style="font-size:0.82rem">Ganancia estimada</p><h3 id="mesGanancia" style="color:var(--cyan)">$0</h3></div>
+            <div><p class="text-muted" style="font-size:0.82rem">Margen promedio</p><h3 id="mesMargen">0%</h3></div>
+            <div><p class="text-muted" style="font-size:0.82rem">Órdenes del mes</p><h3 id="mesTotal">0</h3></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- CLIENTES -->
+  <!-- ================= CLIENTES ================= -->
   <section id="clientes" class="section">
     <div class="card">
-      <div class="card-header"><h3><i class="fas fa-users"></i> Gestión de Clientes</h3><button class="btn btn-primary" onclick="abrirModalCliente()"><i class="fas fa-plus"></i> Nuevo Cliente</button></div>
-      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Nombre</th><th>Teléfono</th><th>Dirección</th><th>Órdenes</th><th>Acciones</th></tr></thead><tbody id="tbodyClientes"><tr><td colspan="5" class="no-data">Cargando...</td></tr></tbody></table></div></div>
+      <div class="card-header">
+        <h3><i class="fas fa-users"></i> Gestión de Clientes</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalCliente()"><i class="fas fa-plus"></i> Nuevo</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportarClientesCSV()"><i class="fas fa-download"></i> Exportar</button>
+        </div>
+      </div>
+      <div class="card-body compact">
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Órdenes</th><th>Total Gastado</th><th>Acciones</th></tr></thead><tbody id="tbClientes"></tbody></table></div>
+      </div>
     </div>
   </section>
 
-  <!-- ÓRDENES -->
+  <!-- ================= ÓRDENES ================= -->
   <section id="ordenes" class="section">
     <div class="card">
-      <div class="card-header"><h3><i class="fas fa-clipboard-list"></i> Órdenes de Trabajo</h3><button class="btn btn-primary" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Crear Orden</button></div>
-      <div class="card-body">
-        <div class="filters">
-          <select id="filtroEstado"><option value="">Todos los estados</option><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select>
+      <div class="card-header">
+        <h3><i class="fas fa-clipboard-list"></i> Órdenes de Trabajo</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Crear Orden</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportarOrdenesCSV()"><i class="fas fa-download"></i> Exportar</button>
         </div>
-        <div class="table-responsive"><table class="data-table"><thead><tr><th># Orden</th><th>Cliente</th><th>Equipo / IMEI</th><th>Problema</th><th>Estado</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody id="tbodyOrdenes"><tr><td colspan="7" class="no-data">Cargando...</td></tr></tbody></table></div>
+      </div>
+      <div class="card-body compact">
+        <div class="filters" style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <select id="filtroEstado" class="form-input" style="width:auto;padding:0.45rem 0.75rem;font-size:0.82rem" onchange="renderOrdenes()"><option value="">Todos</option><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select>
+          <input type="text" id="filtroOrden" class="form-input" style="width:auto;padding:0.45rem 0.75rem;font-size:0.82rem" placeholder="Filtrar por nombre o equipo..." oninput="renderOrdenes()">
+        </div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Cliente</th><th>Equipo</th><th>Problema</th><th>Estado</th><th>Total</th><th>Saldo</th><th>Acciones</th></tr></thead><tbody id="tbOrdenes"></tbody></table></div>
       </div>
     </div>
   </section>
 
-  <!-- INVENTARIO -->
+  <!-- ================= INVENTARIO ================= -->
   <section id="inventario" class="section">
     <div class="card">
-      <div class="card-header"><h3><i class="fas fa-boxes"></i> Inventario de Repuestos</h3><button class="btn btn-primary" onclick="abrirModalRepuesto()"><i class="fas fa-plus"></i> Nuevo Repuesto</button></div>
-      <div class="card-body"><div class="table-responsive"><table class="data-table"><thead><tr><th>Repuesto</th><th>Stock</th><th>P. Compra</th><th>P. Venta</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbodyInventario"><tr><td colspan="6" class="no-data">Cargando...</td></tr></tbody></table></div></div>
-    </div>
-  </section>
-
-  <!-- REPORTES -->
-  <section id="reportes" class="section">
-    <div class="stats-grid">
-      <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-day"></i> Ingresos Diarios</h3></div><div class="card-body"><h2 id="ingresosDiarios">$0</h2><p id="fechaReporteDiario" class="text-muted"></p></div></div>
-      <div class="card"><div class="card-header"><h3><i class="fas fa-calendar-alt"></i> Ingresos Mensuales</h3></div><div class="card-body"><h2 id="ingresosMensuales">$0</h2><p id="mesReporte" class="text-muted"></p></div></div>
-      <div class="card"><div class="card-header"><h3><i class="fas fa-wrench"></i> Reparaciones Comunes</h3></div><div class="card-body"><ul id="listaReparaciones" class="chart-list"></ul></div></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><h3><i class="fas fa-file-export"></i> Exportar</h3></div>
-      <div class="card-body">
-        <button class="btn btn-secondary" onclick="exportarCSV()"><i class="fas fa-file-csv"></i> Exportar Órdenes CSV</button>
-        <button class="btn btn-secondary" onclick="window.print()"><i class="fas fa-file-pdf"></i> Imprimir como PDF</button>
+      <div class="card-header">
+        <h3><i class="fas fa-boxes-stacked"></i> Inventario de Repuestos</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="abrirModalRepuesto()"><i class="fas fa-plus"></i> Nuevo</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportarInventarioCSV()"><i class="fas fa-download"></i> Exportar</button>
+        </div>
+      </div>
+      <div class="card-body compact">
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Repuesto</th><th>Stock</th><th>Mín</th><th>P. Compra</th><th>P. Venta</th><th>Valor Total</th><th>Ganancia Pot.</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tbInventario"></tbody></table></div>
       </div>
     </div>
   </section>
 
-  <!-- CONFIGURACIÓN -->
-  <section id="configuracion" class="section">
+  <!-- ================= GARANTÍAS ================= -->
+  <section id="garantias" class="section">
     <div class="card">
-      <div class="card-header"><h3><i class="fas fa-cog"></i> Configuración del Sistema</h3></div>
+      <div class="card-header">
+        <h3><i class="fas fa-shield-halved"></i> Gestión de Garantías</h3>
+        <p class="text-muted" style="font-size:0.82rem">Garantía automática al entregar equipo</p>
+      </div>
+      <div class="card-body compact">
+        <div class="form-row mb-2" style="grid-template-columns:1fr 1fr">
+          <div class="form-group"><label>Días de garantía por defecto</label><input type="number" id="garDiasDef" class="form-input" value="30" min="1"></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn btn-primary btn-sm" onclick="guardarConfigGarantia()"><i class="fas fa-save"></i> Guardar</button></div>
+        </div>
+        <div id="lstGarantias"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NOTAS ================= -->
+  <section id="notas" class="section">
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-note-sticky"></i> Notas Rápidas</h3>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalNota()"><i class="fas fa-plus"></i> Nueva Nota</button>
+      </div>
       <div class="card-body">
-        <form id="formConfig" onsubmit="guardarConfig(event)">
-          <div class="form-group"><label>Nombre del Taller</label><input type="text" value="NEXTCOM Multiservicios" disabled></div>
-          <div class="form-group"><label>Teléfono de Contacto</label><input type="tel" id="cfgTelefono" placeholder="+57 300 123 4567"></div>
-          <div class="form-group"><label>Dirección</label><input type="text" id="cfgDireccion" placeholder="Dirección del taller"></div>
-          <div class="form-group"><label>Stock Mínimo para Alertas</label><input type="number" id="cfgStockMin" value="5" min="1"></div>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Configuración</button>
-        </form>
+        <div id="lstNotas" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REPORTES ================= -->
+  <section id="reportes" class="section">
+    <div class="stats-grid">
+      <div class="stat-card green"><div class="stat-value" id="rIngresosDia">$0</div><div class="stat-label">Ingresos hoy</div></div>
+      <div class="stat-card purple"><div class="stat-value" id="rIngresosMes">$0</div><div class="stat-label">Ingresos mes</div></div>
+      <div class="stat-card blue"><div class="stat-value" id="rTotalOrdenes">0</div><div class="stat-label">Órdenes totales</div></div>
+      <div class="stat-card orange"><div class="stat-value" id="rTicketProm">$0</div><div class="stat-label">Ticket promedio</div></div>
+    </div>
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-wrench"></i> Problemas más frecuentes</h3></div>
+        <div class="card-body"><ul id="lstProblemas" style="list-style:none"></ul></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-ranking-star"></i> Top Clientes</h3></div>
+        <div class="card-body"><ul id="lstTopClientes" style="list-style:none"></ul></div>
+      </div>
+      <div class="card dash-grid-full">
+        <div class="card-header"><h3><i class="fas fa-file-export"></i> Exportar Datos</h3></div>
+        <div class="card-body" style="display:flex;gap:0.75rem;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="exportarOrdenesCSV()"><i class="fas fa-table"></i> Órdenes CSV</button>
+          <button class="btn btn-secondary" onclick="exportarClientesCSV()"><i class="fas fa-users"></i> Clientes CSV</button>
+          <button class="btn btn-secondary" onclick="exportarInventarioCSV()"><i class="fas fa-boxes-stacked"></i> Inventario CSV</button>
+          <button class="btn btn-success" onclick="backupJSON()"><i class="fas fa-download"></i> Backup Completo JSON</button>
+          <button class="btn btn-primary" onclick="document.getElementById('importFile').click()"><i class="fas fa-upload"></i> Restaurar Backup</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HERRAMIENTAS ================= -->
+  <section id="herramientas" class="section">
+    <div class="dash-grid">
+      <!-- Calculadora -->
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-calculator"></i> Calculadora</h3></div>
+        <div class="card-body">
+          <div class="calc-grid">
+            <div class="calc-display" id="calcDisplay">0</div>
+            <button class="calc-btn clear" onclick="calcClear()">C</button>
+            <button class="calc-btn op" onclick="calcInput('(')">(</button>
+            <button class="calc-btn op" onclick="calcInput(')')">)</button>
+            <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+            <button class="calc-btn" onclick="calcInput('7')">7</button>
+            <button class="calc-btn" onclick="calcInput('8')">8</button>
+            <button class="calc-btn" onclick="calcInput('9')">9</button>
+            <button class="calc-btn op" onclick="calcInput('*')">×</button>
+            <button class="calc-btn" onclick="calcInput('4')">4</button>
+            <button class="calc-btn" onclick="calcInput('5')">5</button>
+            <button class="calc-btn" onclick="calcInput('6')">6</button>
+            <button class="calc-btn op" onclick="calcInput('-')">−</button>
+            <button class="calc-btn" onclick="calcInput('1')">1</button>
+            <button class="calc-btn" onclick="calcInput('2')">2</button>
+            <button class="calc-btn" onclick="calcInput('3')">3</button>
+            <button class="calc-btn op" onclick="calcInput('+')">+</button>
+            <button class="calc-btn" onclick="calcInput('0')" style="grid-column:span 2">0</button>
+            <button class="calc-btn" onclick="calcInput('.')">.</button>
+            <button class="calc-btn eq" onclick="calcResult()">=</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Utilidades -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-hashtag"></i> Generar Código de Orden</h3></div>
+          <div class="card-body">
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem">
+              <input type="text" id="genCodPrefix" class="form-input" placeholder="Prefijo" value="ORD" style="width:100px">
+              <button class="btn btn-primary btn-sm" onclick="generarCodigo()"><i class="fas fa-qrcode"></i> Generar</button>
+            </div>
+            <div id="genCodResult" style="text-align:center;padding:1rem;background:var(--bg-glass);border:1px dashed var(--border);border-radius:var(--radius-sm);font-family:monospace;font-size:1.3rem;letter-spacing:2px;color:var(--primary);cursor:pointer" onclick="copiarTexto(this.textContent)" title="Click para copiar"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-percentage"></i> Calculadora de Margen</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label>Costo</label><input type="number" id="margCosto" class="form-input" placeholder="0" oninput="calcMargen()"></div>
+            <div class="form-group"><label>Precio Venta</label><input type="number" id="margVenta" class="form-input" placeholder="0" oninput="calcMargen()"></div>
+            <div style="padding:0.75rem;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-xs)">
+              <p style="font-size:0.82rem;color:var(--text-muted)">Margen de ganancia</p>
+              <h2 id="margResultado" style="color:var(--success)">0%</h2>
+              <p class="text-muted" style="font-size:0.8rem" id="margGanancia">Ganancia: $0</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-calendar"></i> Fecha Entrega</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label>Fecha Ingreso</label><input type="date" id="calcFechaIng" class="form-input" onchange="calcFechaEntrega()"></div>
+            <div class="form-group"><label>Días estimados</label><input type="number" id="calcDias" class="form-input" value="3" min="1" onchange="calcFechaEntrega()"></div>
+            <div style="padding:0.75rem;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-xs)">
+              <p style="font-size:0.82rem;color:var(--text-muted)">Fecha estimada de entrega</p>
+              <h2 id="calcFechaRes" style="color:var(--cyan)">--</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ACTIVIDAD ================= -->
+  <section id="actividad" class="section">
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-clock-rotate-left"></i> Historial de Actividad</h3>
+        <button class="btn btn-secondary btn-sm" onclick="limpiarActividad()"><i class="fas fa-broom"></i> Limpiar</button>
+      </div>
+      <div class="card-body compact">
+        <div class="activity-list" id="lstActividad"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONFIGURACIÓN ================= -->
+  <section id="configuracion" class="section">
+    <div class="dash-grid">
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-gear"></i> Datos del Negocio</h3></div>
+        <div class="card-body">
+          <form onsubmit="guardarConfig(event)">
+            <div class="form-group"><label>Nombre del Negocio</label><input type="text" id="cfgNombre" class="form-input" value="NEXTCOM Multiservicios"></div>
+            <div class="form-group"><label>Teléfono</label><input type="tel" id="cfgTelefono" class="form-input" placeholder="+57 300 123 4567"></div>
+            <div class="form-group"><label>Dirección</label><input type="text" id="cfgDireccion" class="form-input" placeholder="Dirección completa"></div>
+            <div class="form-row">
+              <div class="form-group"><label>Stock mínimo alerta</label><input type="number" id="cfgStockMin" class="form-input" value="5" min="1"></div>
+              <div class="form-group"><label>Moneda</label><select id="cfgMoneda" class="form-input"><option value="COP">COP ($)</option><option value="USD">USD ($)</option><option value="MXN">MXN ($)</option></select></div>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+          </form>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-database"></i> Datos del Sistema</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:0.75rem">
+              <div class="flex-between"><span class="text-muted" style="font-size:0.85rem">Clientes</span><strong id="cfgCountClientes">0</strong></div>
+              <div class="flex-between"><span class="text-muted" style="font-size:0.85rem">Órdenes</span><strong id="cfgCountOrdenes">0</strong></div>
+              <div class="flex-between"><span class="text-muted" style="font-size:0.85rem">Repuestos</span><strong id="cfgCountRepuestos">0</strong></div>
+              <div class="flex-between"><span class="text-muted" style="font-size:0.85rem">Notas</span><strong id="cfgCountNotas">0</strong></div>
+              <div class="flex-between"><span class="text-muted" style="font-size:0.85rem">Almacenamiento</span><strong id="cfgStorage">0 KB</strong></div>
+              <hr style="border:none;border-top:1px solid var(--border)">
+              <button class="btn btn-success btn-sm" onclick="backupJSON()" style="width:100%"><i class="fas fa-download"></i> Descargar Backup</button>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('importFile2').click()" style="width:100%"><i class="fas fa-upload"></i> Restaurar Backup</button>
+              <input type="file" id="importFile2" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+              <button class="btn btn-danger btn-sm" onclick="borrarTodo()" style="width:100%"><i class="fas fa-trash"></i> Borrar Todos los Datos</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -235,9 +684,13 @@
     <div class="modal-header"><h3 id="tituloCliente">Nuevo Cliente</h3><button class="modal-close" onclick="cerrarModal('modalCliente')">&times;</button></div>
     <form id="formCliente" onsubmit="guardarCliente(event)">
       <input type="hidden" id="clienteId">
-      <div class="form-group"><label>Nombre Completo *</label><input type="text" id="cNombre" required></div>
-      <div class="form-group"><label>Teléfono *</label><input type="tel" id="cTelefono" required></div>
-      <div class="form-group"><label>Dirección (opcional)</label><input type="text" id="cDireccion"></div>
+      <div class="form-group"><label>Nombre Completo <span class="req">*</span></label><input type="text" id="cNombre" class="form-input" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>Teléfono <span class="req">*</span></label><input type="tel" id="cTelefono" class="form-input" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="cEmail" class="form-input"></div>
+      </div>
+      <div class="form-group"><label>Dirección</label><input type="text" id="cDireccion" class="form-input"></div>
+      <div class="form-group"><label>Notas</label><textarea id="cNotas" class="form-input" rows="2"></textarea></div>
       <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalCliente')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
     </form>
   </div>
@@ -245,47 +698,57 @@
 
 <!-- Modal Orden -->
 <div id="modalOrden" class="modal modal-lg">
-  <div class="modal-content">
-    <div class="modal-header"><h3 id="tituloOrden">Nueva Orden de Trabajo</h3><button class="modal-close" onclick="cerrarModal('modalOrden')">&times;</button></div>
+  <div class="modal-content" style="max-width:900px">
+    <div class="modal-header"><h3 id="tituloOrden">Nueva Orden</h3><button class="modal-close" onclick="cerrarModal('modalOrden')">&times;</button></div>
     <form id="formOrden" onsubmit="guardarOrden(event)">
       <input type="hidden" id="ordenId">
       <div class="form-row">
-        <div class="form-group"><label>Cliente *</label><select id="oCliente" required onchange="cargarTelefonoCliente()"><option value="">Seleccionar...</option></select></div>
-        <div class="form-group"><label>Teléfono</label><input type="tel" id="oTelefono" readonly></div>
+        <div class="form-group"><label>Cliente <span class="req">*</span></label><select id="oCliente" class="form-input" required onchange="cargarTelefonoCliente()"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group"><label>Teléfono</label><input type="tel" id="oTelefono" class="form-input" readonly></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Marca *</label><input type="text" id="oMarca" required list="dlMarcas"><datalist id="dlMarcas"><option value="Samsung"><option value="Apple"><option value="Xiaomi"><option value="Motorola"><option value="Huawei"><option value="Oppo"><option value="Realme"><option value="Otro"></datalist></div>
-        <div class="form-group"><label>Modelo *</label><input type="text" id="oModelo" required></div>
+        <div class="form-group"><label>Marca <span class="req">*</span></label><input type="text" id="oMarca" class="form-input" required list="dlMarcas"><datalist id="dlMarcas"><option value="Samsung"><option value="Apple"><option value="Xiaomi"><option value="Motorola"><option value="Huawei"><option value="Oppo"><option value="Realme"><option value="Honor"><option value="Vivo"><option value="Nokia"><option value="Otro"></datalist></div>
+        <div class="form-group"><label>Modelo <span class="req">*</span></label><input type="text" id="oModelo" class="form-input" required></div>
+        <div class="form-group"><label>Color</label><input type="text" id="oColor" class="form-input"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>IMEI (15 dígitos)</label><input type="text" id="oImei" pattern="[0-9]{15}" title="15 dígitos" maxlength="17"></div>
-        <div class="form-group"><label>Fecha Ingreso *</label><input type="date" id="oFechaIngreso" required></div>
+        <div class="form-group"><label>IMEI</label><input type="text" id="oImei" class="form-input" pattern="[0-9]{15}" maxlength="17" placeholder="15 dígitos"></div>
+        <div class="form-group"><label>Contraseña/Patrón</label><input type="text" id="oPass" class="form-input" placeholder="Opcional"></div>
+        <div class="form-group"><label>Accesorios</label><input type="text" id="oAccesorios" class="form-input" placeholder="Cargador, funda, etc."></div>
       </div>
-      <div class="form-group"><label>Problema Reportado *</label><textarea id="oProblema" rows="2" required></textarea></div>
-      <div class="form-group"><label>Estado Físico</label><textarea id="oEstadoFisico" rows="2" placeholder="Rayones, golpes, pantalla rota, etc."></textarea></div>
       <div class="form-row">
-        <div class="form-group"><label>Fecha Estimada</label><input type="date" id="oFechaEst"></div>
-        <div class="form-group"><label>Estado *</label><select id="oEstado" required><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select></div>
+        <div class="form-group"><label>Fecha Ingreso <span class="req">*</span></label><input type="date" id="oFechaIngreso" class="form-input" required></div>
+        <div class="form-group"><label>Fecha Estimada</label><input type="date" id="oFechaEst" class="form-input"></div>
+        <div class="form-group"><label>Estado <span class="req">*</span></label><select id="oEstado" class="form-input" required><option value="recibido">🔵 Recibido</option><option value="revision">🟡 En Revisión</option><option value="reparacion">🟠 En Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select></div>
       </div>
-      <fieldset class="form-section"><legend><i class="fas fa-stethoscope"></i> Diagnóstico</legend>
-        <div class="form-group"><label>Diagnóstico Técnico</label><textarea id="oDiagnostico" rows="2"></textarea></div>
+      <div class="form-group"><label>Problema Reportado <span class="req">*</span></label><textarea id="oProblema" class="form-input" rows="2" required></textarea></div>
+      <div class="form-group"><label>Estado Físico</label><textarea id="oEstadoFisico" class="form-input" rows="2" placeholder="Rayones, golpes, pantalla rota..."></textarea></div>
+
+      <fieldset class="form-section"><legend><i class="fas fa-stethoscope"></i> Diagnóstico y Reparación</legend>
+        <div class="form-group"><label>Diagnóstico Técnico</label><textarea id="oDiagnostico" class="form-input" rows="2"></textarea></div>
         <div class="form-group"><label>Repuestos Usados</label>
-          <div id="contRepuestos"><div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div></div>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="agregarFilaRepuesto()" style="margin-top:0.3rem"><i class="fas fa-plus"></i> Agregar repuesto</button>
+          <div id="contRepuestos"><div class="rep-item"><select class="rep-select form-input"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant form-input" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div></div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="agregarFilaRepuesto()" style="margin-top:0.4rem"><i class="fas fa-plus"></i> Agregar repuesto</button>
         </div>
-        <div class="form-group"><label>Notas Internas</label><textarea id="oNotas" rows="2"></textarea></div>
+        <div class="form-group"><label>Notas Internas</label><textarea id="oNotas" class="form-input" rows="2"></textarea></div>
       </fieldset>
+
       <fieldset class="form-section"><legend><i class="fas fa-money-bill-wave"></i> Pagos</legend>
         <div class="form-row">
-          <div class="form-group"><label>Total ($) *</label><input type="number" id="oTotal" step="0.01" min="0" required oninput="calcSaldo()"></div>
-          <div class="form-group"><label>Abono ($)</label><input type="number" id="oAbono" step="0.01" min="0" value="0" oninput="calcSaldo()"></div>
-          <div class="form-group"><label>Saldo ($)</label><input type="number" id="oSaldo" step="0.01" readonly></div>
+          <div class="form-group"><label>Total ($) <span class="req">*</span></label><input type="number" id="oTotal" class="form-input" step="0.01" min="0" required oninput="calcSaldo()"></div>
+          <div class="form-group"><label>Abono ($)</label><input type="number" id="oAbono" class="form-input" step="0.01" min="0" value="0" oninput="calcSaldo()"></div>
+          <div class="form-group"><label>Saldo ($)</label><input type="number" id="oSaldo" class="form-input" step="0.01" readonly></div>
         </div>
-        <div class="form-group"><label>Método de Pago</label><select id="oMetodo"><option value="efectivo">💵 Efectivo</option><option value="transferencia">🏦 Transferencia</option><option value="tarjeta">💳 Tarjeta</option><option value="nequi">📱 Nequi/Daviplata</option></select></div>
+        <div class="form-row">
+          <div class="form-group"><label>Método de Pago</label><select id="oMetodo" class="form-input"><option value="efectivo">💵 Efectivo</option><option value="transferencia">🏦 Transferencia</option><option value="tarjeta">💳 Tarjeta</option><option value="nequi">📱 Nequi/Daviplata</option></select></div>
+          <div class="form-group"><label>Prioridad</label><select id="oPrioridad" class="form-input"><option value="normal">Normal</option><option value="alta">🔴 Alta (urgente)</option><option value="baja">Normal baja</option></select></div>
+        </div>
       </fieldset>
-      <fieldset class="form-section"><legend><i class="fas fa-camera"></i> Fotos</legend>
-        <div class="form-group"><label>Subir Fotos</label><input type="file" id="oFotos" accept="image/*" multiple onchange="previewFotos(this)"><div id="previewFotos" class="photo-preview"></div></div>
+
+      <fieldset class="form-section"><legend><i class="fas fa-camera"></i> Evidencia Fotográfica</legend>
+        <div class="form-group"><label>Subir Fotos</label><input type="file" id="oFotos" class="form-input" accept="image/*" multiple onchange="previewFotos(this)"><div id="previewFotos" class="photo-grid"></div></div>
       </fieldset>
+
       <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalOrden')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Orden</button></div>
     </form>
   </div>
@@ -293,9 +756,9 @@
 
 <!-- Modal Detalle Orden -->
 <div id="modalDetalle" class="modal modal-lg">
-  <div class="modal-content">
-    <div class="modal-header"><h3>Detalle Orden #<span id="detNumero"></span></h3><button class="modal-close" onclick="cerrarModal('modalDetalle')">&times;</button></div>
-    <div class="modal-body order-detail" id="detContenido"></div>
+  <div class="modal-content" style="max-width:900px">
+    <div class="modal-header"><h3>Orden #<span id="detNumero"></span></h3><button class="modal-close" onclick="cerrarModal('modalDetalle')">&times;</button></div>
+    <div class="modal-body" id="detContenido"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="imprimirOrden()"><i class="fas fa-print"></i> Imprimir</button>
       <button class="btn btn-success" onclick="notificarWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
@@ -310,16 +773,42 @@
     <div class="modal-header"><h3 id="tituloRepuesto">Nuevo Repuesto</h3><button class="modal-close" onclick="cerrarModal('modalRepuesto')">&times;</button></div>
     <form id="formRepuesto" onsubmit="guardarRepuesto(event)">
       <input type="hidden" id="repuestoId">
-      <div class="form-group"><label>Nombre *</label><input type="text" id="rNombre" required></div>
+      <div class="form-group"><label>Nombre <span class="req">*</span></label><input type="text" id="rNombre" class="form-input" required></div>
       <div class="form-row">
-        <div class="form-group"><label>Cantidad *</label><input type="number" id="rCantidad" min="0" required></div>
-        <div class="form-group"><label>Mínimo</label><input type="number" id="rMinimo" min="1" value="5"></div>
+        <div class="form-group"><label>Stock <span class="req">*</span></label><input type="number" id="rCantidad" class="form-input" min="0" required></div>
+        <div class="form-group"><label>Mínimo</label><input type="number" id="rMinimo" class="form-input" min="1" value="5"></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>P. Compra</label><input type="number" id="rPCompra" step="0.01" min="0"></div>
-        <div class="form-group"><label>P. Venta</label><input type="number" id="rPVenta" step="0.01" min="0"></div>
+        <div class="form-group"><label>P. Compra</label><input type="number" id="rPCompra" class="form-input" step="0.01" min="0"></div>
+        <div class="form-group"><label>P. Venta</label><input type="number" id="rPVenta" class="form-input" step="0.01" min="0"></div>
       </div>
+      <div class="form-group"><label>Proveedor</label><input type="text" id="rProveedor" class="form-input"></div>
       <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalRepuesto')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Nota -->
+<div id="modalNota" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tituloNota">Nueva Nota</h3><button class="modal-close" onclick="cerrarModal('modalNota')">&times;</button></div>
+    <form id="formNota" onsubmit="guardarNota(event)">
+      <input type="hidden" id="notaId">
+      <div class="form-group"><label>Título</label><input type="text" id="nTitulo" class="form-input" placeholder="Título de la nota..."></div>
+      <div class="form-group"><label>Contenido <span class="req">*</span></label><textarea id="nContenido" class="form-input" rows="5" required placeholder="Escribe aquí..."></textarea></div>
+      <div class="form-group">
+        <label>Color</label>
+        <div class="note-colors" style="margin-top:0.3rem">
+          <div class="note-color active" style="background:var(--primary)" data-color="blue" onclick="selectNotaColor(this)"></div>
+          <div class="note-color" style="background:var(--success)" data-color="green" onclick="selectNotaColor(this)"></div>
+          <div class="note-color" style="background:var(--warning)" data-color="orange" onclick="selectNotaColor(this)"></div>
+          <div class="note-color" style="background:var(--purple)" data-color="purple" onclick="selectNotaColor(this)"></div>
+          <div class="note-color" style="background:var(--danger)" data-color="red" onclick="selectNotaColor(this)"></div>
+          <div class="note-color" style="background:var(--cyan)" data-color="cyan" onclick="selectNotaColor(this)"></div>
+        </div>
+      </div>
+      <input type="hidden" id="nColor" value="blue">
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modalNota')">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button></div>
     </form>
   </div>
 </div>
@@ -328,152 +817,216 @@
 <div id="modalConfirmar" class="modal">
   <div class="modal-content modal-sm">
     <div class="modal-header"><h3>Confirmar</h3><button class="modal-close" onclick="cerrarModal('modalConfirmar')">&times;</button></div>
-    <div class="modal-body"><p id="confMsg">¿Está seguro?</p></div>
-    <div class="modal-footer"><button class="btn btn-secondary" onclick="cerrarModal('modalConfirmar')">Cancelar</button><button class="btn btn-danger" id="btnConfEliminar">Eliminar</button></div>
+    <div class="modal-body text-center"><i class="fas fa-triangle-exclamation" style="font-size:2.5rem;color:var(--warning);margin-bottom:0.75rem;display:block"></i><p id="confMsg" style="color:var(--text-secondary)">¿Está seguro?</p></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="cerrarModal('modalConfirmar')">Cancelar</button><button class="btn btn-danger" id="btnConfEliminar">Confirmar</button></div>
   </div>
 </div>
 
 <!-- Toast -->
-<div id="toast" class="toast"><span id="toastMsg"></span></div>
+<div id="toast" class="toast">
+  <span class="toast-icon"><i class="fas fa-check-circle"></i></span>
+  <div class="toast-content"><div class="toast-title" id="toastTitle">Éxito</div><div class="toast-msg" id="toastMsg"></div></div>
+</div>
 
-<!-- ================= LÓGICA COMPLETA ================= -->
+<!-- ================= JAVASCRIPT COMPLETO ================= -->
 <script>
-// =============================================
-// NEXTCOM MULTISERVICIOS - SISTEMA LOCAL
-// Base de datos: localStorage (sin servidor)
-// =============================================
+// ====================================================
+// NEXTCOM MULTISERVICIOS - SISTEMA PREMIUM
+// 100% Local - Sin servidor - Sin Firebase
+// ====================================================
 
-// ---- BASE DE DATOS LOCAL ----
+// ---- BASE DE DATOS ----
 const DB = {
-  get(key) {
-    try { return JSON.parse(localStorage.getItem('nextcom_' + key)) || []; }
-    catch { return []; }
-  },
-  set(key, data) {
-    localStorage.setItem('nextcom_' + key, JSON.stringify(data));
-  },
-  getObj(key) {
-    try { return JSON.parse(localStorage.getItem('nextcom_' + key)) || {}; }
-    catch { return {}; }
-  },
-  setObj(key, data) {
-    localStorage.setItem('nextcom_' + key, JSON.stringify(data));
-  }
+  get(k) { try { return JSON.parse(localStorage.getItem('nxc_'+k))||[] } catch { return [] } },
+  set(k, v) { localStorage.setItem('nxc_'+k, JSON.stringify(v)) },
+  getObj(k) { try { return JSON.parse(localStorage.getItem('nxc_'+k))||{} } catch { return {} } },
+  setObj(k, v) { localStorage.setItem('nxc_'+k, JSON.stringify(v)) }
 };
 
 // ---- UTILIDADES ----
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-function genOrdenNum() {
-  const d = new Date();
-  return 'ORD-' + d.toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(1000 + Math.random()*9000);
-}
-function hoy() { return new Date().toISOString().split('T')[0]; }
-function fmtMon(n) { return '$' + Number(n||0).toLocaleString('es-CO'); }
-function fmtTel(t) { return t || '-'; }
-function fmtFecha(ts) {
-  if (!ts) return '-';
-  const d = new Date(ts);
-  return d.toLocaleDateString('es-CO', {year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-function fmtFechaCorta(f) {
-  if (!f) return '-';
-  return new Date(f).toLocaleDateString('es-CO', {year:'numeric',month:'short',day:'numeric'});
-}
-function badgeEstado(e) {
-  const m = {recibido:'🔵 Recibido', revision:'🟡 En Revisión', reparacion:'🟠 En Reparación', listo:'🟢 Listo', entregado:'⚫ Entregado'};
-  return `<span class="status-badge" data-status="${e}">${m[e]||e}</span>`;
-}
-function toast(msg, tipo='success') {
-  const t = document.getElementById('toast');
-  document.getElementById('toastMsg').textContent = msg;
-  t.className = 'toast show ' + tipo;
-  clearTimeout(t._timer);
-  t._timer = setTimeout(()=>t.className='toast', 4000);
-}
-function abrirModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow='hidden'; }
-function cerrarModal(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow=''; }
-function resetForm(id) { document.getElementById(id).reset(); }
+function uid() { return Date.now().toString(36)+Math.random().toString(36).substr(2,6) }
+function genNum() { const d=new Date(); return 'ORD-'+d.toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.floor(1000+Math.random()*9000) }
+function hoy() { return new Date().toISOString().split('T')[0] }
+function fm(n) { return '$'+Number(n||0).toLocaleString('es-CO') }
+function ff(ts) { if(!ts)return'-'; const d=new Date(ts); return d.toLocaleDateString('es-CO',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) }
+function fc(f) { if(!f)return'-'; return new Date(f).toLocaleDateString('es-CO',{year:'numeric',month:'short',day:'numeric'}) }
+function badge(e) { const m={recibido:'🔵 Recibido',revision:'🟡 En Revisión',reparacion:'🟠 Reparación',listo:'🟢 Listo',entregado:'⚫ Entregado'}; return `<span class="status-badge" data-status="${e}">${m[e]||e}</span>` }
+function avatarColor(n) { const c=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899']; let h=0; for(let i=0;i<(n||'').length;i++)h=n.charCodeAt(i)+((h<<5)-h); return c[Math.abs(h)%c.length] }
+function avatarHTML(n, sz=32) { const c=avatarColor(n),ini=(n||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); return `<div style="width:${sz}px;height:${sz}px;border-radius:8px;background:${c};display:flex;align-items:center;justify-content:center;font-size:${sz*0.35}px;font-weight:600;color:white;flex-shrink:0">${ini}</div>` }
 
+function toast(msg, tipo='success') {
+  const t=document.getElementById('toast');
+  const icons = {success:'fa-check-circle',error:'fa-times-circle',warning:'fa-exclamation-triangle',info:'fa-info-circle'};
+  const titles = {success:'Éxito',error:'Error',warning:'Atención',info:'Info'};
+  t.querySelector('.toast-icon i').className='fas '+icons[tipo];
+  document.getElementById('toastTitle').textContent = titles[tipo]||'Éxito';
+  document.getElementById('toastMsg').textContent = msg;
+  t.className='toast show '+tipo;
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='toast',4500);
+}
+
+function abrirModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow='hidden' }
+function cerrarModal(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow='' }
 function confirmar(msg) {
-  return new Promise(resolve => {
-    document.getElementById('confMsg').textContent = msg;
-    const btn = document.getElementById('btnConfEliminar');
-    abrirModal('modalConfirmar');
-    btn.onclick = () => { cerrarModal('modalConfirmar'); resolve(true); };
-    document.querySelector('#modalConfirmar .modal-close').onclick = () => { cerrarModal('modalConfirmar'); resolve(false); };
+  return new Promise(r=>{
+    document.getElementById('confMsg').textContent=msg; abrirModal('modalConfirmar');
+    document.getElementById('btnConfEliminar').onclick=()=>{cerrarModal('modalConfirmar');r(true)};
+    document.querySelector('#modalConfirmar .modal-close').onclick=()=>{cerrarModal('modalConfirmar');r(false)};
   });
 }
 
+// ---- ACTIVIDAD ----
+function logAct(msg, tipo='blue') {
+  const logs = DB.get('actividad');
+  logs.unshift({msg, tipo, ts:Date.now()});
+  if(logs.length>200) logs.length=200;
+  DB.set('actividad', logs);
+}
+
+// ---- NOTIFICACIONES ----
+function addNotif(msg, tipo='info') {
+  const notifs = DB.get('notificaciones');
+  notifs.unshift({msg, tipo, ts:Date.now(), leido:false});
+  if(notifs.length>50) notifs.length=50;
+  DB.set('notificaciones', notifs);
+  actualizarBadgeNotif();
+}
+function actualizarBadgeNotif() {
+  const notifs = DB.get('notificaciones').filter(n=>!n.leido);
+  const dot = document.getElementById('notifDot');
+  dot.style.display = notifs.length?'block':'none';
+  const badgeC = document.getElementById('badgeOrdenes');
+  const ordenesActivas = DB.get('ordenes').filter(o=>o.estado==='listo').length;
+  badgeC.textContent = ordenesActivas;
+  badgeC.style.display = ordenesActivas?'inline':'none';
+}
+function toggleNotifPanel() {
+  const p = document.getElementById('notifPanel');
+  p.style.display = p.style.display==='none'?'block':'none';
+  if(p.style.display==='block') renderNotifs();
+}
+function renderNotifs() {
+  const notifs = DB.get('notificaciones');
+  const lst = document.getElementById('notifList');
+  if(!notifs.length) { lst.innerHTML='<p class="text-muted text-center" style="padding:1rem;font-size:0.85rem">Sin notificaciones</p>'; return; }
+  lst.innerHTML = notifs.slice(0,15).map((n,i) => {
+    const colors = {info:'var(--cyan)',success:'var(--success)',warning:'var(--warning)',error:'var(--danger)'};
+    const icons = {info:'fa-info-circle',success:'fa-check-circle',warning:'fa-exclamation-triangle',error:'fa-times-circle'};
+    return `<div style="display:flex;gap:0.6rem;padding:0.65rem 0.5rem;border-bottom:1px solid var(--border);${n.leido?'opacity:0.5':''}"><i class="fas ${icons[n.tipo]||icons.info}" style="color:${colors[n.tipo]||colors.info};margin-top:2px"></i><div style="flex:1"><p style="font-size:0.82rem;color:var(--text-secondary)">${n.msg}</p><p style="font-size:0.7rem;color:var(--text-muted);margin-top:0.15rem">${ff(n.ts)}</p></div></div>`;
+  }).join('');
+  // Marcar como leídas
+  notifs.forEach(n=>n.leido=true);
+  DB.set('notificaciones', notifs);
+  actualizarBadgeNotif();
+}
+function limpiarNotifs() { DB.set('notificaciones',[]); actualizarBadgeNotif(); renderNotifs(); toast('Notificaciones limpiadas','info') }
+
 // ---- NAVEGACIÓN ----
+const titulos = {dashboard:'Dashboard',clientes:'Clientes',ordenes:'Órdenes de Trabajo',inventario:'Inventario',garantias:'Garantías',notas:'Notas Rápidas',reportes:'Reportes',herramientas:'Herramientas',actividad:'Historial de Actividad',configuracion:'Configuración'};
+const subs = {dashboard:'Resumen general del sistema',clientes:'Administra tu base de clientes',ordenes:'Gestiona las órdenes de trabajo',inventario:'Control de repuestos y stock',garantias:'Seguimiento de garantías activas',notas:'Notas y recordatorios rápidos',reportes:'Estadísticas y exportación de datos',herramientas:'Calculadora y utilidades',actividad:'Registro de acciones del sistema',configuracion:'Ajustes del sistema y backups'};
+
 function navegar(sec) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(sec).classList.add('active');
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  document.querySelector(`.nav-link[data-section="${sec}"]`).classList.add('active');
-  const tit = {dashboard:'Dashboard', clientes:'Clientes', ordenes:'Órdenes de Trabajo', inventario:'Inventario', reportes:'Reportes', configuracion:'Configuración'};
-  document.getElementById('pageTitle').textContent = tit[sec] || 'NEXTCOM';
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  document.querySelector(`.nav-link[data-section="${sec}"]`)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = titulos[sec]||sec;
+  document.getElementById('pageSubtitle').textContent = subs[sec]||'';
   if(sec==='clientes') renderClientes();
   if(sec==='ordenes') renderOrdenes();
   if(sec==='inventario') renderInventario();
+  if(sec==='garantias') renderGarantias();
+  if(sec==='notas') renderNotas();
   if(sec==='reportes') renderReportes();
-  if(sec==='configuracion') cargarConfig();
+  if(sec==='actividad') renderActividad();
+  if(sec==='configuracion') renderConfig();
   if(innerWidth<=1024) document.getElementById('sidebar').classList.remove('active');
+  // Cerrar panel de notificaciones
+  document.getElementById('notifPanel').style.display='none';
 }
 
 // ---- DASHBOARD ----
 function cargarDashboard() {
-  const clientes = DB.get('clientes');
-  const ordenes = DB.get('ordenes');
-  const repuestos = DB.get('repuestos');
+  const clientes = DB.get('clientes'), ordenes = DB.get('ordenes'), repuestos = DB.get('repuestos');
   const config = DB.getObj('config');
-  const stockMin = config.stockMin || 5;
+  const stockMin = config.stockMin||5;
 
-  document.getElementById('totalClientes').textContent = clientes.length;
-  document.getElementById('ordenesActivas').textContent = ordenes.filter(o=>o.estado!=='entregado').length;
-  document.getElementById('enReparacion').textContent = ordenes.filter(o=>o.estado==='reparacion').length;
+  document.getElementById('sClientes').textContent = clientes.length;
+  const activas = ordenes.filter(o=>o.estado!=='entregado');
+  document.getElementById('sActivas').textContent = activas.length;
+  document.getElementById('sReparacion').textContent = ordenes.filter(o=>o.estado==='reparacion').length;
 
-  // Ingresos hoy
   const hoyStr = hoy();
   const totalHoy = ordenes.filter(o=>o.fechaIngreso===hoyStr).reduce((s,o)=>s+(Number(o.abono)||0),0);
-  document.getElementById('ingresosHoy').textContent = fmtMon(totalHoy);
+  document.getElementById('sIngresos').textContent = fm(totalHoy);
 
-  // Órdenes recientes
+  // Badge de órdenes listas
+  const listas = ordenes.filter(o=>o.estado==='listo').length;
+  const badgeO = document.getElementById('sOrdenesBadge');
+  badgeO.textContent = '+'+listas;
+  badgeO.className = 'stat-change '+(listas>0?'up':'');
+
+  // Recientes
   const rec = [...ordenes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,8);
-  const tb = document.getElementById('tbodyRecientes');
-  if(!rec.length) { tb.innerHTML='<tr><td colspan="6" class="no-data">No hay órdenes aún</td></tr>'; }
+  const tb = document.getElementById('tbRecientes');
+  if(!rec.length) { tb.innerHTML='<tr><td colspan="6" class="no-data"><i class="fas fa-inbox" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;opacity:0.3"></i>No hay órdenes aún<br><small>Crea tu primera orden</small></td></tr>'; }
   else {
     tb.innerHTML = rec.map(o=>`<tr>
-      <td><strong>${o.numero}</strong></td>
-      <td>${o.clienteNombre||'-'}</td>
+      <td><strong style="color:var(--primary)">${o.numero}</strong></td>
+      <td><div class="cliente-cell">${avatarHTML(o.clienteNombre)}<span>${o.clienteNombre||'-'}</span></div></td>
       <td>${o.marca||''} ${o.modelo||''}</td>
-      <td>${badgeEstado(o.estado)}</td>
-      <td>${fmtFechaCorta(o.fechaIngreso)}</td>
-      <td>
-        <button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button>
-        <button class="btn btn-sm btn-secondary btn-icon" onclick="editarOrden('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-      </td></tr>`).join('');
+      <td>${badge(o.estado)}</td>
+      <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fm(o.saldo)}</strong></td>
+      <td><button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button></td>
+    </tr>`).join('');
   }
 
   // Stock bajo
-  const bajos = repuestos.filter(r => (r.cantidad||0) <= (r.minimo||stockMin));
-  const lst = document.getElementById('listaStockBajo');
-  if(!bajos.length) { lst.innerHTML='<li class="ok">✅ Todo el inventario está OK</li>'; }
-  else { lst.innerHTML = bajos.map(r=>`<li>⚠️ <strong>${r.nombre}</strong>: ${r.cantidad} unidades (mín: ${r.minimo||stockMin})</li>`).join(''); }
+  const bajos = repuestos.filter(r=>(r.cantidad||0)<=(r.minimo||stockMin));
+  const lst = document.getElementById('lstStockBajo');
+  if(!bajos.length) lst.innerHTML='<li style="color:var(--success);font-size:0.85rem;padding:0.5rem"><i class="fas fa-check-circle"></i> Todo OK</li>';
+  else lst.innerHTML = bajos.map(r=>`<li style="padding:0.5rem;font-size:0.85rem;color:var(--text-secondary)"><i class="fas fa-exclamation-triangle" style="color:var(--warning);margin-right:0.4rem"></i><strong>${r.nombre}</strong>: ${r.cantidad} uds</li>`).join('');
+
+  // Resumen financiero mensual
+  const hoyDate = new Date(), mesA = hoyDate.getMonth(), anioA = hoyDate.getFullYear();
+  const ordenesMes = ordenes.filter(o=>{if(!o.fechaIngreso)return false;const d=new Date(o.fechaIngreso);return d.getMonth()===mesA&&d.getFullYear()===anioA});
+  const ingMes = ordenesMes.reduce((s,o)=>s+(Number(o.total)||0),0);
+  const aboMes = ordenesMes.reduce((s,o)=>s+(Number(o.abono)||0),0);
+  document.getElementById('mesIngresos').textContent = fm(ingMes);
+  document.getElementById('mesGanancia').textContent = fm(aboMes);
+  document.getElementById('mesMargen').textContent = ingMes>0?Math.round((aboMes/ingMes)*100)+'%':'0%';
+  document.getElementById('mesTotal').textContent = ordenesMes.length;
+
+  // Storage info
+  actualizarStorage();
+}
+
+function actualizarStorage() {
+  let total = 0;
+  for(let k in localStorage) { if(k.startsWith('nxc_')) total += localStorage[k].length*2; }
+  const kb = (total/1024).toFixed(1);
+  const pct = Math.min(100,(total/(5*1024*1024))*100);
+  document.getElementById('storageBar').style.width = pct+'%';
+  document.getElementById('storageText').textContent = kb+' KB usado';
+  const cfg = document.getElementById('cfgStorage');
+  if(cfg) cfg.textContent = kb+' KB';
 }
 
 // ---- CLIENTES ----
 function abrirModalCliente(id) {
-  resetForm('formCliente');
-  document.getElementById('clienteId').value = '';
-  document.getElementById('tituloCliente').textContent = 'Nuevo Cliente';
+  document.getElementById('formCliente').reset();
+  document.getElementById('clienteId').value='';
+  document.getElementById('tituloCliente').textContent='Nuevo Cliente';
   if(id) {
-    const c = DB.get('clientes').find(x=>x.id===id);
-    if(c) {
-      document.getElementById('clienteId').value = c.id;
-      document.getElementById('cNombre').value = c.nombre;
-      document.getElementById('cTelefono').value = c.telefono;
-      document.getElementById('cDireccion').value = c.direccion||'';
-      document.getElementById('tituloCliente').textContent = 'Editar Cliente';
+    const c=DB.get('clientes').find(x=>x.id===id);
+    if(c){
+      document.getElementById('clienteId').value=c.id;
+      document.getElementById('cNombre').value=c.nombre;
+      document.getElementById('cTelefono').value=c.telefono;
+      document.getElementById('cEmail').value=c.email||'';
+      document.getElementById('cDireccion').value=c.direccion||'';
+      document.getElementById('cNotas').value=c.notas||'';
+      document.getElementById('tituloCliente').textContent='Editar Cliente';
     }
   }
   abrirModal('modalCliente');
@@ -485,589 +1038,679 @@ function guardarCliente(e) {
   const data = {
     nombre: document.getElementById('cNombre').value.trim(),
     telefono: document.getElementById('cTelefono').value.trim(),
-    direccion: document.getElementById('cDireccion').value.trim()
+    email: document.getElementById('cEmail').value.trim(),
+    direccion: document.getElementById('cDireccion').value.trim(),
+    notas: document.getElementById('cNotas').value.trim()
   };
-  if(!data.nombre||!data.telefono) { toast('Nombre y teléfono obligatorios','error'); return; }
+  if(!data.nombre||!data.telefono){toast('Nombre y teléfono obligatorios','error');return}
 
   let clientes = DB.get('clientes');
-  if(id) {
-    const idx = clientes.findIndex(x=>x.id===id);
-    if(idx>=0) clientes[idx] = {...clientes[idx], ...data, updatedAt:Date.now()};
+  if(id){
+    const idx=clientes.findIndex(x=>x.id===id);
+    if(idx>=0)clientes[idx]={...clientes[idx],...data,updatedAt:Date.now()};
+    logAct(`Cliente <strong>${data.nombre}</strong> actualizado`, 'blue');
     toast('Cliente actualizado');
   } else {
-    data.id = genId();
-    data.createdAt = Date.now();
+    data.id=uid();data.createdAt=Date.now();
     clientes.push(data);
+    logAct(`Nuevo cliente <strong>${data.nombre}</strong> registrado`, 'green');
+    addNotif(`Nuevo cliente: ${data.nombre}`);
     toast('Cliente creado');
   }
-  DB.set('clientes', clientes);
+  DB.set('clientes',clientes);
   cerrarModal('modalCliente');
   renderClientes();
   cargarDashboard();
 }
 
 function renderClientes() {
-  const clientes = DB.get('clientes');
-  const ordenes = DB.get('ordenes');
-  const tb = document.getElementById('tbodyClientes');
-  if(!clientes.length) { tb.innerHTML='<tr><td colspan="5" class="no-data">No hay clientes</td></tr>'; return; }
-
-  const counts = {};
-  ordenes.forEach(o => { counts[o.clienteId] = (counts[o.clienteId]||0)+1; });
-
-  tb.innerHTML = clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<tr>
-    <td><strong>${c.nombre}</strong></td>
-    <td>${fmtTel(c.telefono)}</td>
-    <td>${c.direccion||'-'}</td>
+  const clientes=DB.get('clientes'),ordenes=DB.get('ordenes'),tb=document.getElementById('tbClientes');
+  if(!clientes.length){tb.innerHTML='<tr><td colspan="6" class="no-data"><i class="fas fa-users" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>No hay clientes</td></tr>';return}
+  const counts={},gastos={};
+  ordenes.forEach(o=>{counts[o.clienteId]=(counts[o.clienteId]||0)+1;gastos[o.clienteId]=(gastos[o.clienteId]||0)+(Number(o.total)||0)});
+  tb.innerHTML=clientes.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(c=>`<tr>
+    <td><div class="cliente-cell">${avatarHTML(c.nombre)}<div><strong>${c.nombre}</strong>${c.email?`<br><small class="text-muted">${c.email}</small>`:''}</div></div></td>
+    <td>${c.telefono}</td><td>${c.direccion||'-'}</td>
     <td><span class="badge">${counts[c.id]||0} órdenes</span></td>
-    <td>
-      <button class="btn btn-sm btn-primary btn-icon" onclick="abrirModalCliente('${c.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+    <td><strong class="text-success">${fm(gastos[c.id]||0)}</strong></td>
+    <td style="display:flex;gap:0.3rem">
+      <button class="btn btn-sm btn-secondary btn-icon" onclick="abrirModalCliente('${c.id}')" title="Editar"><i class="fas fa-edit"></i></button>
       <button class="btn btn-sm btn-danger btn-icon" onclick="eliminarCliente('${c.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
     </td></tr>`).join('');
 }
 
-async function eliminarCliente(id) {
-  if(!await confirmar('¿Eliminar este cliente?')) return;
-  let clientes = DB.get('clientes').filter(x=>x.id!==id);
-  DB.set('clientes', clientes);
+async function eliminarCliente(id){
+  if(!await confirmar('¿Eliminar este cliente y todas sus órdenes asociadas?'))return;
+  let clientes=DB.get('clientes').filter(x=>x.id!==id);
+  let ordenes=DB.get('ordenes').filter(x=>x.clienteId!==id);
+  DB.set('clientes',clientes);DB.set('ordenes',ordenes);
+  const c=DB.get('clientes').find(x=>x.id===id);
+  logAct('Cliente eliminado','red');
   toast('Cliente eliminado');
-  renderClientes();
-  cargarDashboard();
+  renderClientes();cargarDashboard();
 }
 
 // ---- ÓRDENES ----
 function abrirModalOrden(id) {
-  resetForm('formOrden');
-  document.getElementById('ordenId').value = '';
-  document.getElementById('oFechaIngreso').value = hoy();
-  document.getElementById('tituloOrden').textContent = 'Nueva Orden de Trabajo';
-  document.getElementById('previewFotos').innerHTML = '';
-  document.getElementById('contRepuestos').innerHTML = `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
-  cargarSelectClientes();
-  cargarSelectRepuestos();
-  calcSaldo();
+  document.getElementById('formOrden').reset();
+  document.getElementById('ordenId').value='';
+  document.getElementById('oFechaIngreso').value=hoy();
+  document.getElementById('tituloOrden').textContent='Nueva Orden';
+  document.getElementById('previewFotos').innerHTML='';
+  document.getElementById('contRepuestos').innerHTML=`<div class="rep-item"><select class="rep-select form-input"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant form-input" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+  cargarSelectClientes();cargarSelectRepuestos();calcSaldo();
 
   if(id) {
-    const o = DB.get('ordenes').find(x=>x.id===id);
-    if(o) {
-      document.getElementById('ordenId').value = o.id;
-      document.getElementById('oCliente').value = o.clienteId;
-      document.getElementById('oTelefono').value = o.telefono||'';
-      document.getElementById('oMarca').value = o.marca||'';
-      document.getElementById('oModelo').value = o.modelo||'';
-      document.getElementById('oImei').value = o.imei||'';
-      document.getElementById('oProblema').value = o.problema||'';
-      document.getElementById('oEstadoFisico').value = o.estadoFisico||'';
-      document.getElementById('oFechaIngreso').value = o.fechaIngreso||hoy();
-      document.getElementById('oFechaEst').value = o.fechaEstimada||'';
-      document.getElementById('oEstado').value = o.estado||'recibido';
-      document.getElementById('oDiagnostico').value = o.diagnostico||'';
-      document.getElementById('oNotas').value = o.notas||'';
-      document.getElementById('oTotal').value = o.total||0;
-      document.getElementById('oAbono').value = o.abono||0;
-      document.getElementById('oSaldo').value = o.saldo||0;
-      document.getElementById('oMetodo').value = o.metodo||'efectivo';
-      document.getElementById('tituloOrden').textContent = 'Editar Orden #'+o.numero;
+    const o=DB.get('ordenes').find(x=>x.id===id);
+    if(o){
+      document.getElementById('ordenId').value=o.id;
+      document.getElementById('oCliente').value=o.clienteId;
+      document.getElementById('oTelefono').value=o.telefono||'';
+      document.getElementById('oMarca').value=o.marca||'';
+      document.getElementById('oModelo').value=o.modelo||'';
+      document.getElementById('oColor').value=o.color||'';
+      document.getElementById('oImei').value=o.imei||'';
+      document.getElementById('oPass').value=o.password||'';
+      document.getElementById('oAccesorios').value=o.accesorios||'';
+      document.getElementById('oProblema').value=o.problema||'';
+      document.getElementById('oEstadoFisico').value=o.estadoFisico||'';
+      document.getElementById('oFechaIngreso').value=o.fechaIngreso||hoy();
+      document.getElementById('oFechaEst').value=o.fechaEstimada||'';
+      document.getElementById('oEstado').value=o.estado||'recibido';
+      document.getElementById('oDiagnostico').value=o.diagnostico||'';
+      document.getElementById('oNotas').value=o.notas||'';
+      document.getElementById('oTotal').value=o.total||0;
+      document.getElementById('oAbono').value=o.abono||0;
+      document.getElementById('oSaldo').value=o.saldo||0;
+      document.getElementById('oMetodo').value=o.metodo||'efectivo';
+      document.getElementById('oPrioridad').value=o.prioridad||'normal';
+      document.getElementById('tituloOrden').textContent='Editar Orden #'+o.numero;
 
-      // Repuestos
-      if(o.repuestosUsados && o.repuestosUsados.length) {
-        const cont = document.getElementById('contRepuestos');
-        cont.innerHTML = '';
-        o.repuestosUsados.forEach(ru => {
-          cont.innerHTML += `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="${ru.cantidad}"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+      if(o.repuestosUsados&&o.repuestosUsados.length){
+        const cont=document.getElementById('contRepuestos');cont.innerHTML='';
+        o.repuestosUsados.forEach(ru=>{
+          cont.innerHTML+=`<div class="rep-item"><select class="rep-select form-input"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant form-input" placeholder="Cant." min="1" value="${ru.cantidad}"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
         });
         cargarSelectRepuestos();
-        cont.querySelectorAll('.rep-select').forEach((sel,i) => {
-          if(o.repuestosUsados[i]) sel.value = o.repuestosUsados[i].repuestoId;
-        });
+        cont.querySelectorAll('.rep-select').forEach((s,i)=>{if(o.repuestosUsados[i])s.value=o.repuestosUsados[i].repuestoId});
       }
 
-      // Fotos
-      if(o.fotos && o.fotos.length) {
-        const pv = document.getElementById('previewFotos');
-        pv.innerHTML = '';
-        o.fotos.forEach((f,i) => {
-          pv.innerHTML += `<div class="photo-item"><img src="${f}" onclick="window.open(this.src)"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`;
-        });
+      if(o.fotos&&o.fotos.length){
+        const pv=document.getElementById('previewFotos');pv.innerHTML='';
+        o.fotos.forEach(f=>{pv.innerHTML+=`<div class="photo-item"><img src="${f}" onclick="window.open(this.src)"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`});
       }
     }
   }
   abrirModal('modalOrden');
 }
 
-function cargarSelectClientes() {
-  const sel = document.getElementById('oCliente');
-  const clientes = DB.get('clientes').sort((a,b)=>a.nombre.localeCompare(b.nombre));
-  sel.innerHTML = '<option value="">Seleccionar cliente...</option>' + clientes.map(c=>`<option value="${c.id}">${c.nombre} - ${c.telefono}</option>`).join('');
+function cargarSelectClientes(){
+  const sel=document.getElementById('oCliente');
+  const clientes=DB.get('clientes').sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  sel.innerHTML='<option value="">Seleccionar cliente...</option>'+clientes.map(c=>`<option value="${c.id}">${c.nombre} — ${c.telefono}</option>`).join('');
 }
 
-function cargarTelefonoCliente() {
-  const cid = document.getElementById('oCliente').value;
-  const c = DB.get('clientes').find(x=>x.id===cid);
-  document.getElementById('oTelefono').value = c ? c.telefono : '';
+function cargarTelefonoCliente(){
+  const cid=document.getElementById('oCliente').value;
+  const c=DB.get('clientes').find(x=>x.id===cid);
+  document.getElementById('oTelefono').value=c?c.telefono:'';
 }
 
-function cargarSelectRepuestos() {
-  const repuestos = DB.get('repuestos').filter(r=>r.cantidad>0);
-  document.querySelectorAll('.rep-select').forEach(sel => {
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Seleccionar...</option>' + repuestos.map(r=>`<option value="${r.id}">${r.nombre} - ${fmtMon(r.precioVenta)} (Stock: ${r.cantidad})</option>`).join('');
-    sel.value = cur;
+function cargarSelectRepuestos(){
+  const repuestos=DB.get('repuestos').filter(r=>r.cantidad>0);
+  document.querySelectorAll('.rep-select').forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML='<option value="">Seleccionar...</option>'+repuestos.map(r=>`<option value="${r.id}">${r.nombre} — ${fm(r.precioVenta)} (${r.cantidad})</option>`).join('');
+    sel.value=cur;
   });
 }
 
-function agregarFilaRepuesto() {
-  const cont = document.getElementById('contRepuestos');
-  cont.innerHTML += `<div class="repuesto-item"><select class="rep-select"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
+function agregarFilaRepuesto(){
+  const cont=document.getElementById('contRepuestos');
+  cont.innerHTML+=`<div class="rep-item"><select class="rep-select form-input"><option value="">Seleccionar...</option></select><input type="number" class="rep-cant form-input" placeholder="Cant." min="1" value="1"><button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()" style="flex:0">✕</button></div>`;
   cargarSelectRepuestos();
 }
 
-function calcSaldo() {
-  const t = Number(document.getElementById('oTotal').value)||0;
-  const a = Number(document.getElementById('oAbono').value)||0;
-  document.getElementById('oSaldo').value = Math.max(0, t-a).toFixed(2);
+function calcSaldo(){
+  const t=Number(document.getElementById('oTotal').value)||0,a=Number(document.getElementById('oAbono').value)||0;
+  document.getElementById('oSaldo').value=Math.max(0,t-a).toFixed(2);
 }
 
-function previewFotos(input) {
-  const pv = document.getElementById('previewFotos');
-  pv.innerHTML = '';
-  const files = input.files;
-  for(let i=0;i<files.length;i++) {
-    if(i>=5) break;
-    const reader = new FileReader();
-    reader.onload = e => {
-      pv.innerHTML += `<div class="photo-item"><img src="${e.target.result}"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`;
-    };
-    reader.readAsDataURL(files[i]);
-  }
+function previewFotos(input){
+  const pv=document.getElementById('previewFotos');
+  Array.from(input.files).slice(0,5).forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{pv.innerHTML+=`<div class="photo-item"><img src="${e.target.result}"><button class="photo-remove" onclick="this.parentElement.remove()">✕</button></div>`};
+    reader.readAsDataURL(f);
+  });
 }
 
 function guardarOrden(e) {
   e.preventDefault();
-  const id = document.getElementById('ordenId').value;
-  const cid = document.getElementById('oCliente').value;
-  if(!cid) { toast('Seleccione un cliente','error'); return; }
+  const id=document.getElementById('ordenId').value,cid=document.getElementById('oCliente').value;
+  if(!cid){toast('Seleccione un cliente','error');return}
 
-  const cli = DB.get('clientes').find(x=>x.id===cid);
-
-  // Recopilar repuestos
-  const repuestosUsados = [];
-  document.querySelectorAll('#contRepuestos .repuesto-item').forEach(item => {
-    const rid = item.querySelector('.rep-select').value;
-    const cant = parseInt(item.querySelector('.rep-cant').value)||1;
-    if(rid && cant>0) repuestosUsados.push({repuestoId:rid, cantidad:cant});
+  const cli=DB.get('clientes').find(x=>x.id===cid);
+  const repuestosUsados=[];
+  document.querySelectorAll('#contRepuestos .rep-item').forEach(item=>{
+    const rid=item.querySelector('.rep-select').value,cant=parseInt(item.querySelector('.rep-cant').value)||1;
+    if(rid&&cant>0)repuestosUsados.push({repuestoId:rid,cantidad:cant});
   });
 
-  // Recopilar fotos existentes
-  const fotos = [];
-  document.querySelectorAll('#previewFotos img').forEach(img => fotos.push(img.src));
+  const fotos=[];
+  document.querySelectorAll('#previewFotos img').forEach(img=>fotos.push(img.src));
 
-  const data = {
-    clienteId: cid,
-    clienteNombre: cli ? cli.nombre : '',
-    telefono: cli ? cli.telefono : document.getElementById('oTelefono').value,
-    marca: document.getElementById('oMarca').value.trim(),
-    modelo: document.getElementById('oModelo').value.trim(),
-    imei: document.getElementById('oImei').value.trim(),
-    problema: document.getElementById('oProblema').value.trim(),
-    estadoFisico: document.getElementById('oEstadoFisico').value.trim(),
-    fechaIngreso: document.getElementById('oFechaIngreso').value,
-    fechaEstimada: document.getElementById('oFechaEst').value,
-    estado: document.getElementById('oEstado').value,
-    diagnostico: document.getElementById('oDiagnostico').value.trim(),
-    notas: document.getElementById('oNotas').value.trim(),
-    total: Number(document.getElementById('oTotal').value)||0,
-    abono: Number(document.getElementById('oAbono').value)||0,
-    saldo: Number(document.getElementById('oSaldo').value)||0,
-    metodo: document.getElementById('oMetodo').value,
-    repuestosUsados,
-    fotos
+  const data={
+    clienteId:cid,clienteNombre:cli?cli.nombre:'',telefono:cli?cli.telefono:'',
+    marca:document.getElementById('oMarca').value.trim(),modelo:document.getElementById('oModelo').value.trim(),
+    color:document.getElementById('oColor').value.trim(),
+    imei:document.getElementById('oImei').value.trim(),
+    password:document.getElementById('oPass').value.trim(),
+    accesorios:document.getElementById('oAccesorios').value.trim(),
+    problema:document.getElementById('oProblema').value.trim(),
+    estadoFisico:document.getElementById('oEstadoFisico').value.trim(),
+    fechaIngreso:document.getElementById('oFechaIngreso').value,
+    fechaEstimada:document.getElementById('oFechaEst').value,
+    estado:document.getElementById('oEstado').value,
+    diagnostico:document.getElementById('oDiagnostico').value.trim(),
+    notas:document.getElementById('oNotas').value.trim(),
+    total:Number(document.getElementById('oTotal').value)||0,
+    abono:Number(document.getElementById('oAbono').value)||0,
+    saldo:Number(document.getElementById('oSaldo').value)||0,
+    metodo:document.getElementById('oMetodo').value,
+    prioridad:document.getElementById('oPrioridad').value,
+    repuestosUsados,fotos,
+    timeline:[]
   };
 
-  let ordenes = DB.get('ordenes');
+  // Timeline
+  const statusLabels = {recibido:'Recibido',revision:'En Revisión',reparacion:'En Reparación',listo:'Listo para retiro',entregado:'Entregado al cliente'};
+  data.timeline.push({estado:data.estado,fecha:Date.now(),nota:`Estado cambiado a: ${statusLabels[data.estado]}`});
 
-  if(id) {
-    // EDITAR
-    const idx = ordenes.findIndex(x=>x.id===id);
-    if(idx>=0) {
-      const oldOrden = ordenes[idx];
-      ordenes[idx] = {...oldOrden, ...data, updatedAt:Date.now()};
+  let ordenes=DB.get('ordenes');
 
-      // Revertir stock anterior y aplicar nuevo
-      if(oldOrden.repuestosUsados) {
-        revertirStock(oldOrden.repuestosUsados);
-      }
-      aplicarStock(repuestosUsados, id);
+  if(id){
+    const idx=ordenes.findIndex(x=>x.id===id);
+    if(idx>=0){
+      const old=ordenes[idx];
+      if(old.repuestosUsados)revertirStock(old.repuestosUsados);
+      aplicarStock(repuestosUsados,id);
+      // Merge timeline
+      data.timeline = [...(old.timeline||[]),...data.timeline];
+      ordenes[idx]={...old,...data,updatedAt:Date.now()};
     }
+    logAct(`Orden <strong>${data.numero||id}</strong> actualizada`, 'blue');
     toast('Orden actualizada');
   } else {
-    // NUEVA
-    data.id = genId();
-    data.numero = genOrdenNum();
-    data.createdAt = Date.now();
-    data.updatedAt = Date.now();
+    data.id=uid();data.numero=genNum();data.createdAt=Date.now();data.updatedAt=Date.now();
     ordenes.push(data);
-    aplicarStock(repuestosUsados, data.id);
-    toast('Orden creada: ' + data.numero);
+    aplicarStock(repuestosUsados,data.id);
+    logAct(`Nueva orden <strong>${data.numero}</strong> creada`, 'green');
+    addNotif(`Nueva orden: ${data.numero} — ${data.marca} ${data.modelo}`);
+    toast('Orden creada: '+data.numero);
   }
 
-  DB.set('ordenes', ordenes);
+  DB.set('ordenes',ordenes);
+
+  // Verificar si está listo para notificar
+  if(data.estado==='listo'){
+    addNotif(`¡Equipo listo! ${data.marca} ${data.modelo} de ${data.clienteNombre}`,'success');
+  }
+
   cerrarModal('modalOrden');
-  renderOrdenes();
-  cargarDashboard();
+  renderOrdenes();cargarDashboard();
 }
 
-function revertirStock(repuestosUsados) {
-  let repuestos = DB.get('repuestos');
-  repuestosUsados.forEach(ru => {
-    const r = repuestos.find(x=>x.id===ru.repuestoId);
-    if(r) r.cantidad = (r.cantidad||0) + ru.cantidad;
-  });
-  DB.set('repuestos', repuestos);
+function revertirStock(rus){
+  let rep=DB.get('repuestos');
+  rus.forEach(ru=>{const r=rep.find(x=>x.id===ru.repuestoId);if(r)r.cantidad=(r.cantidad||0)+ru.cantidad});
+  DB.set('repuestos',rep);
+}
+function aplicarStock(rus,oid){
+  let rep=DB.get('repuestos');
+  rus.forEach(ru=>{const r=rep.find(x=>x.id===ru.repuestoId);if(r){r.cantidad=Math.max(0,(r.cantidad||0)-ru.cantidad);r.lastOrder=oid;r.lastUsed=Date.now()}});
+  DB.set('repuestos',rep);
 }
 
-function aplicarStock(repuestosUsados, ordenId) {
-  let repuestos = DB.get('repuestos');
-  repuestosUsados.forEach(ru => {
-    const r = repuestos.find(x=>x.id===ru.repuestoId);
-    if(r) {
-      r.cantidad = Math.max(0, (r.cantidad||0) - ru.cantidad);
-      r.lastOrder = ordenId;
-      r.lastUsed = Date.now();
-    }
-  });
-  DB.set('repuestos', repuestos);
-}
+function renderOrdenes(){
+  let ordenes=DB.get('ordenes');
+  const fEstado=document.getElementById('filtroEstado').value;
+  const fTexto=(document.getElementById('filtroOrden').value||'').toLowerCase();
+  if(fEstado)ordenes=ordenes.filter(o=>o.estado===fEstado);
+  if(fTexto)ordenes=ordenes.filter(o=>(o.numero||'').toLowerCase().includes(fTexto)||(o.clienteNombre||'').toLowerCase().includes(fTexto)||(o.marca||'').toLowerCase().includes(fTexto)||(o.modelo||'').toLowerCase().includes(fTexto)||(o.problema||'').toLowerCase().includes(fTexto));
+  ordenes=[...ordenes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
 
-function renderOrdenes() {
-  const ordenes = DB.get('ordenes');
-  const filtro = document.getElementById('filtroEstado').value;
-  let lista = ordenes;
-  if(filtro) lista = lista.filter(o=>o.estado===filtro);
-  lista = [...lista].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-
-  const tb = document.getElementById('tbodyOrdenes');
-  if(!lista.length) { tb.innerHTML='<tr><td colspan="7" class="no-data">No hay órdenes</td></tr>'; return; }
-
-  tb.innerHTML = lista.map(o=>`<tr>
-    <td><strong>${o.numero}</strong></td>
-    <td>${o.clienteNombre||'-'}</td>
-    <td>${o.marca||''} ${o.modelo||''}<br><small class="text-muted">${o.imei||'Sin IMEI'}</small></td>
-    <td>${(o.problema||'').substring(0,35)}${(o.problema||'').length>35?'...':''}</td>
-    <td>${badgeEstado(o.estado)}</td>
-    <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fmtMon(o.saldo)}</strong></td>
-    <td>
+  const tb=document.getElementById('tbOrdenes');
+  if(!ordenes.length){tb.innerHTML='<tr><td colspan="8" class="no-data"><i class="fas fa-clipboard" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>No hay órdenes</td></tr>';return}
+  tb.innerHTML=ordenes.map(o=>`<tr>
+    <td><strong style="color:var(--primary)">${o.numero}</strong>${o.prioridad==='alta'?' <i class="fas fa-fire text-danger" title="Urgente"></i>':''}</td>
+    <td><div class="cliente-cell">${avatarHTML(o.clienteNombre,28)}<span>${o.clienteNombre||'-'}</span></div></td>
+    <td><strong>${o.marca||''} ${o.modelo||''}</strong><br><small class="text-muted">${o.imei||'Sin IMEI'}</small></td>
+    <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.problema||'-'}</td>
+    <td>${badge(o.estado)}</td>
+    <td>${fm(o.total)}</td>
+    <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fm(o.saldo)}</strong></td>
+    <td style="display:flex;gap:0.3rem">
       <button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button>
       <button class="btn btn-sm btn-secondary btn-icon" onclick="editarOrden('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button>
     </td></tr>`).join('');
 }
 
-async function editarOrden(id) {
-  cerrarModal('modalDetalle');
-  abrirModalOrden(id);
-}
+function editarOrden(id){cerrarModal('modalDetalle');abrirModalOrden(id)}
 
-let ordenActual = null;
+let ordenActual=null;
 
 function verDetalle(id) {
-  const o = DB.get('ordenes').find(x=>x.id===id);
-  if(!o) return;
-  ordenActual = o;
+  const o=DB.get('ordenes').find(x=>x.id===id);if(!o)return;ordenActual=o;
+  document.getElementById('detNumero').textContent=o.numero;
 
-  document.getElementById('detNumero').textContent = o.numero;
-
-  // Construir tabla de repuestos
-  let repHTML = '';
-  if(o.repuestosUsados && o.repuestosUsados.length) {
-    const repuestos = DB.get('repuestos');
-    repHTML = '<table><tr><th>Repuesto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr>';
-    o.repuestosUsados.forEach(ru => {
-      const r = repuestos.find(x=>x.id===ru.repuestoId);
-      if(r) {
-        const sub = (r.precioVenta||0)*ru.cantidad;
-        repHTML += `<tr><td>${r.nombre}</td><td>${ru.cantidad}</td><td>${fmtMon(r.precioVenta)}</td><td>${fmtMon(sub)}</td></tr>`;
-      }
-    });
-    repHTML += '</table>';
+  let repHTML='';
+  if(o.repuestosUsados&&o.repuestosUsados.length){
+    const reps=DB.get('repuestos');
+    repHTML='<table><tr><th>Repuesto</th><th>Cant.</th><th>P.Unit</th><th>Subtotal</th></tr>';
+    o.repuestosUsados.forEach(ru=>{const r=reps.find(x=>x.id===ru.repuestoId);if(r){repHTML+=`<tr><td>${r.nombre}</td><td>${ru.cantidad}</td><td>${fm(r.precioVenta)}</td><td>${fm((r.precioVenta||0)*ru.cantidad)}</td></tr>`}});
+    repHTML+='</table>';
   }
 
-  // Fotos
-  let fotosHTML = '';
-  if(o.fotos && o.fotos.length) {
-    fotosHTML = '<div class="photo-preview">' + o.fotos.map(f=>`<img src="${f}" onclick="window.open(this.src)">`).join('') + '</div>';
+  let fotosHTML='';
+  if(o.fotos&&o.fotos.length) fotosHTML='<div class="photo-grid">'+o.fotos.map(f=>`<div class="photo-item"><img src="${f}" onclick="window.open(this.src)"></div>`).join('')+'</div>';
+
+  // Timeline
+  let timelineHTML='';
+  if(o.timeline&&o.timeline.length){
+    const tl = [...o.timeline].sort((a,b)=>a.fecha-b.fecha);
+    const statusLabels = {recibido:'Recibido',revision:'En Revisión',reparacion:'En Reparación',listo:'Listo para retiro',entregado:'Entregado al cliente'};
+    timelineHTML='<div class="timeline">'+tl.map((t,i)=>`<div class="timeline-item"><div class="timeline-dot done"></div><div class="timeline-content"><div class="tl-title">${statusLabels[t.estado]||t.estado}</div>${t.nota?`<div class="tl-desc">${t.nota}</div>`:''}<div class="tl-time">${ff(t.fecha)}</div></div></div>`).join('')+'</div>';
   }
 
-  document.getElementById('detContenido').innerHTML = `
+  document.getElementById('detContenido').innerHTML=`
     <div class="form-row">
-      <div><p><strong>Cliente:</strong> ${o.clienteNombre||'-'}</p><p><strong>Teléfono:</strong> ${fmtTel(o.telefono)}</p></div>
-      <div><p><strong>Equipo:</strong> ${o.marca||''} ${o.modelo||''}</p><p><strong>IMEI:</strong> ${o.imei||'N/A'}</p></div>
+      <div><p><strong>Cliente:</strong> ${o.clienteNombre||'-'}</p><p><strong>Teléfono:</strong> ${o.telefono||'-'}</p></div>
+      <div><p><strong>Equipo:</strong> ${o.marca||''} ${o.modelo||''} ${o.color?'('+o.color+')':''}</p><p><strong>IMEI:</strong> ${o.imei||'N/A'}</p></div>
     </div>
-    <div class="section"><div class="section-title">Problema Reportado</div><p>${o.problema||'-'}</p></div>
-    <div class="section"><div class="section-title">Estado Físico</div><p>${o.estadoFisico||'No especificado'}</p></div>
-    <div class="form-row">
-      <div><p><strong>Ingreso:</strong> ${fmtFechaCorta(o.fechaIngreso)}</p><p><strong>Estimada:</strong> ${fmtFechaCorta(o.fechaEstimada)}</p></div>
-      <div><p><strong>Estado:</strong> ${badgeEstado(o.estado)}</p></div>
+    ${o.accesorios?`<p style="font-size:0.85rem;color:var(--text-secondary)"><strong>Accesorios:</strong> ${o.accesorios}</p>`:''}
+    ${o.password?`<p style="font-size:0.85rem;color:var(--text-secondary)"><strong>Contraseña:</strong> ${o.password}</p>`:''}
+    <div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Problema Reportado</div><p>${o.problema||'-'}</p></div>
+    <div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Estado Físico</div><p>${o.estadoFisico||'No especificado'}</p></div>
+    <div class="form-row" style="margin:0.75rem 0"><div><p><strong>Ingreso:</strong> ${fc(o.fechaIngreso)}</p><p><strong>Estimada:</strong> ${fc(o.fechaEstimada)}</p></div><div><p><strong>Estado:</strong> ${badge(o.estado)}</p>${o.prioridad==='alta'?'<p style="color:var(--danger)"><i class="fas fa-fire"></i> Prioridad Alta</p>':''}</div></div>
+    ${o.diagnostico?`<div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Diagnóstico</div><p>${o.diagnostico}</p></div>`:''}
+    ${repHTML?`<div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Repuestos Usados</div>${repHTML}</div>`:''}
+    ${o.notas?`<div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Notas</div><p>${o.notas}</p></div>`:''}
+    <div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.3rem">Pagos</div>
+      <div class="form-row" style="grid-template-columns:repeat(3,1fr)">
+        <div style="text-align:center;padding:0.75rem;background:var(--bg-glass);border-radius:var(--radius-xs)"><small class="text-muted">Total</small><h3>${fm(o.total)}</h3></div>
+        <div style="text-align:center;padding:0.75rem;background:var(--bg-glass);border-radius:var(--radius-xs)"><small class="text-muted">Abono</small><h3 style="color:var(--success)">${fm(o.abono)}</h3></div>
+        <div style="text-align:center;padding:0.75rem;background:var(--bg-glass);border-radius:var(--radius-xs)"><small class="text-muted">Saldo</small><h3 style="color:var(--warning)">${fm(o.saldo)}</h3></div>
+      </div>
+      <p style="margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted)">Método: ${o.metodo}</p>
     </div>
-    ${o.diagnostico?`<div class="section"><div class="section-title">Diagnóstico</div><p>${o.diagnostico}</p></div>`:''}
-    ${repHTML?`<div class="section"><div class="section-title">Repuestos Usados</div>${repHTML}</div>`:''}
-    ${o.notas?`<div class="section"><div class="section-title">Notas</div><p>${o.notas}</p></div>`:''}
-    <div class="section"><div class="section-title">Pagos</div>
-      <p>Total: <strong>${fmtMon(o.total)}</strong></p>
-      <p>Abono: ${fmtMon(o.abono)}</p>
-      <p style="font-size:1.1rem;color:var(--warning)">Saldo: <strong>${fmtMon(o.saldo)}</strong></p>
-      <p><small class="text-muted">Método: ${o.metodo}</small></p>
-    </div>
-    ${fotosHTML?`<div class="section"><div class="section-title">Fotos</div>${fotosHTML}</div>`:''}
+    ${timelineHTML?`<div class="section" style="margin:0.75rem 0;padding:0.75rem 0;border-bottom:1px solid var(--border)"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.5rem">Línea de Tiempo</div>${timelineHTML}</div>`:''}
+    ${fotosHTML?`<div class="section" style="margin:0.75rem 0;padding:0.75rem 0"><div class="section-title" style="font-weight:600;color:var(--primary);margin-bottom:0.5rem">Fotos</div>${fotosHTML}</div>`:''}
   `;
   abrirModal('modalDetalle');
 }
 
-function imprimirOrden() {
-  if(!ordenActual) return;
-  const o = ordenActual;
-  const config = DB.getObj('config');
-  const contenido = `
-    <div class="header"><h1>NEXTCOM Multiservicios</h1><p>${config.direccion||'Dirección no configurada'} | ${config.telefono||'Teléfono no configurado'}</p></div>
-    <h2>Orden de Trabajo #${o.numero}</h2>
-    <p><strong>Fecha:</strong> ${fmtFecha(o.createdAt)}</p>
-    <p><strong>Cliente:</strong> ${o.clienteNombre} | <strong>Tel:</strong> ${o.telefono}</p>
-    <p><strong>Equipo:</strong> ${o.marca} ${o.modelo} ${o.imei?'(IMEI: '+o.imei+')':''}</p>
-    <div class="section"><div class="section-title">Problema</div><p>${o.problema}</p></div>
-    <div class="section"><div class="section-title">Estado Físico</div><p>${o.estadoFisico||'No especificado'}</p></div>
-    <div class="section"><div class="section-title">Diagnóstico</div><p>${o.diagnostico||'Pendiente'}</p></div>
-    <div class="section"><div class="section-title">Pagos</div>
-      <table><tr><td>Total:</td><td>${fmtMon(o.total)}</td></tr><tr><td>Abono:</td><td>${fmtMon(o.abono)}</td></tr><tr><td><strong>Saldo:</strong></td><td><strong>${fmtMon(o.saldo)}</strong></td></tr></table>
-    </div>
-    <p><strong>Estado:</strong> ${o.estado.toUpperCase()}</p>
-    <p style="margin-top:30px">Firma Técnico: _________________ &nbsp;&nbsp;&nbsp;&nbsp; Firma Cliente: _________________</p>
-    <div style="margin-top:30px;text-align:center;font-size:0.85rem;color:#666">Gracias por confiar en NEXTCOM Multiservicios</div>
-  `;
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>Orden ${o.numero}</title><style>body{font-family:Arial;padding:20px;color:#000}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px}.section{margin:12px 0}.section-title{font-weight:bold;border-bottom:1px solid #999;padding-bottom:4px;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin:5px 0}th,td{border:1px solid #999;padding:6px;text-align:left}p{margin:3px 0}@media print{body{padding:0}}</style></head><body>${contenido}</body></html>`);
-  w.document.close();
-  setTimeout(()=>{w.print();},300);
+function imprimirOrden(){
+  if(!ordenActual)return;const o=ordenActual;const cfg=DB.getObj('config');
+  const html=`<div style="font-family:Arial;padding:20px"><div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px"><h1>NEXTCOM Multiservicios</h1><p>${cfg.direccion||''} | ${cfg.telefono||''}</p></div>
+  <h2>Orden de Trabajo #${o.numero}</h2>
+  <p><strong>Fecha:</strong> ${ff(o.createdAt)} | <strong>Cliente:</strong> ${o.clienteNombre} | <strong>Tel:</strong> ${o.telefono}</p>
+  <p><strong>Equipo:</strong> ${o.marca} ${o.modelo} ${o.color?'('+o.color+')':''} ${o.imei?'(IMEI: '+o.imei+')':''}</p>
+  <h3>Problema</h3><p>${o.problema}</p>
+  ${o.diagnostico?`<h3>Diagnóstico</h3><p>${o.diagnostico}</p>`:''}
+  <h3>Pagos</h3><p>Total: ${fm(o.total)} | Abono: ${fm(o.abono)} | <strong>Saldo: ${fm(o.saldo)}</strong></p>
+  <h3>Estado: ${o.estado.toUpperCase()}</h3>
+  <p style="margin-top:30px">Firma Técnico: _________________ &nbsp;&nbsp;&nbsp; Firma Cliente: _________________</p>
+  <p style="margin-top:20px;text-align:center;font-size:0.8rem;color:#666">Garantía de 30 días sobre la reparación realizada</p></div>`;
+  const w=window.open('','_blank');w.document.write(`<!DOCTYPE html><html><head><title>Orden ${o.numero}</title><style>@media print{body{padding:0}}</style></head><body>${html}</body></html>`);w.document.close();setTimeout(()=>w.print(),300);
 }
 
-function notificarWhatsApp() {
-  if(!ordenActual) return;
-  const o = ordenActual;
-  const msg = `¡Hola ${o.clienteNombre}! 👋\n\nSu equipo ${o.marca} ${o.modelo} está ${o.estado==='listo'?'LISTO para ser retirado':'en proceso'} en NEXTCOM Multiservicios. 📱\n\n🔧 Orden: ${o.numero}\n💰 Saldo pendiente: ${fmtMon(o.saldo)}\n\n📍 ¡Gracias por confiar en nosotros!`;
-  const phone = (o.telefono||'').replace(/[^\d+]/g,'');
-  if(!phone||phone.length<7) { toast('Teléfono no válido para WhatsApp','error'); return; }
-  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+function notificarWhatsApp(){
+  if(!ordenActual)return;const o=ordenActual;
+  const msgs = {
+    recibido:`Hola ${o.clienteNombre}! Su ${o.marca} ${o.modelo} ha sido recibido en NEXTCOM Multiservicios. Orden: ${o.numero}`,
+    revision:`Hola ${o.clienteNombre}! Su ${o.marca} ${o.modelo} está en revisión. Le informaremos pronto. Orden: ${o.numero}`,
+    reparacion:`Hola ${o.clienteNombre}! Su ${o.marca} ${o.modelo} ya está en reparación. Orden: ${o.numero}`,
+    listo:`¡Hola ${o.clienteNombre}! 🎉 Su equipo ${o.marca} ${o.modelo} está LISTO para retiro en NEXTCOM Multiservicios! 📱✨ Orden: ${o.numero} | Saldo: ${fm(o.saldo)}`,
+    entregado:`Hola ${o.clienteNombre}, gracias por confiar en NEXTCOM. Su equipo ${o.marca} ${o.modelo} ha sido entregado. ¡Que lo disfrute! 😊`
+  };
+  const msg=msgs[o.estado]||`Hola ${o.clienteNombre}! Actualización de su orden ${o.numero} en NEXTCOM: ${o.estado}`;
+  const phone=(o.telefono||'').replace(/[^\d+]/g,'');
+  if(!phone||phone.length<7){toast('Teléfono no válido','error');return}
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank');
+  logAct(`Notificación WhatsApp enviada a <strong>${o.clienteNombre}</strong>`,'cyan');
+  addNotif(`WhatsApp enviado a ${o.clienteNombre}`);
 }
 
-function editarDesdeDetalle() {
-  if(ordenActual) editarOrden(ordenActual.id);
-}
-
-// Filtro de órdenes
-document.getElementById('filtroEstado').addEventListener('change', renderOrdenes);
+function editarDesdeDetalle(){if(ordenActual)editarOrden(ordenActual.id)}
+document.getElementById('filtroEstado').addEventListener('change',renderOrdenes);
+document.getElementById('filtroOrden').addEventListener('input',renderOrdenes);
 
 // ---- INVENTARIO ----
-function abrirModalRepuesto(id) {
-  resetForm('formRepuesto');
-  document.getElementById('repuestoId').value = '';
-  document.getElementById('tituloRepuesto').textContent = 'Nuevo Repuesto';
-  if(id) {
-    const r = DB.get('repuestos').find(x=>x.id===id);
-    if(r) {
-      document.getElementById('repuestoId').value = r.id;
-      document.getElementById('rNombre').value = r.nombre;
-      document.getElementById('rCantidad').value = r.cantidad;
-      document.getElementById('rMinimo').value = r.minimo||5;
-      document.getElementById('rPCompra').value = r.precioCompra||0;
-      document.getElementById('rPVenta').value = r.precioVenta||0;
-      document.getElementById('tituloRepuesto').textContent = 'Editar Repuesto';
+function abrirModalRepuesto(id){
+  document.getElementById('formRepuesto').reset();document.getElementById('repuestoId').value='';
+  document.getElementById('tituloRepuesto').textContent='Nuevo Repuesto';
+  if(id){
+    const r=DB.get('repuestos').find(x=>x.id===id);
+    if(r){
+      document.getElementById('repuestoId').value=r.id;
+      document.getElementById('rNombre').value=r.nombre;
+      document.getElementById('rCantidad').value=r.cantidad;
+      document.getElementById('rMinimo').value=r.minimo||5;
+      document.getElementById('rPCompra').value=r.precioCompra||0;
+      document.getElementById('rPVenta').value=r.precioVenta||0;
+      document.getElementById('rProveedor').value=r.proveedor||'';
+      document.getElementById('tituloRepuesto').textContent='Editar Repuesto';
     }
   }
   abrirModal('modalRepuesto');
 }
 
-function guardarRepuesto(e) {
+function guardarRepuesto(e){
   e.preventDefault();
-  const id = document.getElementById('repuestoId').value;
-  const data = {
-    nombre: document.getElementById('rNombre').value.trim(),
-    cantidad: parseInt(document.getElementById('rCantidad').value)||0,
-    minimo: parseInt(document.getElementById('rMinimo').value)||5,
-    precioCompra: Number(document.getElementById('rPCompra').value)||0,
-    precioVenta: Number(document.getElementById('rPVenta').value)||0
-  };
-  if(!data.nombre) { toast('Nombre obligatorio','error'); return; }
+  const id=document.getElementById('repuestoId').value;
+  const data={nombre:document.getElementById('rNombre').value.trim(),cantidad:parseInt(document.getElementById('rCantidad').value)||0,minimo:parseInt(document.getElementById('rMinimo').value)||5,precioCompra:Number(document.getElementById('rPCompra').value)||0,precioVenta:Number(document.getElementById('rPVenta').value)||0,proveedor:document.getElementById('rProveedor').value.trim()};
+  if(!data.nombre){toast('Nombre obligatorio','error');return}
 
-  let repuestos = DB.get('repuestos');
-  if(id) {
-    const idx = repuestos.findIndex(x=>x.id===id);
-    if(idx>=0) repuestos[idx] = {...repuestos[idx], ...data, updatedAt:Date.now()};
-    toast('Repuesto actualizado');
-  } else {
-    data.id = genId();
-    data.createdAt = Date.now();
-    repuestos.push(data);
-    toast('Repuesto creado');
-  }
-  DB.set('repuestos', repuestos);
-  cerrarModal('modalRepuesto');
-  renderInventario();
-  cargarDashboard();
+  let rep=DB.get('repuestos');
+  if(id){const idx=rep.findIndex(x=>x.id===id);if(idx>=0)rep[idx]={...rep[idx],...data,updatedAt:Date.now()};logAct(`Repuesto <strong>${data.nombre}</strong> actualizado`,'blue');toast('Repuesto actualizado')}
+  else{data.id=uid();data.createdAt=Date.now();rep.push(data);logAct(`Nuevo repuesto <strong>${data.nombre}</strong> agregado`,'green');addNotif(`Repuesto: ${data.nombre} (${data.cantidad} uds)`);toast('Repuesto creado')}
+  DB.set('repuestos',rep);cerrarModal('modalRepuesto');renderInventario();cargarDashboard();
 }
 
-function renderInventario() {
-  const repuestos = DB.get('repuestos');
-  const config = DB.getObj('config');
-  const stockMin = config.stockMin||5;
-  const tb = document.getElementById('tbodyInventario');
-  if(!repuestos.length) { tb.innerHTML='<tr><td colspan="6" class="no-data">No hay repuestos</td></tr>'; return; }
-
-  tb.innerHTML = repuestos.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(r=>{
-    const bajo = (r.cantidad||0) <= (r.minimo||stockMin);
+function renderInventario(){
+  const rep=DB.get('repuestos'),cfg=DB.getObj('config'),stockMin=cfg.stockMin||5,tb=document.getElementById('tbInventario');
+  if(!rep.length){tb.innerHTML='<tr><td colspan="9" class="no-data">No hay repuestos registrados</td></tr>';return}
+  tb.innerHTML=rep.sort((a,b)=>a.nombre.localeCompare(b.nombre)).map(r=>{
+    const bajo=(r.cantidad||0)<=(r.minimo||stockMin);
+    const valTotal=(r.cantidad||0)*(r.precioCompra||0);
+    const ganPot=((r.precioVenta||0)-(r.precioCompra||0))*(r.cantidad||0);
     return `<tr>
-      <td><strong>${r.nombre}</strong></td>
-      <td>${r.cantidad}</td>
-      <td>${fmtMon(r.precioCompra)}</td>
-      <td>${fmtMon(r.precioVenta)}</td>
+      <td><strong>${r.nombre}</strong>${r.proveedor?`<br><small class="text-muted">${r.proveedor}</small>`:''}</td>
+      <td><strong>${r.cantidad}</strong></td><td>${r.minimo||stockMin}</td>
+      <td>${fm(r.precioCompra)}</td><td>${fm(r.precioVenta)}</td>
+      <td>${fm(valTotal)}</td><td class="text-success">${fm(ganPot)}</td>
       <td class="${bajo?'text-danger':'text-success'}">${bajo?'⚠️ Bajo':'✅ OK'}</td>
-      <td>
-        <button class="btn btn-sm btn-primary btn-icon" onclick="abrirModalRepuesto('${r.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-        <button class="btn btn-sm btn-danger btn-icon" onclick="eliminarRepuesto('${r.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+      <td style="display:flex;gap:0.3rem">
+        <button class="btn btn-sm btn-secondary btn-icon" onclick="abrirModalRepuesto('${r.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-danger btn-icon" onclick="eliminarRepuesto('${r.id}')"><i class="fas fa-trash"></i></button>
       </td></tr>`;
   }).join('');
 }
 
-async function eliminarRepuesto(id) {
-  if(!await confirmar('¿Eliminar este repuesto?')) return;
-  let repuestos = DB.get('repuestos').filter(x=>x.id!==id);
-  DB.set('repuestos', repuestos);
-  toast('Repuesto eliminado');
-  renderInventario();
+async function eliminarRepuesto(id){if(!await confirmar('¿Eliminar este repuesto?'))return;let rep=DB.get('repuestos').filter(x=>x.id!==id);DB.set('repuestos',rep);logAct('Repuesto eliminado','red');toast('Eliminado');renderInventario();cargarDashboard()}
+
+// ---- GARANTÍAS ----
+function guardarConfigGarantia(){
+  const cfg=DB.getObj('config');
+  cfg.garantiaDias=parseInt(document.getElementById('garDiasDef').value)||30;
+  DB.setObj('config',cfg);toast('Configuración de garantía guardada');renderGarantias();
+}
+
+function renderGarantias(){
+  const cfg=DB.getObj('config');
+  const diasDef=cfg.garantiaDias||30;
+  document.getElementById('garDiasDef').value=diasDef;
+
+  const ordenes=DB.get('ordenes').filter(o=>o.estado==='entregado'&&o.fechaEntrega);
+  const hoyTs=Date.now();
+  const lst=document.getElementById('lstGarantias');
+
+  const garantias=ordenes.map(o=>{
+    const finEntrega=o.fechaEntrega||o.updatedAt;
+    const finG=new Date(finEntrega+(diasDef*24*60*60*1000));
+    const diasRest=Math.ceil((finG-hoyTs)/(24*60*60*1000));
+    return {...o,finG,diasRest,vigente:diasRest>0};
+  }).sort((a,b)=>a.diasRest-b.diasRest);
+
+  if(!garantias.length){lst.innerHTML='<div class="no-data"><i class="fas fa-shield-halved" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>No hay garantías activas</div>';return}
+
+  lst.innerHTML=garantias.map(g=>`
+    <div class="garantia-card">
+      <div class="garantia-info">
+        <h4>${g.marca} ${g.modelo} — ${g.clienteNombre}</h4>
+        <p>Orden: ${g.numero} | Entregado: ${fc(g.fechaEntrega||g.updatedAt)} | Garantía hasta: ${fc(g.finG)}</p>
+      </div>
+      <div style="text-align:right">
+        <span class="garantia-status ${g.vigente?'vigente':'vencida'}">${g.vigente?'✅ Vigente':'❌ Vencida'}</span>
+        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.3rem">${g.vigente?g.diasRest+' días restantes':'Expirada'}</p>
+      </div>
+    </div>`).join('');
+}
+
+// Actualizar fecha de entrega cuando se marca como entregado
+// Sobrescribir guardarOrden para incluir fecha de entrega
+const _guardarOrdenOrig = guardarOrden;
+
+// ---- NOTAS ----
+function abrirModalNota(id){
+  document.getElementById('formNota').reset();document.getElementById('notaId').value='';
+  document.getElementById('tituloNota').textContent='Nueva Nota';
+  document.querySelectorAll('.note-color').forEach(c=>c.classList.remove('active'));
+  document.querySelector('.note-color[data-color="blue"]').classList.add('active');
+  document.getElementById('nColor').value='blue';
+  if(id){
+    const n=DB.get('notas').find(x=>x.id===id);
+    if(n){
+      document.getElementById('notaId').value=n.id;
+      document.getElementById('nTitulo').value=n.titulo||'';
+      document.getElementById('nContenido').value=n.contenido;
+      document.getElementById('nColor').value=n.color||'blue';
+      document.querySelectorAll('.note-color').forEach(c=>{c.classList.toggle('active',c.dataset.color===(n.color||'blue'))});
+      document.getElementById('tituloNota').textContent='Editar Nota';
+    }
+  }
+  abrirModal('modalNota');
+}
+
+function selectNotaColor(el){document.querySelectorAll('.note-color').forEach(c=>c.classList.remove('active'));el.classList.add('active');document.getElementById('nColor').value=el.dataset.color}
+
+function guardarNota(e){
+  e.preventDefault();
+  const id=document.getElementById('notaId').value;
+  const data={titulo:document.getElementById('nTitulo').value.trim(),contenido:document.getElementById('nContenido').value.trim(),color:document.getElementById('nColor').value};
+  if(!data.contenido){toast('Contenido obligatorio','error');return}
+
+  let notas=DB.get('notas');
+  if(id){const idx=notas.findIndex(x=>x.id===id);if(idx>=0)notas[idx]={...notas[idx],...data,updatedAt:Date.now()};toast('Nota actualizada')}
+  else{data.id=uid();data.createdAt=Date.now();notas.push(data);toast('Nota creada')}
+  DB.set('notas',notas);cerrarModal('modalNota');renderNotas();
+}
+
+function renderNotas(){
+  const notas=DB.get('notas').sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const lst=document.getElementById('lstNotas');
+  if(!notas.length){lst.innerHTML='<div class="no-data" style="grid-column:1/-1"><i class="fas fa-note-sticky" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>Sin notas aún</div>';return}
+
+  const colorMap={blue:'var(--primary)',green:'var(--success)',orange:'var(--warning)',purple:'var(--purple)',red:'var(--danger)',cyan:'var(--cyan)'};
+  lst.innerHTML=notas.map(n=>`
+    <div class="note-card" style="border-left:3px solid ${colorMap[n.color]||colorMap.blue}">
+      ${n.titulo?`<h4 style="font-size:0.9rem;font-weight:600;margin-bottom:0.3rem">${n.titulo}</h4>`:''}
+      <div class="note-text">${n.contenido}</div>
+      <div class="note-footer">
+        <span>${ff(n.updatedAt||n.createdAt)}</span>
+        <div class="note-actions">
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalNota('${n.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="eliminarNota('${n.id}')" style="color:var(--danger)"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function eliminarNota(id){if(!await confirmar('¿Eliminar esta nota?'))return;DB.set('notas',DB.get('notas').filter(x=>x.id!==id));toast('Nota eliminada');renderNotas()}
+
+// ---- REPORTES ----
+function renderReportes(){
+  const ordenes=DB.get('ordenes'),hoyStr=hoy(),hoyDate=new Date(),mesA=hoyDate.getMonth(),anioA=hoyDate.getFullYear();
+
+  const ingDia=ordenes.filter(o=>o.fechaIngreso===hoyStr).reduce((s,o)=>s+(Number(o.abono)||0),0);
+  const ingMes=ordenes.filter(o=>{if(!o.fechaIngreso)return false;const d=new Date(o.fechaIngreso);return d.getMonth()===mesA&&d.getFullYear()===anioA}).reduce((s,o)=>s+(Number(o.total)||0),0);
+
+  document.getElementById('rIngresosDia').textContent=fm(ingDia);
+  document.getElementById('rIngresosMes').textContent=fm(ingMes);
+  document.getElementById('rTotalOrdenes').textContent=ordenes.length;
+  document.getElementById('rTicketProm').textContent=ordenes.length?fm(ordenes.reduce((s,o)=>s+(Number(o.total)||0),0)/ordenes.length):'$0';
+
+  // Problemas frecuentes
+  const probs={};ordenes.forEach(o=>{if(o.problema){const k=o.problema.toLowerCase().split(/\s+/).slice(0,3).join(' ');probs[k]=(probs[k]||0)+1}});
+  const topProbs=Object.entries(probs).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const mxP=topProbs[0]?topProbs[0][1]:1;
+  const lstP=document.getElementById('lstProblemas');
+  if(!topProbs.length){lstP.innerHTML='<li class="text-muted" style="padding:0.75rem 0">Sin datos</li>'}
+  else lstP.innerHTML=topProbs.map(([p,c])=>`<li style="padding:0.6rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem"><span style="flex:1;font-size:0.88rem">${p}</span><span class="badge">${c}</span><div class="chart-bar"><div class="chart-bar-fill" style="width:${(c/mxP)*100}%"></div></div></li>`).join('');
+
+  // Top clientes
+  const gastos={};ordenes.forEach(o=>{gastos[o.clienteId]=(gastos[o.clienteId]||0)+(Number(o.total)||0)});
+  const topCli=Object.entries(gastos).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const lstC=document.getElementById('lstTopClientes');
+  if(!topCli.length){lstC.innerHTML='<li class="text-muted" style="padding:0.75rem 0">Sin datos</li>'}
+  else lstC.innerHTML=topCli.map(([cid,g],i)=>{const c=DB.get('clientes').find(x=>x.id===cid);return `<li style="padding:0.6rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.6rem"><span style="color:var(--text-muted);font-size:0.8rem;width:20px">#${i+1}</span>${avatarHTML(c?c.nombre:'?',28)}<span style="flex:1;font-size:0.88rem">${c?c.nombre:'Desconocido'}</span><strong class="text-success">${fm(g)}</strong></li>`}).join('');
+}
+
+// ---- HERRAMIENTAS ----
+let calcExpr='';
+function calcInput(v){calcExpr+=v;document.getElementById('calcDisplay').textContent=calcExpr}
+function calcClear(){calcExpr='';document.getElementById('calcDisplay').textContent='0'}
+function calcResult(){try{document.getElementById('calcDisplay').textContent=eval(calcExpr)||0;calcExpr=document.getElementById('calcDisplay').textContent}catch{document.getElementById('calcDisplay').textContent='Error';calcExpr=''}}
+
+function generarCodigo(){
+  const prefix=document.getElementById('genCodPrefix').value||'ORD';
+  const code=prefix+'-'+Date.now().toString(36).toUpperCase()+'-'+Math.random().toString(36).substring(2,6).toUpperCase();
+  document.getElementById('genCodResult').textContent=code;
+}
+
+function copiarTexto(txt){navigator.clipboard.writeText(txt.trim());toast('Copiado al portapapeles','info')}
+
+function calcMargen(){
+  const c=Number(document.getElementById('margCosto').value)||0,v=Number(document.getElementById('margVenta').value)||0;
+  const gan=v-c,marg=c>0?Math.round((gan/c)*100):0;
+  document.getElementById('margResultado').textContent=marg+'%';
+  document.getElementById('margGanancia').textContent='Ganancia: '+fm(gan);
+}
+
+function calcFechaEntrega(){
+  const ing=document.getElementById('calcFechaIng').value;
+  const dias=parseInt(document.getElementById('calcDias').value)||3;
+  if(!ing){document.getElementById('calcFechaRes').textContent='--';return}
+  const d=new Date(ing);d.setDate(d.getDate()+dias);
+  document.getElementById('calcFechaRes').textContent=d.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+document.getElementById('calcFechaIng').value=hoy();
+calcFechaEntrega();
+
+// ---- ACTIVIDAD ----
+function renderActividad(){
+  const logs=DB.get('actividad'),lst=document.getElementById('lstActividad');
+  if(!logs.length){lst.innerHTML='<div class="no-data"><i class="fas fa-clock-rotate-left" style="font-size:1.5rem;opacity:0.3;display:block;margin-bottom:0.5rem"></i>Sin actividad registrada</div>';return}
+  lst.innerHTML=logs.slice(0,100).map(l=>`<div class="activity-item"><div class="activity-dot ${l.tipo}"></div><div><div class="activity-text">${l.msg}</div><div class="activity-time">${ff(l.ts)}</div></div></div>`).join('');
+}
+
+async function limpiarActividad(){if(!await confirmar('¿Limpiar todo el historial?'))return;DB.set('actividad',[]);toast('Historial limpiado','info');renderActividad()}
+
+// ---- CONFIG ----
+function renderConfig(){
+  const cfg=DB.getObj('config');
+  document.getElementById('cfgNombre').value=cfg.nombre||'NEXTCOM Multiservicios';
+  document.getElementById('cfgTelefono').value=cfg.telefono||'';
+  document.getElementById('cfgDireccion').value=cfg.direccion||'';
+  document.getElementById('cfgStockMin').value=cfg.stockMin||5;
+  document.getElementById('cfgMoneda').value=cfg.moneda||'COP';
+  document.getElementById('cfgCountClientes').textContent=DB.get('clientes').length;
+  document.getElementById('cfgCountOrdenes').textContent=DB.get('ordenes').length;
+  document.getElementById('cfgCountRepuestos').textContent=DB.get('repuestos').length;
+  document.getElementById('cfgCountNotas').textContent=DB.get('notas').length;
+  actualizarStorage();
+}
+
+function guardarConfig(e){
+  e.preventDefault();
+  DB.setObj('config',{nombre:document.getElementById('cfgNombre').value.trim(),telefono:document.getElementById('cfgTelefono').value.trim(),direccion:document.getElementById('cfgDireccion').value.trim(),stockMin:parseInt(document.getElementById('cfgStockMin').value)||5,moneda:document.getElementById('cfgMoneda').value});
+  toast('Configuración guardada');logAct('Configuración actualizada','blue');
+}
+
+// ---- EXPORTAR/IMPORTAR ----
+function exportarCSV(datos,headers,filename){
+  let csv=headers.join(',')+'\n';
+  datos.forEach(r=>{csv+=headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(',')+'\n'});
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+  toast('CSV exportado');logAct('Archivo CSV exportado','cyan');
+}
+
+function exportarOrdenesCSV(){const datos=DB.get('ordenes');if(!datos.length){toast('Sin órdenes','warning');return}exportarCSV(datos,['numero','clienteNombre','telefono','marca','modelo','imei','problema','estado','total','abono','saldo','fechaIngreso'],'ordenes-nextcom.csv')}
+function exportarClientesCSV(){const datos=DB.get('clientes');if(!datos.length){toast('Sin clientes','warning');return}exportarCSV(datos,['nombre','telefono','email','direccion'],'clientes-nextcom.csv')}
+function exportarInventarioCSV(){const datos=DB.get('repuestos');if(!datos.length){toast('Sin inventario','warning');return}exportarCSV(datos,['nombre','cantidad','minimo','precioCompra','precioVenta'],'inventario-nextcom.csv')}
+
+function backupJSON(){
+  const data={clientes:DB.get('clientes'),ordenes:DB.get('ordenes'),repuestos:DB.get('repuestos'),notas:DB.get('notas'),config:DB.getObj('config'),actividad:DB.get('actividad'),backupDate:new Date().toISOString(),version:'2.0'};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nextcom-backup-${hoy()}.json`;a.click();
+  toast('Backup descargado');logAct('Backup completo descargado','green');addNotif('Backup descargado exitosamente','success');
+}
+
+function restaurarBackup(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!confirmar('¿Restaurar backup? Se reemplazarán todos los datos actuales.'))return;
+      if(data.clientes)DB.set('clientes',data.clientes);
+      if(data.ordenes)DB.set('ordenes',data.ordenes);
+      if(data.repuestos)DB.set('repuestos',data.repuestos);
+      if(data.notas)DB.set('notas',data.notas);
+      if(data.config)DB.setObj('config',data.config);
+      if(data.actividad)DB.set('actividad',data.actividad);
+      toast('Backup restaurado exitosamente');logAct('Backup restaurado desde archivo','green');addNotif('Backup restaurado','success');
+      cargarDashboard();renderConfig();
+    }catch(err){toast('Error al leer el archivo: '+err.message,'error')}
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+async function borrarTodo(){
+  if(!await confirmar('⚠️ ¿BORRAR TODOS LOS DATOS? Esta acción no se puede deshacer.'))return;
+  if(!await confirmar('¿Está COMPLETAMENTE seguro?'))return;
+  const keys=['nxc_clientes','nxc_ordenes','nxc_repuestos','nxc_notas','nxc_config','nxc_actividad','nxc_notificaciones'];
+  keys.forEach(k=>localStorage.removeItem(k));
+  toast('Todos los datos han sido eliminados','warning');logAct('Todos los datos eliminados','red');
   cargarDashboard();
 }
 
-// ---- REPORTES ----
-function renderReportes() {
-  const ordenes = DB.get('ordenes');
-  const hoyStr = hoy();
-  const hoyDate = new Date();
-  const mesActual = hoyDate.getMonth();
-  const anioActual = hoyDate.getFullYear();
-
-  // Ingresos diarios
-  const totalDia = ordenes.filter(o=>o.fechaIngreso===hoyStr).reduce((s,o)=>s+(Number(o.abono)||0),0);
-  document.getElementById('ingresosDiarios').textContent = fmtMon(totalDia);
-  document.getElementById('fechaReporteDiario').textContent = hoyDate.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-  // Ingresos mensuales
-  const totalMes = ordenes.filter(o => {
-    if(!o.fechaIngreso) return false;
-    const d = new Date(o.fechaIngreso);
-    return d.getMonth()===mesActual && d.getFullYear()===anioActual;
-  }).reduce((s,o)=>s+(Number(o.abono)||0),0);
-  document.getElementById('ingresosMensuales').textContent = fmtMon(totalMes);
-  document.getElementById('mesReporte').textContent = hoyDate.toLocaleDateString('es-CO',{month:'long',year:'numeric'});
-
-  // Reparaciones comunes
-  const probs = {};
-  ordenes.forEach(o => {
-    if(o.problema) {
-      const key = o.problema.toLowerCase().split(/\s+/).slice(0,3).join(' ');
-      probs[key] = (probs[key]||0)+1;
-    }
-  });
-  const top = Object.entries(probs).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const mx = top[0]?top[0][1]:1;
-  const lst = document.getElementById('listaReparaciones');
-  if(!top.length) { lst.innerHTML='<li class="text-muted">Sin datos suficientes</li>'; return; }
-  lst.innerHTML = top.map(([p,c])=>`<li><span>${p}</span><span class="badge">${c}</span><div class="chart-bar"><div class="chart-bar-fill" style="width:${(c/mx)*100}%"></div></div></li>`).join('');
-}
-
-function exportarCSV() {
-  const ordenes = DB.get('ordenes');
-  if(!ordenes.length) { toast('No hay órdenes para exportar','warning'); return; }
-  const headers = ['Orden','Cliente','Teléfono','Marca','Modelo','IMEI','Problema','Estado','Total','Abono','Saldo','Fecha'];
-  const rows = ordenes.map(o => [o.numero, o.clienteNombre, o.telefono, o.marca, o.modelo, o.imei||'', o.problema||'', o.estado, o.total, o.abono, o.saldo, o.fechaIngreso]);
-  let csv = headers.join(',') + '\n';
-  rows.forEach(r => { csv += r.map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',') + '\n'; });
-  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `ordenes-nextcom-${hoy()}.csv`; a.click();
-  URL.revokeObjectURL(url);
-  toast('CSV exportado');
-}
-
-// ---- CONFIGURACIÓN ----
-function cargarConfig() {
-  const c = DB.getObj('config');
-  document.getElementById('cfgTelefono').value = c.telefono||'';
-  document.getElementById('cfgDireccion').value = c.direccion||'';
-  document.getElementById('cfgStockMin').value = c.stockMin||5;
-}
-
-function guardarConfig(e) {
-  e.preventDefault();
-  const c = {
-    telefono: document.getElementById('cfgTelefono').value.trim(),
-    direccion: document.getElementById('cfgDireccion').value.trim(),
-    stockMin: parseInt(document.getElementById('cfgStockMin').value)||5
-  };
-  DB.setObj('config', c);
-  toast('Configuración guardada');
-}
-
 // ---- BÚSQUEDA GLOBAL ----
-function buscarGlobal() {
-  const q = document.getElementById('globalSearch').value.trim().toLowerCase();
-  if(!q) { toast('Ingrese un término de búsqueda','warning'); return; }
-
-  const ordenes = DB.get('ordenes');
-  const resultados = ordenes.filter(o =>
-    (o.numero||'').toLowerCase().includes(q) ||
-    (o.clienteNombre||'').toLowerCase().includes(q) ||
-    (o.telefono||'').includes(q) ||
-    (o.imei||'').includes(q) ||
-    (o.marca||'').toLowerCase().includes(q) ||
-    (o.modelo||'').toLowerCase().includes(q) ||
-    (o.problema||'').toLowerCase().includes(q)
-  );
-
-  if(!resultados.length) { toast('No se encontraron resultados','warning'); return; }
-
+function buscarGlobal(){
+  const q=document.getElementById('globalSearch').value.trim().toLowerCase();
+  if(!q){toast('Ingrese un término','warning');return}
+  const ordenes=DB.get('ordenes');
+  const res=ordenes.filter(o=>(o.numero||'').includes(q)||(o.clienteNombre||'').includes(q)||(o.telefono||'').includes(q)||(o.imei||'').includes(q)||(o.marca||'').toLowerCase().includes(q)||(o.modelo||'').toLowerCase().includes(q)||(o.problema||'').includes(q));
+  if(!res.length){toast('Sin resultados','warning');return}
   navegar('ordenes');
-  const tb = document.getElementById('tbodyOrdenes');
-  tb.innerHTML = resultados.map(o=>`<tr>
-    <td><strong>${o.numero}</strong></td><td>${o.clienteNombre||'-'}</td>
-    <td>${o.marca||''} ${o.modelo||''}<br><small class="text-muted">${o.imei||'-'}</small></td>
-    <td>${(o.problema||'').substring(0,30)}</td>
-    <td>${badgeEstado(o.estado)}</td>
-    <td class="${o.saldo>0?'text-danger':'text-success'}"><strong>${fmtMon(o.saldo)}</strong></td>
-    <td><button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')"><i class="fas fa-eye"></i></button></td>
-  </tr>`).join('');
-  toast(`${resultados.length} resultado(s) encontrado(s)`);
+  const tb=document.getElementById('tbOrdenes');
+  tb.innerHTML=res.map(o=>`<tr><td><strong style="color:var(--primary)">${o.numero}</strong></td><td><div class="cliente-cell">${avatarHTML(o.clienteNombre,28)}<span>${o.clienteNombre||'-'}</span></div></td><td>${o.marca||''} ${o.modelo||''}</td><td>${(o.problema||'').substring(0,30)}</td><td>${badge(o.estado)}</td><td>${fm(o.total)}</td><td class="${o.saldo>0?'text-danger':'text-success'}">${fm(o.saldo)}</td><td><button class="btn btn-sm btn-primary btn-icon" onclick="verDetalle('${o.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('');
+  toast(`${res.length} resultado(s) encontrado(s)`,'info');
 }
-document.getElementById('searchBtn').addEventListener('click', buscarGlobal);
-document.getElementById('globalSearch').addEventListener('keypress', e => { if(e.key==='Enter') buscarGlobal(); });
 
-// ---- TECLADO ----
-document.addEventListener('keydown', e => {
-  if(e.ctrlKey && e.key==='n') { e.preventDefault(); abrirModalOrden(); }
-  if(e.key==='Escape') document.querySelectorAll('.modal.active').forEach(m => cerrarModal(m.id));
+// ---- EVENT LISTENERS GENERALES ----
+document.querySelectorAll('.nav-link').forEach(l=>l.addEventListener('click',()=>navegar(l.dataset.section)));
+document.getElementById('menuToggle').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('active'));
+document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',function(){cerrarModal(this.closest('.modal').id)}));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',function(e){if(e.target===this)cerrarModal(this.id)}));
+document.getElementById('searchBtn')?.addEventListener('click',buscarGlobal);
+document.getElementById('globalSearch').addEventListener('keypress',e=>{if(e.key==='Enter')buscarGlobal()});
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='n'){e.preventDefault();abrirModalOrden()}
+  if(e.key==='Escape'){document.querySelectorAll('.modal.active').forEach(m=>cerrarModal(m.id));document.getElementById('notifPanel').style.display='none'}
 });
 
-// ---- EVENTOS GENERALES ----
-document.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => navegar(l.dataset.section)));
-document.getElementById('menuToggle').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('active'));
-document.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', function(){ cerrarModal(this.closest('.modal').id); }));
-document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', function(e){ if(e.target===this) cerrarModal(this.id); }));
-
 // ---- INICIALIZACIÓN ----
-window.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
+window.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
     cargarDashboard();
-    cargarConfig();
-    document.getElementById('loading-overlay').classList.add('hidden');
-    console.log('✅ NEXTCOM Multiservicios listo - Almacenamiento local');
-  }, 600);
+    actualizarBadgeNotif();
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    console.log('✅ NEXTCOM Multiservicios Premium — Sistema listo');
+  },800);
 });
 </script>
 </body>

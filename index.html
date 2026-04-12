@@ -356,7 +356,7 @@
 
   <section id="clientes" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-users"></i> Clientes</h3><div style="display:flex;gap:.3rem;flex-wrap:wrap"><button class="btn bp bsm" onclick="abrirModalCliente()"><i class="fas fa-plus"></i> Nuevo</button><button class="btn bs bsm" onclick="expCSV('clientes')"><i class="fas fa-download"></i> Exportar</button></div></div><div class="cb comp"><div class="tw"><table class="dt"><thead><tr><th>Cliente</th><th>Teléfono</th><th>Email</th><th>Dirección</th><th>Órdenes</th><th>Total</th><th></th></tr></thead><tbody id="tbCli"></tbody></table></div></div></div></section>
 
-  <section id="ordenes" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-clipboard-list"></i> Órdenes</h3><div style="display:flex;gap:.3rem;flex-wrap:wrap"><button class="btn bp bsm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Crear</button><button class="btn bs bsm" onclick="expCSV('ordenes')"><i class="fas fa-download"></i> Exportar</button></div></div><div class="cb comp">
+  <section id="ordenes" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-clipboard-list"></i> Órdenes</h3><div style="display:flex;gap:.3rem;flex-wrap:wrap"><button class="btn bp bsm" onclick="abrirModalOrden()"><i class="fas fa-plus"></i> Crear</button><button class="btn bs bsm" onclick="expCSV('ordenes')"><i class="fas fa-download"></i> Exportar</button><button class="btn bd bsm" onclick="borrarOrdenes()"><i class="fas fa-trash"></i> Borrar</button></div></div><div class="cb comp">
     <div style="display:flex;gap:.4rem;margin-bottom:.65rem;flex-wrap:wrap"><select id="fEst" class="fi fism" style="width:auto" onchange="renderOrd()"><option value="">Todos</option><option value="recibido">🔵 Recibido</option><option value="revision">🟡 Revisión</option><option value="reparacion">🟠 Reparación</option><option value="listo">🟢 Listo</option><option value="entregado">⚫ Entregado</option></select><input type="text" id="fTxt" class="fi fism" style="width:180px" placeholder="Filtrar..." oninput="renderOrd()"></div>
     <div class="tw"><table class="dt"><thead><tr><th>#</th><th>Cliente</th><th>Equipo</th><th>Problema</th><th>Estado</th><th>Total</th><th>Saldo</th><th></th></tr></thead><tbody id="tbOrd"></tbody></table></div>
   </div></div></section>
@@ -883,6 +883,26 @@ async function cambiarEstado(ordenId, nuevo) {
   D.s('ordenes', ord); renderOrd(); loadDash(); toast(`Estado → ${sl[nuevo]}`, 'success');
 }
 
+async function borrarOrdenes() {
+  if (!await confirmar('¿Estás seguro de BORRAR TODAS las órdenes? Esta acción no se puede deshacer.')) return;
+  D.s('ordenes', []);
+  D.s('garantias', []);
+  renderOrd(); loadDash(); updNBadge();
+  toast('Órdenes eliminadas', 'info');
+  logAct('Todas las órdenes fueron eliminadas', 'red');
+}
+
+async function borrarOrdenIndividual(id) {
+  if (!await confirmar('¿Estás seguro de eliminar esta orden? Esta acción no se puede deshacer.')) return;
+  const ord = D.g('ordenes').filter(x => x.id !== id);
+  D.s('ordenes', ord);
+  const gar = D.g('garantias').filter(g => g.ordenId !== id);
+  D.s('garantias', gar);
+  renderOrd(); loadDash(); updNBadge();
+  toast('Orden eliminada', 'info');
+  logAct(`Orden ${id} eliminada`, 'red');
+}
+
 function renderOrd() {
   let ord = D.g('ordenes'); const fe = document.getElementById('fEst').value, ft = (document.getElementById('fTxt').value || '').toLowerCase();
   if (fe) ord = ord.filter(o => o.estado === fe);
@@ -893,7 +913,7 @@ function renderOrd() {
   const est = ['recibido', 'revision', 'reparacion', 'listo', 'entregado'], lb = { recibido: '🔵 Recibido', revision: '🟡 Revisión', reparacion: '🟠 Reparación', listo: '🟢 Listo', entregado: '⚫ Entregado' };
   tb.innerHTML = ord.map(o => {
     const sel = `<select class="ssel" data-s="${o.estado}" onchange="cambiarEstado('${o.id}',this.value)">${est.map(e => `<option value="${e}"${o.estado === e ? ' selected' : ''}>${lb[e]}</option>`).join('')}</select>`;
-    return `<tr><td><strong style="color:var(--pri)">${o.numero}</strong>${o.prioridad === 'alta' ? ' <i class="fas fa-fire txd"></i>' : ''}</td><td><div class="ccell">${av(o.clienteNombre, 24)}<span>${o.clienteNombre || '-'}</span></div></td><td><strong>${o.marca || ''} ${o.modelo || ''}</strong><br><small class="txm2">${o.imei || '-'}</small></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.problema || '-'}</td><td>${sel}</td><td>${fm(o.total)}</td><td class="${o.saldo > 0 ? 'txd' : 'txs2'}"><strong>${fm(o.saldo)}</strong></td><td style="display:flex;gap:.15rem"><button class="btn bs bsm bic" onclick="verDet('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button><button class="btn bs bsm bic" onclick="showTicket('${o.id}')" title="Ver ticket"><i class="fas fa-receipt"></i></button><button class="btn bwa bsm bic" onclick="sendTicketWAfromTable('${o.id}')" title="Enviar ticket por WhatsApp"><i class="fab fa-whatsapp"></i></button><button class="btn bs bsm bic" onclick="editarOrd('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button></td></tr>`;
+    return `<tr><td><strong style="color:var(--pri)">${o.numero}</strong>${o.prioridad === 'alta' ? ' <i class="fas fa-fire txd"></i>' : ''}</td><td><div class="ccell">${av(o.clienteNombre, 24)}<span>${o.clienteNombre || '-'}</span></div></td><td><strong>${o.marca || ''} ${o.modelo || ''}</strong><br><small class="txm2">${o.imei || '-'}</small></td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.problema || '-'}</td><td>${sel}</td><td>${fm(o.total)}</td><td class="${o.saldo > 0 ? 'txd' : 'txs2'}"><strong>${fm(o.saldo)}</strong></td><td style="display:flex;gap:.15rem"><button class="btn bs bsm bic" onclick="verDet('${o.id}')" title="Ver"><i class="fas fa-eye"></i></button><button class="btn bs bsm bic" onclick="showTicket('${o.id}')" title="Ver ticket"><i class="fas fa-receipt"></i></button><button class="btn bwa bsm bic" onclick="sendTicketWAfromTable('${o.id}')" title="Enviar ticket por WhatsApp"><i class="fab fa-whatsapp"></i></button><button class="btn bs bsm bic" onclick="editarOrd('${o.id}')" title="Editar"><i class="fas fa-edit"></i></button><button class="btn bd bsm bic" onclick="borrarOrdenIndividual('${o.id}')" title="Borrar"><i class="fas fa-trash"></i></button></td></tr>`;
   }).join('');
 }
 

@@ -494,7 +494,56 @@
 
   <section id="notas" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-note-sticky"></i> Notas</h3><button class="btn bp bsm" onclick="abrirModalNota()"><i class="fas fa-plus"></i> Nueva</button></div><div class="cb"><div class="ngr" id="lstNotas"></div></div></div></section>
 
-  <section id="reportes" class="sec"><div class="sg"><div class="sc sb2"><div class="sv" id="rD">$0</div><div class="sl">Ingresos hoy</div></div><div class="sc sb4"><div class="sv" id="rM">$0</div><div class="sl">Ingresos mes</div></div><div class="sc sb1"><div class="sv" id="rT">0</div><div class="sl">Órdenes</div></div><div class="sc sb5"><div class="sv" id="rK">$0</div><div class="sl">Ticket prom.</div></div><div class="sc sb3"><div class="sv" id="rE">0</div><div class="sl">Entregados</div></div></div><div class="dg"><div class="cd"><div class="ch"><h3><i class="fas fa-wrench"></i> Problemas frecuentes</h3></div><div class="cb" id="lstProb"></div></div><div class="cd"><div class="ch"><h3><i class="fas fa-ranking-star"></i> Top Clientes</h3></div><div class="cb" id="lstTop"></div></div><div class="cd df"><div class="ch"><h3><i class="fas fa-database"></i> Backup</h3></div><div class="cb" style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn bs" onclick="expCSV('ordenes')"><i class="fas fa-table"></i> Órdenes</button><button class="btn bs" onclick="expCSV('clientes')"><i class="fas fa-users"></i> Clientes</button><button class="btn bs" onclick="expCSV('repuestos')"><i class="fas fa-boxes"></i> Inventario</button><button class="btn bg" onclick="backupJSON()"><i class="fas fa-download"></i> Backup JSON</button><button class="btn bp" id="btnRest"><i class="fas fa-upload"></i> Restaurar</button><input type="file" id="impF" accept=".json" style="display:none"></div></div></div></div></section>
+  <section id="reportes" class="sec">
+    <div class="sg">
+      <div class="sc sb2"><div class="sv" id="rD">$0</div><div class="sl">Ingresos hoy</div></div>
+      <div class="sc sb4"><div class="sv" id="rM">$0</div><div class="sl">Ingresos mes</div></div>
+      <div class="sc sb1"><div class="sv" id="rT">0</div><div class="sl">Órdenes</div></div>
+      <div class="sc sb5"><div class="sv" id="rK">$0</div><div class="sl">Ticket prom.</div></div>
+      <div class="sc sb3"><div class="sv" id="rE">0</div><div class="sl">Entregados</div></div>
+      <div class="sc suc"><div class="sv" id="rV">0</div><div class="sl">Ventas POS</div></div>
+    </div>
+    <div class="dg">
+      <div class="cd"><div class="ch"><h3><i class="fas fa-wrench"></i> Problemas frecuentes</h3></div><div class="cb" id="lstProb"></div></div>
+      <div class="cd"><div class="ch"><h3><i class="fas fa-ranking-star"></i> Top Clientes</h3></div><div class="cb" id="lstTop"></div></div>
+      <div class="cd df"><div class="ch"><h3><i class="fas fa-database"></i> Backup</h3></div><div class="cb" style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn bs" onclick="expCSV('ordenes')"><i class="fas fa-table"></i> Órdenes</button><button class="btn bs" onclick="expCSV('clientes')"><i class="fas fa-users"></i> Clientes</button><button class="btn bs" onclick="expCSV('repuestos')"><i class="fas fa-boxes"></i> Inventario</button><button class="btn bg" onclick="backupJSON()"><i class="fas fa-download"></i> Backup JSON</button><button class="btn bp" id="btnRest"><i class="fas fa-upload"></i> Restaurar</button><input type="file" id="impF" accept=".json" style="display:none"></div></div>
+    </div>
+    
+    <!-- Historial de Ventas POS -->
+    <div class="cd" style="margin-top:1rem">
+      <div class="ch">
+        <h3><i class="fas fa-cash-register"></i> Historial de Ventas POS</h3>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <select id="filtroVentasPeriodo" class="ssel" onchange="renderHistorialVentas()" style="min-width:140px">
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta Semana</option>
+            <option value="mes">Este Mes</option>
+            <option value="todo">Todo</option>
+          </select>
+          <button class="btn bs bsm bic" onclick="expCSV('ventas')"><i class="fas fa-file-export"></i> Exportar</button>
+        </div>
+      </div>
+      <div class="cb comp">
+        <div class="tw" style="max-height:400px;overflow-y:auto">
+          <table class="dt">
+            <thead>
+              <tr>
+                <th style="width:12%">Fecha/Hora</th>
+                <th style="width:10%">ID Venta</th>
+                <th style="width:15%">Items</th>
+                <th style="width:12%">Subtotal</th>
+                <th style="width:12%">Descuento</th>
+                <th style="width:12%">Total</th>
+                <th style="width:12%">Método Pago</th>
+                <th style="width:12%;text-align:center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbVentas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section id="herramientas" class="sec"><div class="dg"><div class="cd"><div class="ch"><h3><i class="fas fa-calculator"></i> Calculadora</h3></div><div class="cb"><div class="cgr"><div class="cdi" id="calcD">0</div><button class="cb3 cl" onclick="cClr()">C</button><button class="cb3 op" onclick="cIn('(')">(</button><button class="cb3 op" onclick="cIn(')')">)</button><button class="cb3 op" onclick="cIn('/')">÷</button><button class="cb3" onclick="cIn('7')">7</button><button class="cb3" onclick="cIn('8')">8</button><button class="cb3" onclick="cIn('9')">9</button><button class="cb3 op" onclick="cIn('*')">×</button><button class="cb3" onclick="cIn('4')">4</button><button class="cb3" onclick="cIn('5')">5</button><button class="cb3" onclick="cIn('6')">6</button><button class="cb3 op" onclick="cIn('-')">−</button><button class="cb3" onclick="cIn('1')">1</button><button class="cb3" onclick="cIn('2')">2</button><button class="cb3" onclick="cIn('3')">3</button><button class="cb3 op" onclick="cIn('+')">+</button><button class="cb3" onclick="cIn('0')" style="grid-column:span 2">0</button><button class="cb3" onclick="cIn('.')">.</button><button class="cb3 eq" onclick="cRes()">=</button></div></div></div><div style="display:flex;flex-direction:column;gap:.85rem"><div class="cd"><div class="ch"><h3><i class="fas fa-qrcode"></i> Código</h3></div><div class="cb"><div style="display:flex;gap:.35rem;margin-bottom:.45rem"><input type="text" id="gcPfx" class="fi fism" value="ORD" style="width:80px"><button class="btn bp bsm" onclick="genCode()">Generar</button></div><div id="gcRes" style="text-align:center;padding:.65rem;background:var(--bgi);border:1px dashed var(--bor);border-radius:var(--rx);font-family:monospace;font-size:1rem;letter-spacing:2px;color:var(--pri);cursor:pointer" onclick="copiar(this.textContent)"></div></div></div><div class="cd"><div class="ch"><h3><i class="fas fa-percentage"></i> Margen</h3></div><div class="cb"><div class="fg"><label>Costo</label><input type="number" id="mgC" class="fi" placeholder="0" oninput="calcMarg()"></div><div class="fg"><label>P. Venta</label><input type="number" id="mgV" class="fi" placeholder="0" oninput="calcMarg()"></div><div style="padding:.65rem;background:var(--bgi);border:1px solid var(--bor);border-radius:var(--rx)"><p style="font-size:.72rem;color:var(--txm)">Margen</p><h2 id="mgR" style="color:var(--suc)">0%</h2><p class="txm2" style="font-size:.7rem" id="mgG">Ganancia: $0</p></div></div></div><div class="cd"><div class="ch"><h3><i class="fas fa-calendar"></i> Fecha Entrega</h3></div><div class="cb"><div class="fg"><label>Fecha Ingreso</label><input type="date" id="cfIng" class="fi" onchange="calcFE()"></div><div class="fg"><label>Días</label><input type="number" id="cfDias" class="fi" value="3" min="1" onchange="calcFE()"></div><div style="padding:.65rem;background:var(--bgi);border:1px solid var(--bor);border-radius:var(--rx)"><p style="font-size:.72rem;color:var(--txm)">Entrega</p><h2 id="cfRes" style="color:var(--cyn)">--</h2></div></div></div></div></div></section>
 
@@ -1439,16 +1488,22 @@ function renderNot() { const not = D.g('notas').sort((a, b) => (b.updatedAt || 0
 async function delNot(id) { if (!await confirmar('¿Eliminar nota?')) return; D.s('notas', D.g('notas').filter(x => x.id !== id)); toast('Eliminada'); renderNot(); }
 
 // ==========================================
-// REPORTES (idéntico al original)
+// REPORTES (mejorado con historial de ventas)
 // ==========================================
 function renderRep() {
-  const ord = D.g('ordenes'), hs = hoy(), h = new Date(), ma = h.getMonth(), aa = h.getFullYear();
+  const ord = D.g('ordenes'), ventas = D.g('ventas') || [], hs = hoy(), h = new Date(), ma = h.getMonth(), aa = h.getFullYear();
   const id = ord.filter(o => o.fechaIngreso === hs).reduce((s, o) => s + (Number(o.abono) || 0), 0);
   const oMes = ord.filter(o => { if (!o.fechaIngreso) return false; const d = new Date(o.fechaIngreso); return d.getMonth() === ma && d.getFullYear() === aa; });
   const im = oMes.reduce((s, o) => s + (Number(o.total) || 0), 0);
   document.getElementById('rD').textContent = fm(id); document.getElementById('rM').textContent = fm(im);
   document.getElementById('rT').textContent = ord.length; document.getElementById('rK').textContent = ord.length ? fm(ord.reduce((s, o) => s + (Number(o.total) || 0), 0) / ord.length) : '$0';
   document.getElementById('rE').textContent = ord.filter(o => o.estado === 'entregado').length;
+  
+  // Ventas POS
+  const vHoy = ventas.filter(v => { const d = new Date(v.createdAt); return fc(d.getTime()) === fc(Date.now()); });
+  const totalVentasHoy = vHoy.reduce((s, v) => s + (Number(v.total) || 0), 0);
+  document.getElementById('rV').textContent = vHoy.length;
+  
   const probs = {}; ord.forEach(o => { if (o.problema) { const k = o.problema.toLowerCase().split(/\s+/).slice(0, 3).join(' '); probs[k] = (probs[k] || 0) + 1; } });
   const tp = Object.entries(probs).sort((a, b) => b[1] - a[1]).slice(0, 8), mx = tp[0] ? tp[0][1] : 1;
   const lp = document.getElementById('lstProb');
@@ -1457,6 +1512,128 @@ function renderRep() {
   const tc = Object.entries(gas).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const lt = document.getElementById('lstTop');
   if (!tc.length) { lt.innerHTML = '<div class="nodata"><i class="fas fa-ranking-star"></i>Sin datos</div>'; } else { const colors = ['fb', 'fg', 'fo', 'fp', 'fc']; lt.innerHTML = '<div class="cc">' + tc.map(([cid, g], i) => { const c = D.g('clientes').find(x => x.id === cid); return `<div class="cr"><span class="cl2">${c ? c.nombre : 'Desconocido'}</span><div class="cb2"><div class="cf ${colors[i % colors.length]}" style="width:${(g / (tc[0] ? tc[0][1] : 1)) * 100}%"></div></div><span class="cv txs2">${fm(g)}</span></div>`; }).join('') + '</div>'; }
+  
+  renderHistorialVentas();
+}
+
+function renderHistorialVentas() {
+  const ventas = D.g('ventas') || [];
+  const periodo = document.getElementById('filtroVentasPeriodo').value;
+  const ahora = new Date();
+  
+  let ventasFiltradas = ventas.filter(v => {
+    const d = new Date(v.createdAt);
+    if (periodo === 'hoy') return fc(d.getTime()) === fc(Date.now());
+    if (periodo === 'semana') {
+      const inicioSemana = new Date(ahora); inicioSemana.setDate(ahora.getDate() - ahora.getDay());
+      return d >= inicioSemana;
+    }
+    if (periodo === 'mes') return d.getMonth() === ahora.getMonth() && d.getFullYear() === ahora.getFullYear();
+    return true;
+  });
+  
+  ventasFiltradas.sort((a, b) => b.createdAt - a.createdAt);
+  
+  const tb = document.getElementById('tbVentas');
+  if (!ventasFiltradas.length) {
+    tb.innerHTML = '<tr><td colspan="8" class="nodata"><i class="fas fa-cash-register"></i>Sin ventas en este período</td></tr>';
+    return;
+  }
+  
+  const metodoPagoLabels = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '🏦 Transferencia', mixto: '🔀 Mixto' };
+  
+  tb.innerHTML = ventasFiltradas.map(v => {
+    const itemsCount = v.items ? v.items.reduce((s, i) => s + i.cantidad, 0) : 0;
+    const fecha = new Date(v.createdAt);
+    const fechaStr = fecha.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) + ' ' + fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    const idCorto = v.id ? v.id.substring(0, 8) + '...' : '-';
+    
+    return `<tr>
+      <td><small>${fechaStr}</small></td>
+      <td><strong style="color:var(--pri);font-size:.75rem">${idCorto}</strong></td>
+      <td><span class="sbadge" style="background:rgba(79,140,255,.12);color:#6ea8fe">${itemsCount} items</span></td>
+      <td>${fm(v.subtotal || 0)}</td>
+      <td style="color:var(--war)">${fm(v.descuento || 0)}</td>
+      <td><strong style="color:var(--suc)">${fm(v.total || 0)}</strong></td>
+      <td><small>${metodoPagoLabels[v.metodoPago] || v.metodoPago}</small></td>
+      <td style="text-align:center">
+        <button class="btn bs bsm bic" onclick="verDetalleVenta('${v.id}')" title="Ver detalle"><i class="fas fa-eye"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function verDetalleVenta(id) {
+  const ventas = D.g('ventas') || [];
+  const venta = ventas.find(v => v.id === id);
+  if (!venta) { toast('Venta no encontrada', 'error'); return; }
+  
+  const itemsHtml = (venta.items || []).map(i => {
+    const prod = D.g('repuestos').find(r => r.id === i.id);
+    return `<div style="display:flex;justify-content:space-between;padding:.35rem .65rem;border-bottom:1px solid var(--bor);font-size:.78rem">
+      <span>${i.nombre} <small style="color:var(--txm)">x${i.cantidad}</small></span>
+      <strong>${fm(i.precio * i.cantidad)}</strong>
+    </div>`;
+  }).join('');
+  
+  const modalContent = `
+    <div style="padding:1rem">
+      <div style="margin-bottom:.8rem">
+        <p style="font-size:.72rem;color:var(--txm)">Fecha: ${new Date(venta.createdAt).toLocaleString('es-CO')}</p>
+        <p style="font-size:.72rem;color:var(--txm)">ID: ${id}</p>
+      </div>
+      <div style="border:1px solid var(--bor);border-radius:var(--rx);overflow:hidden;margin-bottom:.8rem">
+        <div style="background:var(--bgi);padding:.5rem .65rem;font-size:.76rem;font-weight:600;border-bottom:1px solid var(--bor)">Items</div>
+        ${itemsHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.35rem;font-size:.82rem">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal:</span><strong>${fm(venta.subtotal || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;color:var(--war)"><span>Descuento:</span><strong>-${fm(venta.descuento || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:1.1rem;padding-top:.35rem;border-top:1px solid var(--bor)"><span>Total:</span><strong style="color:var(--suc)">${fm(venta.total || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-top:.35rem"><span>Método Pago:</span><strong>${venta.metodoPago || '-'}</strong></div>
+      </div>
+    </div>
+  `;
+  
+  mostrarModalCustom('Detalle de Venta', modalContent);
+}
+
+function mostrarModalCustom(titulo, contenido) {
+  const existing = document.getElementById('modalCustom');
+  if (existing) existing.remove();
+  
+  const modal = document.createElement('div');
+  modal.id = 'modalCustom';
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="mct">
+      <div class="mhdr">
+        <h3>${titulo}</h3>
+        <button class="mclo">&times;</button>
+      </div>
+      <div class="mbody" style="max-height:500px;overflow-y:auto">${contenido}</div>
+      <div class="mftr">
+        <button class="btn bs mclo-btn">Cerrar</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add('show'), 10);
+  
+  modal.querySelectorAll('.mclo, .mclo-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      modal.classList.remove('show');
+      setTimeout(() => modal.remove(), 300);
+    });
+  });
+  
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('show');
+      setTimeout(() => modal.remove(), 300);
+    }
+  });
 }
 
 // ==========================================
@@ -1487,7 +1664,7 @@ function saveCfg(e) { e.preventDefault(); D.so('config', { nombre: document.getE
 // ==========================================
 // EXPORT / IMPORT / BACKUP (idéntico al original)
 // ==========================================
-function expCSV(tipo) { const data = D.g(tipo); if (!data.length) { toast('Sin datos', 'warning'); return; } let h; if (tipo === 'clientes') h = ['nombre', 'telefono', 'email', 'direccion']; else if (tipo === 'ordenes') h = ['numero', 'clienteNombre', 'telefono', 'marca', 'modelo', 'imei', 'problema', 'estado', 'total', 'abono', 'saldo', 'fechaIngreso']; else h = ['nombre', 'cantidad', 'minimo', 'precioCompra', 'precioVenta']; let csv = h.join(',') + '\n'; data.forEach(r => { csv += h.map(x => `"${String(r[x] || '').replace(/"/g, '""')}"`).join(',') + '\n'; }); const b = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${tipo}-nextcom.csv`; a.click(); toast('Exportado'); logAct('CSV: ' + tipo, 'cyn'); }
+function expCSV(tipo) { const data = D.g(tipo); if (!data.length) { toast('Sin datos', 'warning'); return; } let h; if (tipo === 'clientes') h = ['nombre', 'telefono', 'email', 'direccion']; else if (tipo === 'ordenes') h = ['numero', 'clienteNombre', 'telefono', 'marca', 'modelo', 'imei', 'problema', 'estado', 'total', 'abono', 'saldo', 'fechaIngreso']; else if (tipo === 'ventas') h = ['id', 'fecha', 'items', 'subtotal', 'descuento', 'total', 'metodoPago']; else h = ['nombre', 'cantidad', 'minimo', 'precioCompra', 'precioVenta']; let csv = h.join(',') + '\n'; data.forEach(r => { if (tipo === 'ventas') { const itemsDesc = (r.items || []).map(i => `${i.nombre} x${i.cantidad}`).join('; '); const fecha = new Date(r.createdAt).toLocaleString('es-CO'); csv += [`"${r.id}"`, `"${fecha}"`, `"${itemsDesc}"`, r.subtotal, r.descuento, r.total, r.metodoPago].join(',') + '\n'; } else { csv += h.map(x => `"${String(r[x] || '').replace(/"/g, '""')}"`).join(',') + '\n'; } }); const b = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${tipo}-nextcom.csv`; a.click(); toast('Exportado'); logAct('CSV: ' + tipo, 'cyn'); }
 function backupJSON() { const d = { clientes: D.g('clientes'), ordenes: D.g('ordenes'), repuestos: D.g('repuestos'), notas: D.g('notas'), garantias: D.g('garantias'), config: D.go('config'), act: D.g('act'), notifs: D.g('notifs'), date: new Date().toISOString(), v: '3.2-firebase' }; const b = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `nextcom-backup-${hoy()}.json`; a.click(); toast('Backup descargado'); logAct('Backup descargado', 'green'); addNotif('Backup descargado', 'success'); }
 document.getElementById('impF').addEventListener('change', function () { restoreBackup(this); }); document.getElementById('btnRest').addEventListener('click', () => document.getElementById('impF').click());
 function restoreBackup(inp) { const f = inp.files[0]; if (!f) return; const r = new FileReader(); r.onload = e => { try { const d = JSON.parse(e.target.result); confirmar('¿Restaurar backup?').then(ok => { if (!ok) return; if (d.clientes) D.s('clientes', d.clientes); if (d.ordenes) D.s('ordenes', d.ordenes); if (d.repuestos) D.s('repuestos', d.repuestos); if (d.notas) D.s('notas', d.notas); if (d.garantias) D.s('garantias', d.garantias); if (d.config) D.so('config', d.config); if (d.act) D.s('act', d.act); toast('Restaurado'); logAct('Backup restaurado', 'green'); addNotif('Backup restaurado', 'success'); loadDash(); renderCfg(); }); } catch (err) { toast('Error: ' + err.message, 'error'); } }; r.readAsText(f); inp.value = ''; }

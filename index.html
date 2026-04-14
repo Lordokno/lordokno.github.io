@@ -488,6 +488,41 @@
         </div>
       </div>
     </div>
+    
+    <!-- Historial de Ventas en POS -->
+    <div class="cd" style="margin-top:1rem">
+      <div class="ch">
+        <h3><i class="fas fa-history"></i> Historial de Ventas Recientes</h3>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <select id="posFiltroVentasPeriodo" class="ssel" onchange="renderHistorialVentasPOS()" style="min-width:140px">
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta Semana</option>
+            <option value="mes">Este Mes</option>
+            <option value="todo">Todo</option>
+          </select>
+          <button class="btn bs bsm bic" onclick="expCSV('ventas')"><i class="fas fa-file-export"></i> Exportar</button>
+        </div>
+      </div>
+      <div class="cb comp">
+        <div class="tw" style="max-height:350px;overflow-y:auto">
+          <table class="dt">
+            <thead>
+              <tr>
+                <th style="width:12%">Fecha/Hora</th>
+                <th style="width:10%">ID Venta</th>
+                <th style="width:15%">Items</th>
+                <th style="width:12%">Subtotal</th>
+                <th style="width:12%">Descuento</th>
+                <th style="width:12%">Total</th>
+                <th style="width:12%">Método Pago</th>
+                <th style="width:15%;text-align:center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbVentasPOS"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </section>
 
   <section id="garantias" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-shield-halved"></i> Garantías</h3><p class="txm2" style="font-size:.72rem">Auto al entregar</p></div><div class="cb"><div class="fr mb" style="grid-template-columns:1fr auto"><div class="fg"><label>Días garantía por defecto</label><input type="number" id="gDias" class="fi" value="30" min="1"></div><div style="display:flex;align-items:flex-end"><button class="btn bp bsm" onclick="guardarCfgG()"><i class="fas fa-save"></i> Guardar</button></div></div><div id="lstGar"></div></div></div></section>
@@ -549,7 +584,7 @@
 
   <section id="actividad" class="sec"><div class="cd"><div class="ch"><h3><i class="fas fa-clock-rotate-left"></i> Actividad</h3><button class="btn bs bsm" onclick="clearAct()"><i class="fas fa-broom"></i> Limpiar</button></div><div class="cb comp"><div class="al" id="lstAct"></div></div></div></section>
 
-  <section id="config" class="sec"><div class="dg"><div class="cd"><div class="ch"><h3><i class="fas fa-gear"></i> Negocio</h3></div><div class="cb"><form id="fCfg" onsubmit="saveCfg(event)"><div class="fg"><label>Nombre</label><input type="text" id="cfNom" class="fi" value="NEXTCOM Multiservicios"></div><div class="fg"><label>Teléfono</label><input type="tel" id="cfTel" class="fi" placeholder="+57 300 123 4567"></div><div class="fg"><label>Dirección</label><input type="text" id="cfDir" class="fi" placeholder="Dirección"></div><div class="fr"><div class="fg"><label>Stock mín.</label><input type="number" id="cfSM" class="fi" value="5" min="1"></div><div class="fg"><label>Moneda</label><select id="cfMon" class="fi"><option value="COP">COP ($)</option><option value="USD">USD ($)</option></select></div></div><button type="submit" class="btn bp"><i class="fas fa-save"></i> Guardar</button></form></div></div><div class="cd"><div class="ch"><h3><i class="fas fa-database"></i> Sistema</h3></div><div class="cb"><div style="display:flex;flex-direction:column;gap:.5rem"><div class="fb"><span class="txm2" style="font-size:.78rem">Clientes</span><strong id="ccC">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Órdenes</span><strong id="ccO">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Repuestos</span><strong id="ccR">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Notas</span><strong id="ccN">0</strong></div><hr style="border:none;border-top:1px solid var(--bor)"><button class="btn bg bsm" onclick="backupJSON()" style="width:100%"><i class="fas fa-download"></i> Backup</button><hr style="border:none;border-top:1px solid var(--bor)"><button class="btn bd bsm" onclick="delAll()" style="width:100%"><i class="fas fa-trash"></i> Borrar Todo</button></div></div></div></div></section>
+  <section id="config" class="sec"><div class="dg"><div class="cd"><div class="ch"><h3><i class="fas fa-gear"></i> Negocio</h3></div><div class="cb"><form id="fCfg" onsubmit="saveCfg(event)"><div class="fg"><label>Nombre</label><input type="text" id="cfNom" class="fi" value="NEXTCOM Multiservicios"></div><div class="fg"><label>Teléfono</label><input type="tel" id="cfTel" class="fi" placeholder="+57 300 123 4567"></div><div class="fg"><label>Dirección</label><input type="text" id="cfDir" class="fi" placeholder="Dirección"></div><div class="fr"><div class="fg"><label>Stock mín.</label><input type="number" id="cfSM" class="fi" value="5" min="1"></div><div class="fg"><label>Moneda</label><select id="cfMon" class="fi"><option value="COP">COP ($)</option><option value="USD">USD ($)</option></select></div></div><div class="fg"><label>Logo del Negocio (para tickets)</label><input type="file" id="cfLogo" class="fi" accept="image/*" onchange="previewLogo()"><div id="logoPreview" style="margin-top:.5rem;display:none"><img id="logoImg" src="" alt="Logo" style="max-height:80px;border-radius:var(--rx);border:1px solid var(--bor)"></div><button type="button" class="btn bs bsm" onclick="removeLogo()" style="margin-top:.3rem;display:none" id="btnRemoveLogo"><i class="fas fa-trash"></i> Quitar Logo</button></div><button type="submit" class="btn bp"><i class="fas fa-save"></i> Guardar</button></form></div></div><div class="cd"><div class="ch"><h3><i class="fas fa-database"></i> Sistema</h3></div><div class="cb"><div style="display:flex;flex-direction:column;gap:.5rem"><div class="fb"><span class="txm2" style="font-size:.78rem">Clientes</span><strong id="ccC">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Órdenes</span><strong id="ccO">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Repuestos</span><strong id="ccR">0</strong></div><div class="fb"><span class="txm2" style="font-size:.78rem">Notas</span><strong id="ccN">0</strong></div><hr style="border:none;border-top:1px solid var(--bor)"><button class="btn bg bsm" onclick="backupJSON()" style="width:100%"><i class="fas fa-download"></i> Backup</button><hr style="border:none;border-top:1px solid var(--bor)"><button class="btn bd bsm" onclick="delAll()" style="width:100%"><i class="fas fa-trash"></i> Borrar Todo</button></div></div></div></div></section>
 </main>
 
 <!-- MODALES — idénticos al original -->
@@ -1468,6 +1503,168 @@ function procesarVenta() {
   logAct(`Venta realizada: ${totalItems} productos por ${fm(total)}`, 'green');
   addNotif(`✅ Venta completada: ${fm(total)}`, 'success');
   toast('¡Venta procesada exitosamente!', 'success', 3000);
+  
+  // Renderizar historial en POS
+  renderHistorialVentasPOS();
+}
+
+// Historial de ventas en POS
+function renderHistorialVentasPOS() {
+  const ventas = D.g('ventas') || [];
+  const periodo = document.getElementById('posFiltroVentasPeriodo').value;
+  const ahora = new Date();
+  
+  let ventasFiltradas = ventas.filter(v => {
+    const d = new Date(v.createdAt);
+    if (periodo === 'hoy') return fc(d.getTime()) === fc(Date.now());
+    if (periodo === 'semana') {
+      const inicioSemana = new Date(ahora); inicioSemana.setDate(ahora.getDate() - ahora.getDay());
+      return d >= inicioSemana;
+    }
+    if (periodo === 'mes') return d.getMonth() === ahora.getMonth() && d.getFullYear() === ahora.getFullYear();
+    return true;
+  });
+  
+  ventasFiltradas.sort((a, b) => b.createdAt - a.createdAt);
+  
+  const tb = document.getElementById('tbVentasPOS');
+  if (!ventasFiltradas.length) {
+    tb.innerHTML = '<tr><td colspan="8" class="nodata"><i class="fas fa-cash-register"></i>Sin ventas en este período</td></tr>';
+    return;
+  }
+  
+  const metodoPagoLabels = { efectivo: '💵 Efectivo', tarjeta: '💳 Tarjeta', transferencia: '🏦 Transferencia', mixto: '🔀 Mixto' };
+  
+  tb.innerHTML = ventasFiltradas.map(v => {
+    const itemsCount = v.items ? v.items.reduce((s, i) => s + i.cantidad, 0) : 0;
+    const fecha = new Date(v.createdAt);
+    const fechaStr = fecha.toLocaleDateString('es-CO', { month: 'short', day: 'numeric' }) + ' ' + fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    const idCorto = v.id ? v.id.substring(0, 8) + '...' : '-';
+    
+    return `<tr>
+      <td><small>${fechaStr}</small></td>
+      <td><strong style="color:var(--pri);font-size:.75rem">${idCorto}</strong></td>
+      <td><span class="sbadge" style="background:rgba(79,140,255,.12);color:#6ea8fe">${itemsCount} items</span></td>
+      <td>${fm(v.subtotal || 0)}</td>
+      <td style="color:var(--war)">${fm(v.descuento || 0)}</td>
+      <td><strong style="color:var(--suc)">${fm(v.total || 0)}</strong></td>
+      <td><small>${metodoPagoLabels[v.metodoPago] || v.metodoPago}</small></td>
+      <td style="text-align:center">
+        <button class="btn bs bsm bic" onclick="verDetalleVenta('${v.id}')" title="Ver detalle"><i class="fas fa-eye"></i></button>
+        <button class="btn bp bsm bic" onclick="editarVenta('${v.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+        <button class="btn bd bsm bic" onclick="eliminarVenta('${v.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Editar venta
+async function editarVenta(id) {
+  const ventas = D.g('ventas') || [];
+  const ordenes = D.g('ordenes');
+  const venta = ventas.find(v => v.id === id);
+  const orden = ordenes.find(o => o.id === venta?.orderId);
+  
+  if (!venta || !orden) { 
+    toast('Venta u orden no encontrada', 'error'); 
+    return; 
+  }
+  
+  const itemsHtml = (venta.items || []).map(i => {
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem .65rem;border-bottom:1px solid var(--bor);font-size:.78rem">
+      <span>${i.nombre} <small style="color:var(--txm)">x${i.cantidad} @ ${fm(i.precio)}</small></span>
+      <strong>${fm(i.precio * i.cantidad)}</strong>
+    </div>`;
+  }).join('');
+  
+  const modalContent = `
+    <div style="padding:1rem">
+      <div style="margin-bottom:.8rem">
+        <p style="font-size:.72rem;color:var(--txm)">Fecha: ${new Date(venta.createdAt).toLocaleString('es-CO')}</p>
+        <p style="font-size:.72rem;color:var(--txm)">ID Venta: ${id}</p>
+        <p style="font-size:.72rem;color:var(--txm)">Orden: #${orden.numero}</p>
+      </div>
+      <div style="border:1px solid var(--bor);border-radius:var(--rx);overflow:hidden;margin-bottom:.8rem">
+        <div style="background:var(--bgi);padding:.5rem .65rem;font-size:.76rem;font-weight:600;border-bottom:1px solid var(--bor)">Items Vendidos</div>
+        ${itemsHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.35rem;font-size:.82rem;margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between"><span>Subtotal:</span><strong>${fm(venta.subtotal || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;color:var(--war)"><span>Descuento:</span><strong>-${fm(venta.descuento || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:1.1rem;padding-top:.35rem;border-top:1px solid var(--bor)"><span>Total:</span><strong style="color:var(--suc)">${fm(venta.total || 0)}</strong></div>
+        <div style="display:flex;justify-content:space-between;margin-top:.35rem"><span>Método Pago:</span><strong>${venta.metodoPago || '-'}</strong></div>
+      </div>
+      <div style="padding:.75rem;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--rx);margin-top:1rem">
+        <p style="font-size:.76rem;color:var(--dng);margin-bottom:.5rem"><i class="fas fa-exclamation-triangle"></i> <strong>Advertencia:</strong></p>
+        <p style="font-size:.72rem;color:var(--txs);margin-bottom:.75rem">Al editar esta venta, se restituirán los productos al inventario y se eliminará el registro actual. Deberá crear una nueva venta con los datos corregidos.</p>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn bd bsm" onclick="confirmarEliminarVenta('${id}')"><i class="fas fa-trash"></i> Eliminar y Corregir</button>
+          <button class="btn bs bsm mclo-btn">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  mostrarModalCustom('Editar Venta', modalContent);
+}
+
+// Confirmar eliminación de venta
+async function confirmarEliminarVenta(id) {
+  if (!await confirmar('¿Está seguro de eliminar esta venta? Los productos serán restituidos al inventario.')) return;
+  eliminarVenta(id);
+}
+
+// Eliminar venta
+async function eliminarVenta(id) {
+  const ventas = D.g('ventas') || [];
+  const ordenes = D.g('ordenes');
+  const repuestos = D.g('repuestos');
+  
+  const ventaIndex = ventas.findIndex(v => v.id === id);
+  if (ventaIndex < 0) { 
+    toast('Venta no encontrada', 'error'); 
+    return; 
+  }
+  
+  const venta = ventas[ventaIndex];
+  
+  // Restituir stock
+  let rep = [...repuestos];
+  (venta.items || []).forEach(item => {
+    const idx = rep.findIndex(r => r.id === item.id);
+    if (idx >= 0) {
+      rep[idx].cantidad = rep[idx].cantidad + item.cantidad;
+      rep[idx].updatedAt = Date.now();
+    }
+  });
+  D.s('repuestos', rep);
+  
+  // Eliminar orden asociada si existe
+  if (venta.orderId) {
+    const ordIndex = ordenes.findIndex(o => o.id === venta.orderId);
+    if (ordIndex >= 0) {
+      ordenes.splice(ordIndex, 1);
+      D.s('ordenes', ordenes);
+    }
+  }
+  
+  // Eliminar venta
+  ventas.splice(ventaIndex, 1);
+  D.s('ventas', ventas);
+  
+  // Cerrar modal si está abierto
+  const modal = document.getElementById('modalCustom');
+  if (modal) modal.remove();
+  
+  // Actualizar vistas
+  renderPOS();
+  renderInv();
+  renderHistorialVentasPOS();
+  renderHistorialVentas();
+  loadDash();
+  
+  toast('Venta eliminada y stock restituido', 'success');
+  logAct(`Venta eliminada: ${id}`, 'red');
 }
 
 async function delRep(id) { if (!await confirmar('¿Eliminar?')) return; D.s('repuestos', D.g('repuestos').filter(x => x.id !== id)); toast('Eliminado'); renderInv(); renderPOS(); loadDash(); }
@@ -1595,10 +1792,10 @@ function verDetalleVenta(id) {
     </div>
   `;
   
-  mostrarModalCustom('Detalle de Venta', modalContent);
+  mostrarModalCustom('Detalle de Venta', modalContent, true);
 }
 
-function mostrarModalCustom(titulo, contenido) {
+function mostrarModalCustom(titulo, contenido, permitirZoom = false) {
   const existing = document.getElementById('modalCustom');
   if (existing) existing.remove();
   
@@ -1606,12 +1803,12 @@ function mostrarModalCustom(titulo, contenido) {
   modal.id = 'modalCustom';
   modal.className = 'modal';
   modal.innerHTML = `
-    <div class="mct">
+    <div class="mct" style="max-width:500px">
       <div class="mhdr">
         <h3>${titulo}</h3>
         <button class="mclo">&times;</button>
       </div>
-      <div class="mbody" style="max-height:500px;overflow-y:auto">${contenido}</div>
+      <div class="mbody" style="max-height:60vh;overflow-y:auto">${contenido}</div>
       <div class="mftr">
         <button class="btn bs mclo-btn">Cerrar</button>
       </div>
@@ -1620,6 +1817,28 @@ function mostrarModalCustom(titulo, contenido) {
   
   document.body.appendChild(modal);
   setTimeout(() => modal.classList.add('show'), 10);
+  
+  // Si permitirZoom es true, agregar evento para ampliar imagenes
+  if (permitirZoom) {
+    modal.querySelectorAll('.pi img').forEach(img => {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', function() {
+        const zoomModal = document.createElement('div');
+        zoomModal.className = 'modal';
+        zoomModal.style.background = 'rgba(0,0,0,.95)';
+        zoomModal.innerHTML = `
+          <div style="position:relative;max-width:90vw;max-height:90vh">
+            <img src="${this.src}" style="max-width:100%;max-height:90vh;border-radius:var(--r)">
+            <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:-40px;right:0;background:var(--dng);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem">&times;</button>
+          </div>
+        `;
+        document.body.appendChild(zoomModal);
+        zoomModal.addEventListener('click', (e) => {
+          if (e.target === zoomModal) zoomModal.remove();
+        });
+      });
+    });
+  }
   
   modal.querySelectorAll('.mclo, .mclo-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1656,10 +1875,74 @@ function renderAct() { const l = D.g('act'), lst = document.getElementById('lstA
 async function clearAct() { if (!await confirmar('¿Limpiar?')) return; D.s('act', []); toast('Limpiado', 'info'); renderAct(); }
 
 // ==========================================
-// CONFIGURACIÓN (idéntico al original)
+// CONFIGURACIÓN (mejorado con logo)
 // ==========================================
-function renderCfg() { const c = D.go('config'); document.getElementById('cfNom').value = c.nombre || 'NEXTCOM Multiservicios'; document.getElementById('cfTel').value = c.telefono || ''; document.getElementById('cfDir').value = c.direccion || ''; document.getElementById('cfSM').value = c.stockMin || 5; document.getElementById('cfMon').value = c.moneda || 'COP'; document.getElementById('ccC').textContent = D.g('clientes').length; document.getElementById('ccO').textContent = D.g('ordenes').length; document.getElementById('ccR').textContent = D.g('repuestos').length; document.getElementById('ccN').textContent = D.g('notas').length; updStorage(); }
-function saveCfg(e) { e.preventDefault(); D.so('config', { nombre: document.getElementById('cfNom').value.trim(), telefono: document.getElementById('cfTel').value.trim(), direccion: document.getElementById('cfDir').value.trim(), stockMin: parseInt(document.getElementById('cfSM').value) || 5, moneda: document.getElementById('cfMon').value }); toast('Guardado'); logAct('Configuración actualizada', 'blue'); }
+let logoDataUrl = '';
+
+function previewLogo() {
+  const input = document.getElementById('cfLogo');
+  const preview = document.getElementById('logoPreview');
+  const img = document.getElementById('logoImg');
+  const btnRemove = document.getElementById('btnRemoveLogo');
+  
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      logoDataUrl = e.target.result;
+      img.src = logoDataUrl;
+      preview.style.display = 'block';
+      btnRemove.style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function removeLogo() {
+  logoDataUrl = '';
+  document.getElementById('cfLogo').value = '';
+  document.getElementById('logoPreview').style.display = 'none';
+  document.getElementById('btnRemoveLogo').style.display = 'none';
+}
+
+function renderCfg() { 
+  const c = D.go('config'); 
+  document.getElementById('cfNom').value = c.nombre || 'NEXTCOM Multiservicios'; 
+  document.getElementById('cfTel').value = c.telefono || ''; 
+  document.getElementById('cfDir').value = c.direccion || ''; 
+  document.getElementById('cfSM').value = c.stockMin || 5; 
+  document.getElementById('cfMon').value = c.moneda || 'COP'; 
+  
+  // Logo
+  if (c.logo) {
+    logoDataUrl = c.logo;
+    document.getElementById('logoImg').src = c.logo;
+    document.getElementById('logoPreview').style.display = 'block';
+    document.getElementById('btnRemoveLogo').style.display = 'inline-flex';
+  } else {
+    document.getElementById('logoPreview').style.display = 'none';
+    document.getElementById('btnRemoveLogo').style.display = 'none';
+  }
+  
+  document.getElementById('ccC').textContent = D.g('clientes').length; 
+  document.getElementById('ccO').textContent = D.g('ordenes').length; 
+  document.getElementById('ccR').textContent = D.g('repuestos').length; 
+  document.getElementById('ccN').textContent = D.g('notas').length; 
+  updStorage(); 
+}
+
+function saveCfg(e) { 
+  e.preventDefault(); 
+  D.so('config', { 
+    nombre: document.getElementById('cfNom').value.trim(), 
+    telefono: document.getElementById('cfTel').value.trim(), 
+    direccion: document.getElementById('cfDir').value.trim(), 
+    stockMin: parseInt(document.getElementById('cfSM').value) || 5, 
+    moneda: document.getElementById('cfMon').value,
+    logo: logoDataUrl
+  }); 
+  toast('Guardado'); 
+  logAct('Configuración actualizada', 'blue'); 
+}
 
 // ==========================================
 // EXPORT / IMPORT / BACKUP (idéntico al original)

@@ -1554,19 +1554,28 @@
             const id = document.getElementById('orden-id').value;
             const clienteId = document.getElementById('orden-cliente').value;
             const cliente = db.clientes.find(c => c.id === clienteId);
+            const nuevoEstado = document.getElementById('orden-estado').value;
             
-            const ordenData = {
+            let ordenData = {
                 id: id || generateId(),
                 fecha: id ? db.ordenes.find(o => o.id === id).fecha : new Date().toISOString(),
                 clienteId: clienteId,
                 clienteNombre: cliente ? cliente.nombre : 'VENTA DIRECTA',
                 equipo: document.getElementById('orden-equipo').value,
                 problema: document.getElementById('orden-problema').value,
-                estado: document.getElementById('orden-estado').value,
+                estado: nuevoEstado,
                 diasGarantia: parseInt(document.getElementById('orden-dias-garantia').value) || 30
             };
 
             if (id) {
+                const ordenAnterior = db.ordenes.find(o => o.id === id);
+                // Si el estado cambia a ENTREGADO y antes no lo estaba, guardar fechaEntrega
+                if (nuevoEstado === 'ENTREGADO' && ordenAnterior.estado !== 'ENTREGADO') {
+                    ordenData.fechaEntrega = new Date().toISOString();
+                } else {
+                    ordenData.fechaEntrega = ordenAnterior.fechaEntrega;
+                }
+                
                 const index = db.ordenes.findIndex(o => o.id === id);
                 db.ordenes[index] = ordenData;
                 logActividad(`Orden editada: ${ordenData.equipo}`);
@@ -1915,7 +1924,9 @@
             clienteSelects.forEach(id => {
                 const select = document.getElementById(id);
                 if (select) {
-                    select.innerHTML = '<option value="">SELECCIONAR</option>';
+                    // Mantener la opcion de venta sin cliente si existe
+                    const esVentaSinCliente = id === 'venta-cliente';
+                    select.innerHTML = esVentaSinCliente ? '<option value="">VENTA SIN CLIENTE</option>' : '<option value="">SIN CLIENTE / VENTA DIRECTA</option>';
                     db.clientes.forEach(c => {
                         select.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
                     });
@@ -1933,7 +1944,7 @@
             const ordenSelect = document.getElementById('garantia-orden');
             if (ordenSelect) {
                 ordenSelect.innerHTML = '<option value="">SELECCIONAR</option>';
-                db.ordenes.forEach(o => {
+                db.ordenes.filter(o => o.estado === 'ENTREGADO').forEach(o => {
                     ordenSelect.innerHTML += `<option value="${o.id}">${o.equipo} - ${o.clienteNombre}</option>`;
                 });
             }
@@ -1971,6 +1982,8 @@
                     const fechaOrden = new Date(o.fecha);
                     return fechaOrden >= inicio && fechaOrden <= fin;
                 });
+            } else if (tipo === 'inventario') {
+                datosFiltrados = db.productos;
             }
             
             const negocio = db.config.nombre || 'NEXTCOM';
@@ -2025,6 +2038,27 @@
                             <td style="padding: 8px; border: 1px solid #000;">${o.clienteNombre}</td>
                             <td style="padding: 8px; border: 1px solid #000;">${o.equipo}</td>
                             <td style="padding: 8px; border: 1px solid #000;">${o.estado}</td>
+                        </tr>
+                    `;
+                });
+                contenidoHTML += `</table>`;
+            } else if (tipo === 'inventario') {
+                contenidoHTML += `
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: #333; color: white;">
+                            <th style="padding: 10px; border: 1px solid #000;">NOMBRE</th>
+                            <th style="padding: 10px; border: 1px solid #000;">PRECIO</th>
+                            <th style="padding: 10px; border: 1px solid #000;">STOCK</th>
+                            <th style="padding: 10px; border: 1px solid #000;">CATEGORIA</th>
+                        </tr>
+                `;
+                datosFiltrados.forEach(p => {
+                    contenidoHTML += `
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #000;">${p.nombre}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${moneda}${p.precio.toFixed(2)}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${p.stock}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${p.categoria || 'N/A'}</td>
                         </tr>
                     `;
                 });

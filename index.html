@@ -706,7 +706,6 @@
                                     <th>ID</th>
                                     <th>NOMBRE</th>
                                     <th>TELEFONO</th>
-                                    <th>EMAIL</th>
                                     <th>ACCIONES</th>
                                 </tr>
                             </thead>
@@ -734,6 +733,7 @@
                                     <th>CLIENTE</th>
                                     <th>EQUIPO</th>
                                     <th>ESTADO</th>
+                                    <th>GARANTIA</th>
                                     <th>ACCIONES</th>
                                 </tr>
                             </thead>
@@ -763,6 +763,15 @@
                             </thead>
                             <tbody></tbody>
                         </table>
+                    </div>
+                </div>
+                <div id="ticket-container" style="display:none; margin-top: 1rem;">
+                    <div class="card" style="background: #000; border: 2px solid #fff; max-width: 400px; margin: 0 auto;">
+                        <div id="ticket-content" style="padding: 1rem; font-size: 0.85rem; text-align: center;"></div>
+                        <div style="text-align: center; padding: 1rem;">
+                            <button class="btn" onclick="imprimirTicket()">IMPRIMIR</button>
+                            <button class="btn" onclick="cerrarTicket()">CERRAR</button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -807,8 +816,10 @@
                                     <th>ID</th>
                                     <th>ORDEN</th>
                                     <th>CLIENTE</th>
+                                    <th>EQUIPO</th>
                                     <th>FECHA</th>
                                     <th>ESTADO</th>
+                                    <th>PROGRESO</th>
                                     <th>ACCIONES</th>
                                 </tr>
                             </thead>
@@ -852,8 +863,17 @@
                             <option value="inventario">INVENTARIO</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="generarReporte()">GENERAR</button>
+                    <div class="form-group">
+                        <label class="form-label">FECHA INICIO</label>
+                        <input type="date" class="form-control" id="reporte-fecha-inicio">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">FECHA FIN</label>
+                        <input type="date" class="form-control" id="reporte-fecha-fin">
+                    </div>
+                    <button class="btn btn-primary" onclick="generarReporte()">GENERAR PDF</button>
                 </div>
+                <div id="reporte-resultado" style="margin-top: 1rem;"></div>
             </section>
 
             <!-- Herramientas Section -->
@@ -899,6 +919,18 @@
                         <label class="form-label">MONEDA</label>
                         <input type="text" class="form-control" id="config-moneda" value="$">
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">DIAS DE GARANTIA POR DEFECTO</label>
+                        <input type="number" class="form-control" id="config-dias-garantia" value="30" min="1" max="365">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TELEFONO DEL NEGOCIO</label>
+                        <input type="text" class="form-control" id="config-telefono" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DIRECCION DEL NEGOCIO</label>
+                        <input type="text" class="form-control" id="config-direccion" value="">
+                    </div>
                     <button class="btn btn-primary" onclick="guardarConfiguracion()">GUARDAR</button>
                 </div>
             </section>
@@ -921,15 +953,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">TELEFONO</label>
-                    <input type="text" class="form-control" id="cliente-telefono">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">EMAIL</label>
-                    <input type="email" class="form-control" id="cliente-email">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">DIRECCION</label>
-                    <input type="text" class="form-control" id="cliente-direccion">
+                    <input type="text" class="form-control" id="cliente-telefono" required>
                 </div>
                 <button type="submit" class="btn btn-primary">GUARDAR</button>
             </form>
@@ -976,8 +1000,10 @@
             <form id="form-orden">
                 <input type="hidden" id="orden-id">
                 <div class="form-group">
-                    <label class="form-label">CLIENTE</label>
-                    <select class="form-control" id="orden-cliente" required></select>
+                    <label class="form-label">CLIENTE (OPCIONAL)</label>
+                    <select class="form-control" id="orden-cliente">
+                        <option value="">SIN CLIENTE / VENTA DIRECTA</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">EQUIPO</label>
@@ -988,9 +1014,13 @@
                     <textarea class="form-control" id="orden-problema" rows="3" required></textarea>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">DIAS DE GARANTIA</label>
+                    <input type="number" class="form-control" id="orden-dias-garantia" value="30" min="1" max="365">
+                </div>
+                <div class="form-group">
                     <label class="form-label">ESTADO</label>
                     <select class="form-control" id="orden-estado">
-                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="RECIBIDO">RECIBIDO</option>
                         <option value="EN REVISION">EN REVISION</option>
                         <option value="REPARADO">REPARADO</option>
                         <option value="ENTREGADO">ENTREGADO</option>
@@ -1010,8 +1040,10 @@
             </div>
             <form id="form-venta">
                 <div class="form-group">
-                    <label class="form-label">CLIENTE</label>
-                    <select class="form-control" id="venta-cliente"></select>
+                    <label class="form-label">CLIENTE (OPCIONAL)</label>
+                    <select class="form-control" id="venta-cliente">
+                        <option value="">VENTA SIN CLIENTE</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">PRODUCTO</label>
@@ -1172,7 +1204,7 @@
             garantias: [],
             notas: [],
             actividad: [],
-            config: { nombre: 'NEXTCOM', moneda: '$' }
+            config: { nombre: 'NEXTCOM', moneda: '$', diasGarantia: 30, telefono: '', direccion: '' }
         };
 
         function loadDB() {
@@ -1202,6 +1234,14 @@
 
         function initApp() {
             loadDB();
+            
+            // Cargar configuracion guardada
+            document.getElementById('config-nombre').value = db.config.nombre || 'NEXTCOM';
+            document.getElementById('config-moneda').value = db.config.moneda || '$';
+            document.getElementById('config-dias-garantia').value = db.config.diasGarantia || 30;
+            document.getElementById('config-telefono').value = db.config.telefono || '';
+            document.getElementById('config-direccion').value = db.config.direccion || '';
+            
             actualizarDashboard();
             renderClientes();
             renderOrdenes();
@@ -1298,7 +1338,6 @@
                     <td>${cliente.id.substr(0, 8)}</td>
                     <td>${cliente.nombre}</td>
                     <td>${cliente.telefono}</td>
-                    <td>${cliente.email}</td>
                     <td>
                         <button class="btn" onclick="editarCliente('${cliente.id}')">EDITAR</button>
                         <button class="btn" onclick="eliminarCliente('${cliente.id}')">ELIMINAR</button>
@@ -1319,8 +1358,6 @@
                     document.getElementById('cliente-id').value = cliente.id;
                     document.getElementById('cliente-nombre').value = cliente.nombre;
                     document.getElementById('cliente-telefono').value = cliente.telefono;
-                    document.getElementById('cliente-email').value = cliente.email;
-                    document.getElementById('cliente-direccion').value = cliente.direccion;
                     document.getElementById('modal-cliente-title').textContent = 'EDITAR CLIENTE';
                 }
             }
@@ -1334,9 +1371,7 @@
             const clienteData = {
                 id: id || generateId(),
                 nombre: document.getElementById('cliente-nombre').value,
-                telefono: document.getElementById('cliente-telefono').value,
-                email: document.getElementById('cliente-email').value,
-                direccion: document.getElementById('cliente-direccion').value
+                telefono: document.getElementById('cliente-telefono').value
             };
 
             if (id) {
@@ -1464,16 +1499,25 @@
             
             const filtered = db.ordenes.filter(o => 
                 o.equipo.toLowerCase().includes(search.toLowerCase()) ||
-                o.clienteNombre.toLowerCase().includes(search.toLowerCase())
+                (o.clienteNombre && o.clienteNombre.toLowerCase().includes(search.toLowerCase()))
             );
 
             filtered.forEach(orden => {
+                const tieneGarantia = db.garantias.some(g => g.ordenId === orden.id);
+                let garantiaBadge = '<span class="badge">SIN GARANTIA</span>';
+                if (tieneGarantia) {
+                    garantiaBadge = '<span class="badge badge-success">ACTIVA</span>';
+                } else if (orden.estado === 'ENTREGADO') {
+                    garantiaBadge = '<button class="btn" style="font-size:0.7rem;" onclick="activarGarantia(\'' + orden.id + '\')">ACTIVAR</button>';
+                }
+                
                 const row = `<tr>
                     <td>${orden.id.substr(0, 8)}</td>
                     <td>${new Date(orden.fecha).toLocaleDateString()}</td>
-                    <td>${orden.clienteNombre}</td>
+                    <td>${orden.clienteNombre || 'VENTA DIRECTA'}</td>
                     <td>${orden.equipo}</td>
                     <td><span class="badge">${orden.estado}</span></td>
+                    <td>${garantiaBadge}</td>
                     <td>
                         <button class="btn" onclick="editarOrden('${orden.id}')">EDITAR</button>
                         <button class="btn" onclick="eliminarOrden('${orden.id}')">ELIMINAR</button>
@@ -1493,9 +1537,10 @@
                 const orden = db.ordenes.find(o => o.id === id);
                 if (orden) {
                     document.getElementById('orden-id').value = orden.id;
-                    document.getElementById('orden-cliente').value = orden.clienteId;
+                    document.getElementById('orden-cliente').value = orden.clienteId || '';
                     document.getElementById('orden-equipo').value = orden.equipo;
                     document.getElementById('orden-problema').value = orden.problema;
+                    document.getElementById('orden-dias-garantia').value = orden.diasGarantia || 30;
                     document.getElementById('orden-estado').value = orden.estado;
                     document.getElementById('modal-orden-title').textContent = 'EDITAR ORDEN';
                 }
@@ -1514,10 +1559,11 @@
                 id: id || generateId(),
                 fecha: id ? db.ordenes.find(o => o.id === id).fecha : new Date().toISOString(),
                 clienteId: clienteId,
-                clienteNombre: cliente ? cliente.nombre : 'DESCONOCIDO',
+                clienteNombre: cliente ? cliente.nombre : 'VENTA DIRECTA',
                 equipo: document.getElementById('orden-equipo').value,
                 problema: document.getElementById('orden-problema').value,
-                estado: document.getElementById('orden-estado').value
+                estado: document.getElementById('orden-estado').value,
+                diasGarantia: parseInt(document.getElementById('orden-dias-garantia').value) || 30
             };
 
             if (id) {
@@ -1549,6 +1595,28 @@
             }
         }
 
+        function activarGarantia(ordenId) {
+            const orden = db.ordenes.find(o => o.id === ordenId);
+            if (orden && orden.estado === 'ENTREGADO') {
+                const garantia = {
+                    id: generateId(),
+                    fecha: new Date().toISOString(),
+                    fechaEntrega: new Date(orden.fechaEntrega || orden.fecha).toISOString(),
+                    ordenId: ordenId,
+                    clienteNombre: orden.clienteNombre,
+                    equipo: orden.equipo,
+                    diasGarantia: orden.diasGarantia || 30,
+                    estado: 'ACTIVA'
+                };
+                db.garantias.push(garantia);
+                saveDB();
+                renderOrdenes();
+                renderGarantias();
+                logActividad(`Garantia activada para orden: ${ordenId}`);
+                alert('GARANTIA ACTIVADA CORRECTAMENTE');
+            }
+        }
+
         // Ventas
         function renderVentas() {
             const tbody = document.querySelector('#tabla-ventas tbody');
@@ -1558,10 +1626,10 @@
                 const row = `<tr>
                     <td>${venta.id.substr(0, 8)}</td>
                     <td>${new Date(venta.fecha).toLocaleDateString()}</td>
-                    <td>${venta.clienteNombre}</td>
+                    <td>${venta.clienteNombre || 'VENTA DIRECTA'}</td>
                     <td>${db.config.moneda}${venta.total.toFixed(2)}</td>
                     <td>
-                        <button class="btn" onclick="verDetalleVenta('${venta.id}')">VER</button>
+                        <button class="btn" onclick="verTicket('${venta.id}')">VER TICKET</button>
                     </td>
                 </tr>`;
                 tbody.innerHTML += row;
@@ -1583,7 +1651,7 @@
             const cliente = db.clientes.find(c => c.id === clienteId);
             const producto = db.productos.find(p => p.id === productoId);
             
-            if (!cliente || !producto) {
+            if (!producto) {
                 alert('ERROR: DATOS INVALIDOS');
                 return;
             }
@@ -1594,7 +1662,7 @@
                 id: generateId(),
                 fecha: new Date().toISOString(),
                 clienteId: clienteId,
-                clienteNombre: cliente.nombre,
+                clienteNombre: cliente ? cliente.nombre : 'VENTA DIRECTA',
                 productoId: productoId,
                 productoNombre: producto.nombre,
                 cantidad: cantidad,
@@ -1610,6 +1678,64 @@
             renderProductos();
             actualizarDashboard();
             logActividad(`Venta registrada: ${total.toFixed(2)}`);
+            mostrarTicket(venta);
+        }
+
+        function mostrarTicket(venta) {
+            const negocio = db.config.nombre || 'NEXTCOM';
+            const telefono = db.config.telefono || '';
+            const direccion = db.config.direccion || '';
+            const moneda = db.config.moneda || '$';
+            
+            const ticketHTML = `
+                <div style="font-family: monospace; text-align: center;">
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.2rem;">${negocio}</h2>
+                    ${telefono ? '<p>' + telefono + '</p>' : ''}
+                    ${direccion ? '<p>' + direccion + '</p>' : ''}
+                    <hr style="border: 1px dashed #fff; margin: 1rem 0;">
+                    <p>TICKET DE VENTA</p>
+                    <p>ID: ${venta.id.substr(0, 8)}</p>
+                    <p>FECHA: ${new Date(venta.fecha).toLocaleString()}</p>
+                    <p>CLIENTE: ${venta.clienteNombre}</p>
+                    <hr style="border: 1px dashed #fff; margin: 1rem 0;">
+                    <div style="text-align: left; padding: 0 1rem;">
+                        <p>${venta.productoNombre}</p>
+                        <p>CANT: ${venta.cantidad} x ${moneda}${(venta.total / venta.cantidad).toFixed(2)}</p>
+                    </div>
+                    <hr style="border: 1px dashed #fff; margin: 1rem 0;">
+                    <h3 style="font-size: 1.1rem;">TOTAL: ${moneda}${venta.total.toFixed(2)}</h3>
+                    <p style="margin-top: 1rem;">¡GRACIAS POR SU COMPRA!</p>
+                </div>
+            `;
+            
+            document.getElementById('ticket-content').innerHTML = ticketHTML;
+            document.getElementById('ticket-container').style.display = 'block';
+        }
+
+        function verTicket(ventaId) {
+            const venta = db.ventas.find(v => v.id === ventaId);
+            if (venta) {
+                mostrarTicket(venta);
+            }
+        }
+
+        function imprimirTicket() {
+            const ticketContent = document.getElementById('ticket-content').innerHTML;
+            const ventana = window.open('', '_blank');
+            ventana.document.write(`
+                <html>
+                <head><title>Ticket</title></head>
+                <body style="font-family: monospace; text-align: center;">
+                    ${ticketContent}
+                </body>
+                </html>
+            `);
+            ventana.document.close();
+            ventana.print();
+        }
+
+        function cerrarTicket() {
+            document.getElementById('ticket-container').style.display = 'none';
         }
 
         function verDetalleVenta(id) {
@@ -1625,12 +1751,34 @@
             tbody.innerHTML = '';
 
             db.garantias.forEach(gar => {
+                const fechaEntrega = new Date(gar.fechaEntrega || gar.fecha);
+                const hoy = new Date();
+                const diasTranscurridos = Math.floor((hoy - fechaEntrega) / (1000 * 60 * 60 * 24));
+                const diasTotales = gar.diasGarantia || 30;
+                const diasRestantes = Math.max(0, diasTotales - diasTranscurridos);
+                const porcentaje = Math.min(100, Math.max(0, ((diasTotales - diasTranscurridos) / diasTotales) * 100));
+                
+                let estadoClass = 'badge-success';
+                if (diasRestantes === 0) {
+                    gar.estado = 'EXPIRADA';
+                    estadoClass = '';
+                } else if (diasRestantes <= 7) {
+                    estadoClass = '';
+                }
+                
                 const row = `<tr>
                     <td>${gar.id.substr(0, 8)}</td>
                     <td>${gar.ordenId.substr(0, 8)}</td>
                     <td>${gar.clienteNombre}</td>
+                    <td>${gar.equipo || ''}</td>
                     <td>${new Date(gar.fecha).toLocaleDateString()}</td>
-                    <td><span class="badge">${gar.estado}</span></td>
+                    <td><span class="badge ${estadoClass}">${gar.estado}</span></td>
+                    <td style="width: 150px;">
+                        <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="background: ${porcentaje > 50 ? '#fff' : porcentaje > 20 ? '#ffff00' : '#ff0000'}; height: 100%; width: ${porcentaje}%; transition: width 0.3s;"></div>
+                        </div>
+                        <span style="font-size: 0.7rem;">${diasRestantes} dias restantes</span>
+                    </td>
                     <td>
                         <button class="btn" onclick="eliminarGarantia('${gar.id}')">ELIMINAR</button>
                     </td>
@@ -1797,8 +1945,108 @@
 
         function generarReporte() {
             const tipo = document.getElementById('reporte-tipo').value;
-            alert(`GENERANDO REPORTE DE ${tipo.toUpperCase()}...\n\nESTA FUNCIONALIDAD ESTA EN DESARROLLO`);
-            logActividad(`Reporte generado: ${tipo}`);
+            const fechaInicio = document.getElementById('reporte-fecha-inicio').value;
+            const fechaFin = document.getElementById('reporte-fecha-fin').value;
+            
+            if (!fechaInicio || !fechaFin) {
+                alert('POR FAVOR SELECCIONE FECHA INICIO Y FECHA FIN');
+                return;
+            }
+            
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
+            fin.setHours(23, 59, 59);
+            
+            let datosFiltrados = [];
+            let totalGeneral = 0;
+            
+            if (tipo === 'ventas') {
+                datosFiltrados = db.ventas.filter(v => {
+                    const fechaVenta = new Date(v.fecha);
+                    return fechaVenta >= inicio && fechaVenta <= fin;
+                });
+                totalGeneral = datosFiltrados.reduce((sum, v) => sum + v.total, 0);
+            } else if (tipo === 'ordenes') {
+                datosFiltrados = db.ordenes.filter(o => {
+                    const fechaOrden = new Date(o.fecha);
+                    return fechaOrden >= inicio && fechaOrden <= fin;
+                });
+            }
+            
+            const negocio = db.config.nombre || 'NEXTCOM';
+            const moneda = db.config.moneda || '$';
+            
+            let contenidoHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h1 style="text-align: center;">${negocio}</h1>
+                    <h2 style="text-align: center;">REPORTE DE ${tipo.toUpperCase()}</h2>
+                    <p style="text-align: center;">DEL ${fechaInicio} AL ${fechaFin}</p>
+                    <hr>
+            `;
+            
+            if (tipo === 'ventas') {
+                contenidoHTML += `
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: #333; color: white;">
+                            <th style="padding: 10px; border: 1px solid #000;">FECHA</th>
+                            <th style="padding: 10px; border: 1px solid #000;">CLIENTE</th>
+                            <th style="padding: 10px; border: 1px solid #000;">PRODUCTO</th>
+                            <th style="padding: 10px; border: 1px solid #000;">TOTAL</th>
+                        </tr>
+                `;
+                datosFiltrados.forEach(v => {
+                    contenidoHTML += `
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #000;">${new Date(v.fecha).toLocaleDateString()}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${v.clienteNombre}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${v.productoNombre}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${moneda}${v.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                contenidoHTML += `
+                    </table>
+                    <h3 style="text-align: right; margin-top: 20px;">TOTAL: ${moneda}${totalGeneral.toFixed(2)}</h3>
+                `;
+            } else if (tipo === 'ordenes') {
+                contenidoHTML += `
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                        <tr style="background: #333; color: white;">
+                            <th style="padding: 10px; border: 1px solid #000;">FECHA</th>
+                            <th style="padding: 10px; border: 1px solid #000;">CLIENTE</th>
+                            <th style="padding: 10px; border: 1px solid #000;">EQUIPO</th>
+                            <th style="padding: 10px; border: 1px solid #000;">ESTADO</th>
+                        </tr>
+                `;
+                datosFiltrados.forEach(o => {
+                    contenidoHTML += `
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #000;">${new Date(o.fecha).toLocaleDateString()}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${o.clienteNombre}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${o.equipo}</td>
+                            <td style="padding: 8px; border: 1px solid #000;">${o.estado}</td>
+                        </tr>
+                    `;
+                });
+                contenidoHTML += `</table>`;
+            }
+            
+            contenidoHTML += `
+                <p style="text-align: center; margin-top: 30px; font-size: 12px;">Generado el ${new Date().toLocaleString()}</p>
+                </div>
+            `;
+            
+            const ventana = window.open('', '_blank');
+            ventana.document.write(`
+                <html>
+                <head><title>Reporte ${tipo.toUpperCase()}</title></head>
+                <body>${contenidoHTML}</body>
+                </html>
+            `);
+            ventana.document.close();
+            ventana.print();
+            
+            logActividad(`Reporte ${tipo} generado del ${fechaInicio} al ${fechaFin}`);
         }
 
         function respaldarDatos() {
@@ -1846,7 +2094,7 @@
                     garantias: [],
                     notas: [],
                     actividad: [],
-                    config: { nombre: 'NEXTCOM', moneda: '$' }
+                    config: { nombre: 'NEXTCOM', moneda: '$', diasGarantia: 30, telefono: '', direccion: '' }
                 };
                 initApp();
                 alert('DATOS ELIMINADOS');
@@ -1857,7 +2105,14 @@
         function guardarConfiguracion() {
             db.config.nombre = document.getElementById('config-nombre').value;
             db.config.moneda = document.getElementById('config-moneda').value;
+            db.config.diasGarantia = parseInt(document.getElementById('config-dias-garantia').value) || 30;
+            db.config.telefono = document.getElementById('config-telefono').value;
+            db.config.direccion = document.getElementById('config-direccion').value;
             saveDB();
+            
+            // Actualizar el valor por defecto en el formulario de ordenes
+            document.getElementById('orden-dias-garantia').value = db.config.diasGarantia;
+            
             alert('CONFIGURACION GUARDADA');
             logActividad('Configuracion actualizada');
         }

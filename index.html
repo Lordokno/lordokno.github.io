@@ -1,1875 +1,1459 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXTCOM - CYBERPUNK TERMINAL</title>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #000000;
-            --bg-secondary: #0a0a0a;
-            --bg-tertiary: #111111;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --text-dim: #666666;
-            --border-color: #333333;
-            --border-bright: #ffffff;
-            --scanline-color: rgba(255, 255, 255, 0.03);
-            --glow-color: rgba(255, 255, 255, 0.1);
-            --font-mono: 'Share Tech Mono', monospace;
-            --font-display: 'Orbitron', sans-serif;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-mono);
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-        }
-
-        /* CRT Scanline Effect */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                var(--scanline-color) 3px,
-                var(--scanline-color) 4px
-            );
-            pointer-events: none;
-            z-index: 9998;
-            opacity: 0.6;
-        }
-
-        /* Matrix Canvas */
-        #matrix-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            opacity: 0.3;
-        }
-
-        /* Loading Screen */
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--bg-primary);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.5s ease;
-        }
-
-        .loading-content {
-            text-align: center;
-            z-index: 10001;
-            position: relative;
-        }
-
-        .loading-title {
-            font-family: var(--font-display);
-            font-size: 2.5rem;
-            margin-bottom: 2rem;
-            letter-spacing: 4px;
-            text-shadow: 0 0 10px var(--glow-color);
-        }
-
-        .start-btn {
-            background: transparent;
-            border: 2px solid var(--border-bright);
-            color: var(--text-primary);
-            padding: 1rem 3rem;
-            font-family: var(--font-mono);
-            font-size: 1.2rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .start-btn:hover {
-            background: var(--text-primary);
-            color: var(--bg-primary);
-            box-shadow: 0 0 20px var(--glow-color);
-        }
-
-        .loading-messages {
-            margin-top: 2rem;
-            min-height: 150px;
-            text-align: left;
-            font-size: 1rem;
-            line-height: 1.8;
-        }
-
-        .loading-message {
-            opacity: 0;
-            transform: translateX(-10px);
-            animation: fadeInLeft 0.3s forwards;
-        }
-
-        @keyframes fadeInLeft {
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Main App */
-        #app-container {
-            display: none;
-            height: 100vh;
-            width: 100vw;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background-color: var(--bg-secondary);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 1.5rem;
-            position: relative;
-            z-index: 100;
-        }
-
-        .logo {
-            font-family: var(--font-display);
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            letter-spacing: 2px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-        }
-
-        .nav-menu {
-            list-style: none;
-            flex: 1;
-        }
-
-        .nav-item {
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.8rem 1rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            border: 1px solid transparent;
-            transition: var(--transition);
-            font-size: 0.95rem;
-            letter-spacing: 1px;
-        }
-
-        .nav-link:hover,
-        .nav-link.active {
-            border-color: var(--border-bright);
-            color: var(--text-primary);
-            background-color: var(--bg-tertiary);
-        }
-
-        .nav-number {
-            margin-right: 1rem;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-        }
-
-        .system-status {
-            margin-top: auto;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-            font-size: 0.8rem;
-            color: var(--text-dim);
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--text-primary);
-            border-radius: 50%;
-            margin-right: 0.5rem;
-            animation: blink 2s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem;
-            background-color: var(--bg-primary);
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .page-title {
-            font-family: var(--font-display);
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-name {
-            font-size: 0.9rem;
-        }
-
-        /* Cards */
-        .card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            transition: var(--transition);
-        }
-
-        .card:hover {
-            border-color: var(--border-bright);
-        }
-
-        .card-title {
-            font-family: var(--font-display);
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            letter-spacing: 1px;
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-family: var(--font-display);
-            font-size: 2rem;
-            margin: 0.5rem 0;
-        }
-
-        .stat-label {
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Tables */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: var(--bg-tertiary);
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-        }
-
-        tr:hover {
-            background-color: var(--bg-tertiary);
-        }
-
-        /* Buttons */
-        .btn {
-            background: transparent;
-            border: 1px solid var(--border-bright);
-            color: var(--text-primary);
-            padding: 0.6rem 1.2rem;
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: var(--transition);
-        }
-
-        .btn:hover {
-            background: var(--text-primary);
-            color: var(--bg-primary);
-        }
-
-        .btn-primary {
-            background: var(--text-primary);
-            color: var(--bg-primary);
-        }
-
-        .btn-primary:hover {
-            background: transparent;
-            color: var(--text-primary);
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-dim);
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.8rem;
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--border-bright);
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--bg-secondary);
-            border: 1px solid var(--border-bright);
-            padding: 2rem;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .modal-title {
-            font-family: var(--font-display);
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--border-bright);
-        }
-
-        /* Utility */
-        .hidden {
-            display: none !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-2 {
-            margin-top: 1rem;
-        }
-
-        .mb-2 {
-            margin-bottom: 1rem;
-        }
-
-        /* Sections */
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-        }
-
-        /* Action Bar */
-        .action-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        /* Badge */
-        .badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid var(--border-color);
-        }
-
-        .badge-success {
-            border-color: var(--text-primary);
-            color: var(--text-primary);
-        }
-
-        .badge-warning {
-            border-color: var(--text-dim);
-            color: var(--text-dim);
-        }
-
-        /* Search Box */
-        .search-box {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            padding-left: 2.5rem;
-            background-color: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-dim);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-
-            #app-container {
-                flex-direction: column;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechFlow — Gestión de Taller Técnico</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --sidebar-bg: #0f0f1a;
+  --sidebar-width: 240px;
+  --body-bg: #13131f;
+  --card-bg: #1a1a2e;
+  --card-border: #252540;
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888aa;
+  --text-muted: #555570;
+  --accent-blue: #4f6ef7;
+  --accent-cyan: #00d4ff;
+  --accent-green: #00e676;
+  --accent-orange: #ff9100;
+  --accent-red: #ff4444;
+  --accent-purple: #bb86fc;
+  --accent-yellow: #ffd600;
+  --input-bg: #0f0f1a;
+  --input-border: #2a2a45;
+  --hover-bg: #1e1e38;
+  --modal-bg: #14142a;
+  --badge-radius: 6px;
+  --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --sidebar-bg: #1e1e2d;
+  --body-bg: #f0f0f8;
+  --card-bg: #ffffff;
+  --card-border: #e0e0ee;
+  --text-primary: #1a1a2e;
+  --text-secondary: #555580;
+  --text-muted: #9999bb;
+  --input-bg: #f8f8ff;
+  --input-border: #d0d0e8;
+  --hover-bg: #f0f0fc;
+  --modal-bg: #ffffff;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(--text-primary);min-height:100vh;display:flex;overflow-x:hidden;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--card-border);border-radius:99px;}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-width);min-height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;transition:var(--transition);border-right:1px solid rgba(255,255,255,0.04);}
+.sidebar-logo{padding:20px 20px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;font-weight:700;flex-shrink:0;}
+.logo-text{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.3px;}
+.logo-sub{font-size:9px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;}
+.nav-section{padding:16px 10px 4px;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:1px 8px;border-radius:9px;cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:13px;font-weight:500;position:relative;}
+.nav-item:hover{background:rgba(79,110,247,0.1);color:var(--text-primary);}
+.nav-item.active{background:linear-gradient(135deg,rgba(79,110,247,0.2),rgba(0,212,255,0.1));color:var(--accent-cyan);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--accent-cyan);border-radius:0 3px 3px 0;}
+.nav-item i{font-size:15px;width:18px;text-align:center;}
+.nav-badge{margin-left:auto;background:var(--accent-red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'JetBrains Mono',monospace;}
+.sidebar-footer{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
+
+/* MAIN */
+#main{margin-left:var(--sidebar-width);flex:1;min-height:100vh;overflow-y:auto;}
+.topbar{background:var(--sidebar-bg);border-bottom:1px solid rgba(255,255,255,0.05);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:90;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text-primary);}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.page-content{padding:24px;}
+
+/* CARDS */
+.card-stat{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:var(--transition);}
+.card-stat:hover{transform:translateY(-2px);border-color:rgba(79,110,247,0.3);}
+.card-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;}
+.card-stat.blue::before{background:linear-gradient(90deg,var(--accent-blue),var(--accent-cyan));}
+.card-stat.green::before{background:linear-gradient(90deg,var(--accent-green),#69f0ae);}
+.card-stat.orange::before{background:linear-gradient(90deg,var(--accent-orange),#ffcc02);}
+.card-stat.red::before{background:linear-gradient(90deg,var(--accent-red),#ff7043);}
+.card-stat.purple::before{background:linear-gradient(90deg,var(--accent-purple),#cf6cc9);}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.stat-value{font-size:28px;font-weight:700;color:var(--text-primary);line-height:1.2;margin:4px 0;}
+.stat-sub{font-size:11px;color:var(--text-secondary);}
+.stat-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:32px;opacity:0.12;}
+
+/* SECTION CARDS */
+.section-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;overflow:hidden;}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+
+/* TABLE */
+.tf-table{width:100%;font-size:12px;}
+.tf-table thead th{background:rgba(255,255,255,0.03);padding:10px 14px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--card-border);white-space:nowrap;}
+.tf-table tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:var(--transition);}
+.tf-table tbody tr:hover{background:var(--hover-bg);}
+.tf-table tbody td{padding:10px 14px;vertical-align:middle;color:var(--text-secondary);}
+.tf-table tbody td:first-child{color:var(--text-primary);font-weight:500;}
+
+/* BADGES */
+.badge-status{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--badge-radius);font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.badge-status.recibido{background:rgba(79,110,247,0.15);color:#6b8af9;}
+.badge-status.proceso{background:rgba(255,145,0,0.15);color:#ffb74d;}
+.badge-status.listo{background:rgba(0,214,118,0.15);color:#4caf50;}
+.badge-status.entregado{background:rgba(0,230,118,0.12);color:var(--accent-green);}
+.badge-status.pendiente{background:rgba(255,68,68,0.15);color:#ff7070;}
+
+/* ACTION BUTTONS */
+.btn-action{width:30px;height:30px;border-radius:8px;border:1px solid var(--card-border);background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:13px;}
+.btn-action:hover.wa{background:rgba(37,211,102,0.15);border-color:#25d366;color:#25d366;}
+.btn-action:hover.edit{background:rgba(79,110,247,0.15);border-color:var(--accent-blue);color:var(--accent-blue);}
+.btn-action:hover.print{background:rgba(0,212,255,0.15);border-color:var(--accent-cyan);color:var(--accent-cyan);}
+.btn-action:hover.del{background:rgba(255,68,68,0.15);border-color:var(--accent-red);color:var(--accent-red);}
+.btn-action:hover.view{background:rgba(187,134,252,0.15);border-color:var(--accent-purple);color:var(--accent-purple);}
+
+/* FORMS */
+.tf-input,.tf-select,.tf-textarea{width:100%;background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:9px 12px;color:var(--text-primary);font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;transition:var(--transition);}
+.tf-input:focus,.tf-select:focus,.tf-textarea:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(79,110,247,0.12);}
+.tf-input::placeholder,.tf-textarea::placeholder{color:var(--text-muted);}
+.tf-select option{background:var(--card-bg);color:var(--text-primary);}
+.tf-label{font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;display:block;text-transform:uppercase;letter-spacing:0.8px;}
+.form-row{display:grid;gap:14px;}
+.form-row.cols-2{grid-template-columns:1fr 1fr;}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr;}
+
+/* BUTTONS */
+.btn-primary{background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-secondary{background:var(--hover-bg);color:var(--text-primary);border:1px solid var(--card-border);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:'Space Grotesk',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn-secondary:hover{border-color:var(--accent-blue);color:var(--accent-blue);}
+.btn-danger{background:rgba(255,68,68,0.1);color:var(--accent-red);border:1px solid rgba(255,68,68,0.3);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:'Space Grotesk',sans-serif;}
+.btn-danger:hover{background:rgba(255,68,68,0.2);}
+.btn-success{background:rgba(0,230,118,0.1);color:var(--accent-green);border:1px solid rgba(0,230,118,0.3);border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:var(--transition);font-family:'Space Grotesk',sans-serif;}
+.btn-success:hover{background:rgba(0,230,118,0.2);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--modal-bg);border:1px solid var(--card-border);border-radius:16px;padding:24px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;position:relative;animation:modalIn 0.25s ease;}
+.modal-box.lg{max-width:820px;}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.modal-title{font-size:16px;font-weight:700;}
+.modal-close{background:transparent;border:1px solid var(--card-border);color:var(--text-secondary);width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);}
+.modal-close:hover{border-color:var(--accent-red);color:var(--accent-red);}
+.modal-footer{margin-top:20px;display:flex;gap:10px;justify-content:flex-end;}
+
+/* ALERTS */
+.alert-banner{border-radius:10px;padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.alert-banner.warning{background:rgba(255,145,0,0.12);border:1px solid rgba(255,145,0,0.25);color:#ffa726;}
+.alert-banner.danger{background:rgba(255,68,68,0.12);border:1px solid rgba(255,68,68,0.25);color:#ff7070;}
+.alert-banner.success{background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.25);color:var(--accent-green);}
+.alert-banner.info{background:rgba(79,110,247,0.12);border:1px solid rgba(79,110,247,0.25);color:#7b9aff;}
+
+/* POS */
+.pos-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;}
+.pos-product-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:14px;cursor:pointer;transition:var(--transition);text-align:center;}
+.pos-product-card:hover{border-color:var(--accent-blue);transform:translateY(-2px);}
+.pos-product-card .price{font-size:16px;font-weight:700;color:var(--accent-green);font-family:'JetBrains Mono',monospace;}
+.cart-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+.cart-total{font-size:22px;font-weight:700;color:var(--accent-green);font-family:'JetBrains Mono',monospace;}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast-msg{background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;padding:12px 16px;font-size:12px;display:flex;align-items:center;gap:8px;animation:toastIn 0.3s ease;box-shadow:0 8px 30px rgba(0,0,0,0.4);max-width:300px;}
+.toast-msg.success{border-color:rgba(0,230,118,0.3);color:var(--accent-green);}
+.toast-msg.error{border-color:rgba(255,68,68,0.3);color:var(--accent-red);}
+.toast-msg.info{border-color:rgba(79,110,247,0.3);color:var(--accent-cyan);}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* CAJA */
+.caja-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.caja-status.open{background:rgba(0,230,118,0.15);color:var(--accent-green);}
+.caja-status.closed{background:rgba(255,68,68,0.15);color:var(--accent-red);}
+.caja-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* TIMELINE */
+.timeline{display:flex;align-items:center;gap:0;margin:4px 0;}
+.tl-step{display:flex;align-items:center;gap:0;}
+.tl-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--card-border);background:var(--card-bg);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text-muted);transition:var(--transition);}
+.tl-dot.done{background:var(--accent-green);border-color:var(--accent-green);color:#000;}
+.tl-dot.active{background:var(--accent-blue);border-color:var(--accent-blue);color:#fff;}
+.tl-line{width:24px;height:2px;background:var(--card-border);}
+.tl-line.done{background:var(--accent-green);}
+
+/* SEARCH BAR */
+.search-input{background:var(--input-bg);border:1px solid var(--input-border);border-radius:9px;padding:7px 12px 7px 32px;color:var(--text-primary);font-size:12px;font-family:'Space Grotesk',sans-serif;outline:none;transition:var(--transition);width:200px;}
+.search-input:focus{border-color:var(--accent-blue);width:260px;}
+.search-wrap{position:relative;}
+.search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;}
+
+/* PAGE VISIBILITY */
+.page-section{display:none;}
+.page-section.active{display:block;}
+
+/* INVENTORY STOCK */
+.stock-low{color:var(--accent-red);font-weight:700;}
+.stock-ok{color:var(--accent-green);}
+.stock-med{color:var(--accent-orange);}
+
+/* GUARANTEE CARD */
+.guarantee-card{background:linear-gradient(135deg,rgba(0,230,118,0.08),rgba(0,212,255,0.06));border:1px solid rgba(0,230,118,0.2);border-radius:10px;padding:12px 16px;margin-top:8px;}
+
+/* CONFIGURACION */
+.config-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.config-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.config-item:last-child{border-bottom:none;}
+
+/* TOGGLE */
+.tf-toggle{position:relative;display:inline-flex;width:40px;height:22px;}
+.tf-toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);border-radius:99px;transition:var(--transition);}
+.toggle-slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:var(--text-muted);border-radius:50%;transition:var(--transition);}
+.tf-toggle input:checked + .toggle-slider{background:var(--accent-blue);}
+.tf-toggle input:checked + .toggle-slider::before{transform:translateX(18px);background:#fff;}
+
+/* PRINT */
+@media print{
+  #sidebar,#toast-container,.no-print{display:none!important;}
+  #main{margin-left:0!important;}
+  body{background:#fff;color:#000;}
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);}
+  #sidebar.mobile-open{transform:translateX(0);}
+  #main{margin-left:0;}
+  .pos-grid{grid-template-columns:1fr;}
+  .form-row.cols-2,.form-row.cols-3{grid-template-columns:1fr;}
+}
+
+/* ANIMATIONS */
+.fade-in{animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.pulse{animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+/* NUMBER FONT */
+.mono{font-family:'JetBrains Mono',monospace;}
+
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;background:rgba(79,110,247,0.12);color:var(--accent-blue);}
+.chip.orange{background:rgba(255,145,0,0.12);color:var(--accent-orange);}
+.chip.red{background:rgba(255,68,68,0.12);color:var(--accent-red);}
+.chip.green{background:rgba(0,230,118,0.12);color:var(--accent-green);}
+
+.divider{height:1px;background:var(--card-border);margin:16px 0;}
+</style>
 </head>
 <body>
-    <!-- Matrix Background -->
-    <canvas id="matrix-canvas"></canvas>
 
-    <!-- Loading Screen -->
-    <div id="loading-screen">
-        <div class="loading-content">
-            <h1 class="loading-title">NEXTCOM TERMINAL</h1>
-            <button class="start-btn" id="start-btn">INICIAR</button>
-            <div class="loading-messages" id="loading-messages"></div>
-        </div>
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">TF</div>
+    <div>
+      <div class="logo-text">TechFlow</div>
+      <div class="logo-sub">Workshop OS</div>
     </div>
+  </div>
+  <div class="nav-section">Principal</div>
+  <div class="nav-item active" onclick="navigate('dashboard')"><i class="bi bi-grid-1x2"></i> Dashboard</div>
+  <div class="nav-item" onclick="navigate('orders')" id="nav-orders"><i class="bi bi-clipboard2-check"></i> Órdenes <span class="nav-badge" id="badge-orders">0</span></div>
+  <div class="nav-section">Operaciones</div>
+  <div class="nav-item" onclick="navigate('caja')"><i class="bi bi-cash-stack"></i> Caja</div>
+  <div class="nav-item" onclick="navigate('inventory')" id="nav-inventory"><i class="bi bi-boxes"></i> Inventario <span class="nav-badge" id="badge-inventory" style="display:none">!</span></div>
+  <div class="nav-item" onclick="navigate('pos')"><i class="bi bi-lightning-charge"></i> Venta POS</div>
+  <div class="nav-section">Sistema</div>
+  <div class="nav-item" onclick="navigate('garantias')"><i class="bi bi-shield-check"></i> Garantías</div>
+  <div class="nav-item" onclick="navigate('config')"><i class="bi bi-gear"></i> Configuración</div>
+  <div class="sidebar-footer">v2.0.0 &bull; TechFlow &copy; 2025</div>
+</nav>
 
-    <!-- Main Application -->
-    <div id="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">NEXTCOM</div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active" data-section="dashboard">
-                        <span class="nav-number">[01]</span> DASHBOARD
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="clientes">
-                        <span class="nav-number">[02]</span> CLIENTES
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="ordenes">
-                        <span class="nav-number">[03]</span> ORDENES
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="pos">
-                        <span class="nav-number">[04]</span> POS / VENTAS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="inventario">
-                        <span class="nav-number">[05]</span> INVENTARIO
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="garantias">
-                        <span class="nav-number">[06]</span> GARANTIAS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="notas">
-                        <span class="nav-number">[07]</span> NOTAS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="reportes">
-                        <span class="nav-number">[08]</span> REPORTES
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="herramientas">
-                        <span class="nav-number">[09]</span> HERRAMIENTAS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="actividad">
-                        <span class="nav-number">[10]</span> ACTIVIDAD
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" data-section="configuracion">
-                        <span class="nav-number">[11]</span> CONFIGURACION
-                    </a>
-                </li>
-            </ul>
-            <div class="system-status">
-                <span class="status-indicator"></span>
-                SYSTEM STATUS: ONLINE
+<!-- MAIN -->
+<div id="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-right">
+      <div id="caja-indicator" class="caja-status closed">CAJA CERRADA</div>
+      <button class="btn-action" onclick="navigate('config')" title="Configuración"><i class="bi bi-gear"></i></button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page-section active fade-in">
+      <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6"><div class="card-stat blue"><div class="stat-label">Órdenes Activas</div><div class="stat-value mono" id="ds-active">0</div><div class="stat-sub">En proceso hoy</div><i class="bi bi-clipboard2 stat-icon"></i></div></div>
+        <div class="col-md-3 col-6"><div class="card-stat orange"><div class="stat-label">Piezas Pendientes</div><div class="stat-value mono" id="ds-pending">0</div><div class="stat-sub">Órdenes bloqueadas</div><i class="bi bi-box-seam stat-icon"></i></div></div>
+        <div class="col-md-3 col-6"><div class="card-stat green"><div class="stat-label">Balance de Caja</div><div class="stat-value mono" id="ds-caja">$0</div><div class="stat-sub">Saldo actual</div><i class="bi bi-cash stat-icon"></i></div></div>
+        <div class="col-md-3 col-6"><div class="card-stat purple"><div class="stat-label">Garantías Vigentes</div><div class="stat-value mono" id="ds-garantias">0</div><div class="stat-sub">Activas</div><i class="bi bi-shield-check stat-icon"></i></div></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-8">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title"><i class="bi bi-activity text-info"></i> Órdenes Recientes</div>
+              <button class="btn-primary" style="font-size:12px;padding:6px 12px" onclick="navigate('orders')"><i class="bi bi-plus"></i> Nueva</button>
             </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="header">
-                <h1 class="page-title" id="page-title">DASHBOARD</h1>
-                <div class="user-info">
-                    <span class="user-name">ADMIN</span>
-                    <button class="btn" id="logout-btn">SALIR</button>
-                </div>
-            </header>
-
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="section active">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">VENTAS HOY</div>
-                        <div class="stat-value" id="stat-ventas-hoy">$0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">ORDENES ACTIVAS</div>
-                        <div class="stat-value" id="stat-ordenes-activas">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">CLIENTES TOTALES</div>
-                        <div class="stat-value" id="stat-clientes-totales">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">PRODUCTOS BAJO STOCK</div>
-                        <div class="stat-value" id="stat-stock-bajo">0</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2 class="card-title">ULTIMAS VENTAS</h2>
-                    <div class="table-container">
-                        <table id="tabla-ventas-recientes">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>FECHA</th>
-                                    <th>CLIENTE</th>
-                                    <th>TOTAL</th>
-                                    <th>ESTADO</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Clientes Section -->
-            <section id="clientes" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalCliente()">NUEVO CLIENTE</button>
-                    <div class="search-box" style="flex: 1; margin-bottom: 0;">
-                        <input type="text" class="search-input" placeholder="[SEARCH] BUSCAR CLIENTE..." id="search-cliente">
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="tabla-clientes">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>NOMBRE</th>
-                                    <th>TELEFONO</th>
-                                    <th>EMAIL</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Ordenes Section -->
-            <section id="ordenes" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalOrden()">NUEVA ORDEN</button>
-                    <div class="search-box" style="flex: 1; margin-bottom: 0;">
-                        <input type="text" class="search-input" placeholder="[SEARCH] BUSCAR ORDEN..." id="search-orden">
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="tabla-ordenes">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>FECHA</th>
-                                    <th>CLIENTE</th>
-                                    <th>EQUIPO</th>
-                                    <th>ESTADO</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- POS Section -->
-            <section id="pos" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalVenta()">NUEVA VENTA</button>
-                </div>
-                <div class="card">
-                    <h2 class="card-title">HISTORIAL DE VENTAS</h2>
-                    <div class="table-container">
-                        <table id="tabla-ventas">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>FECHA</th>
-                                    <th>CLIENTE</th>
-                                    <th>TOTAL</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Inventario Section -->
-            <section id="inventario" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalProducto()">NUEVO PRODUCTO</button>
-                    <div class="search-box" style="flex: 1; margin-bottom: 0;">
-                        <input type="text" class="search-input" placeholder="[SEARCH] BUSCAR PRODUCTO..." id="search-producto">
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="tabla-productos">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>NOMBRE</th>
-                                    <th>PRECIO</th>
-                                    <th>STOCK</th>
-                                    <th>CATEGORIA</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Garantias Section -->
-            <section id="garantias" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalGarantia()">NUEVA GARANTIA</button>
-                </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="tabla-garantias">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>ORDEN</th>
-                                    <th>CLIENTE</th>
-                                    <th>FECHA</th>
-                                    <th>ESTADO</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Notas Section -->
-            <section id="notas" class="section">
-                <div class="action-bar">
-                    <button class="btn btn-primary" onclick="abrirModalNota()">NUEVA NOTA</button>
-                </div>
-                <div class="card">
-                    <div class="table-container">
-                        <table id="tabla-notas">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>TITULO</th>
-                                    <th>FECHA</th>
-                                    <th>ACCIONES</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Reportes Section -->
-            <section id="reportes" class="section">
-                <div class="card">
-                    <h2 class="card-title">GENERAR REPORTE</h2>
-                    <div class="form-group">
-                        <label class="form-label">TIPO DE REPORTE</label>
-                        <select class="form-control" id="reporte-tipo">
-                            <option value="ventas">VENTAS</option>
-                            <option value="ordenes">ORDENES</option>
-                            <option value="inventario">INVENTARIO</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" onclick="generarReporte()">GENERAR</button>
-                </div>
-            </section>
-
-            <!-- Herramientas Section -->
-            <section id="herramientas" class="section">
-                <div class="card">
-                    <h2 class="card-title">HERRAMIENTAS DEL SISTEMA</h2>
-                    <div class="action-bar">
-                        <button class="btn" onclick="respaldarDatos()">RESPALDAR DATOS</button>
-                        <button class="btn" onclick="restaurarDatos()">RESTAURAR DATOS</button>
-                        <button class="btn" onclick="limpiarDatos()">LIMPIAR DATOS</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Actividad Section -->
-            <section id="actividad" class="section">
-                <div class="card">
-                    <h2 class="card-title">REGISTRO DE ACTIVIDAD</h2>
-                    <div class="table-container">
-                        <table id="tabla-actividad">
-                            <thead>
-                                <tr>
-                                    <th>FECHA</th>
-                                    <th>ACCION</th>
-                                    <th>USUARIO</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Configuracion Section -->
-            <section id="configuracion" class="section">
-                <div class="card">
-                    <h2 class="card-title">CONFIGURACION DEL SISTEMA</h2>
-                    <div class="form-group">
-                        <label class="form-label">NOMBRE DEL NEGOCIO</label>
-                        <input type="text" class="form-control" id="config-nombre" value="NEXTCOM">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">MONEDA</label>
-                        <input type="text" class="form-control" id="config-moneda" value="$">
-                    </div>
-                    <button class="btn btn-primary" onclick="guardarConfiguracion()">GUARDAR</button>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <!-- Modal Cliente -->
-    <div id="modal-cliente" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modal-cliente-title">NUEVO CLIENTE</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-cliente')">&times;</button>
+            <div style="overflow-x:auto">
+              <table class="tf-table" id="ds-orders-table">
+                <thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Acción</th></tr></thead>
+                <tbody id="ds-orders-body"></tbody>
+              </table>
             </div>
-            <form id="form-cliente">
-                <input type="hidden" id="cliente-id">
-                <div class="form-group">
-                    <label class="form-label">NOMBRE</label>
-                    <input type="text" class="form-control" id="cliente-nombre" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">TELEFONO</label>
-                    <input type="text" class="form-control" id="cliente-telefono">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">EMAIL</label>
-                    <input type="email" class="form-control" id="cliente-email">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">DIRECCION</label>
-                    <input type="text" class="form-control" id="cliente-direccion">
-                </div>
-                <button type="submit" class="btn btn-primary">GUARDAR</button>
-            </form>
+          </div>
         </div>
-    </div>
-
-    <!-- Modal Producto -->
-    <div id="modal-producto" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modal-producto-title">NUEVO PRODUCTO</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-producto')">&times;</button>
+        <div class="col-lg-4">
+          <div class="section-card mb-3">
+            <div class="section-header"><div class="section-title"><i class="bi bi-bar-chart text-warning"></i> Resumen Caja</div></div>
+            <div style="padding:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--text-secondary)">Ingresos hoy</span><span class="mono" style="color:var(--accent-green)" id="ds-ingresos-hoy">$0.00</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--text-secondary)">Total órdenes</span><span class="mono" id="ds-total-orders">0</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span style="color:var(--text-secondary)">Entregadas</span><span class="mono" id="ds-entregadas">0</span></div>
+              <div class="divider"></div>
+              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>Balance</span><span class="mono" style="color:var(--accent-green)" id="ds-balance">$0.00</span></div>
             </div>
-            <form id="form-producto">
-                <input type="hidden" id="producto-id">
-                <div class="form-group">
-                    <label class="form-label">NOMBRE</label>
-                    <input type="text" class="form-control" id="producto-nombre" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">PRECIO</label>
-                    <input type="number" class="form-control" id="producto-precio" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">STOCK</label>
-                    <input type="number" class="form-control" id="producto-stock" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">CATEGORIA</label>
-                    <input type="text" class="form-control" id="producto-categoria">
-                </div>
-                <button type="submit" class="btn btn-primary">GUARDAR</button>
-            </form>
+          </div>
+          <div class="section-card">
+            <div class="section-header"><div class="section-title"><i class="bi bi-exclamation-triangle text-danger"></i> Alertas</div></div>
+            <div style="padding:12px" id="ds-alerts"><div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px">Sin alertas activas</div></div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Modal Orden -->
-    <div id="modal-orden" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="modal-orden-title">NUEVA ORDEN</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-orden')">&times;</button>
+    <!-- ===== ÓRDENES ===== -->
+    <div id="page-orders" class="page-section fade-in">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-orders" placeholder="Buscar órdenes..." oninput="renderOrders()"></div>
+          <select class="tf-select" style="width:140px;padding:7px 10px" id="filter-status" onchange="renderOrders()">
+            <option value="">Todos los estados</option>
+            <option value="Recibido">Recibido</option>
+            <option value="En Proceso">En Proceso</option>
+            <option value="Listo">Listo</option>
+            <option value="Entregado">Entregado</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="openOrderModal()"><i class="bi bi-plus-lg"></i> Nueva Orden</button>
+      </div>
+      <div class="section-card">
+        <div style="overflow-x:auto">
+          <table class="tf-table">
+            <thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th>Repuesto</th><th>Estado</th><th>Promesa</th><th>Total</th><th>Acciones</th></tr></thead>
+            <tbody id="orders-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CAJA ===== -->
+    <div id="page-caja" class="page-section fade-in">
+      <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card-stat green"><div class="stat-label">Balance Actual</div><div class="stat-value mono" id="caja-balance">$0.00</div><div class="stat-sub" id="caja-sub">Caja cerrada</div><i class="bi bi-safe stat-icon"></i></div></div>
+        <div class="col-md-4"><div class="card-stat blue"><div class="stat-label">Total Ingresos</div><div class="stat-value mono" id="caja-ingresos">$0.00</div><div class="stat-sub">Sesión actual</div><i class="bi bi-arrow-down-circle stat-icon"></i></div></div>
+        <div class="col-md-4"><div class="card-stat red"><div class="stat-label">Total Egresos</div><div class="stat-value mono" id="caja-egresos">$0.00</div><div class="stat-sub">Sesión actual</div><i class="bi bi-arrow-up-circle stat-icon"></i></div></div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-4">
+          <div class="section-card">
+            <div class="section-header"><div class="section-title"><i class="bi bi-cash stat-icon" style="position:relative;font-size:16px;opacity:1;color:var(--accent-green)"></i> Control de Caja</div></div>
+            <div style="padding:16px">
+              <div id="caja-closed-ui">
+                <div class="alert-banner info"><i class="bi bi-info-circle"></i> La caja está cerrada. Ingrese el monto de apertura.</div>
+                <label class="tf-label">Monto de apertura ($)</label>
+                <input class="tf-input mono" id="caja-apertura-monto" type="number" placeholder="0.00" value="0">
+                <div style="margin-top:12px">
+                  <button class="btn-success" style="width:100%" onclick="abrirCaja()"><i class="bi bi-unlock"></i> Abrir Caja</button>
+                </div>
+              </div>
+              <div id="caja-open-ui" style="display:none">
+                <div class="alert-banner success"><i class="bi bi-check-circle"></i> Caja abierta desde <span id="caja-hora-apertura"></span></div>
+                <div class="divider"></div>
+                <label class="tf-label">Registrar movimiento manual</label>
+                <select class="tf-select mb-2" id="mov-tipo">
+                  <option value="ingreso">Ingreso</option>
+                  <option value="egreso">Egreso</option>
+                </select>
+                <input class="tf-input mono mb-2" type="number" id="mov-monto" placeholder="Monto $">
+                <input class="tf-input mb-2" type="text" id="mov-desc" placeholder="Descripción">
+                <button class="btn-primary" style="width:100%;margin-bottom:8px" onclick="registrarMovimiento()"><i class="bi bi-plus"></i> Registrar</button>
+                <button class="btn-danger" style="width:100%" onclick="cerrarCaja()"><i class="bi bi-lock"></i> Cerrar Caja</button>
+              </div>
             </div>
-            <form id="form-orden">
-                <input type="hidden" id="orden-id">
-                <div class="form-group">
-                    <label class="form-label">CLIENTE</label>
-                    <select class="form-control" id="orden-cliente" required></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">EQUIPO</label>
-                    <input type="text" class="form-control" id="orden-equipo" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">PROBLEMA</label>
-                    <textarea class="form-control" id="orden-problema" rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">ESTADO</label>
-                    <select class="form-control" id="orden-estado">
-                        <option value="PENDIENTE">PENDIENTE</option>
-                        <option value="EN REVISION">EN REVISION</option>
-                        <option value="REPARADO">REPARADO</option>
-                        <option value="ENTREGADO">ENTREGADO</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary">GUARDAR</button>
-            </form>
+          </div>
         </div>
-    </div>
-
-    <!-- Modal Venta -->
-    <div id="modal-venta" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">NUEVA VENTA</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-venta')">&times;</button>
+        <div class="col-lg-8">
+          <div class="section-card">
+            <div class="section-header"><div class="section-title"><i class="bi bi-list-ul text-info"></i> Movimientos</div></div>
+            <div style="overflow-x:auto">
+              <table class="tf-table">
+                <thead><tr><th>Fecha/Hora</th><th>Tipo</th><th>Descripción</th><th>Monto</th></tr></thead>
+                <tbody id="caja-movimientos-body"></tbody>
+              </table>
             </div>
-            <form id="form-venta">
-                <div class="form-group">
-                    <label class="form-label">CLIENTE</label>
-                    <select class="form-control" id="venta-cliente"></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">PRODUCTO</label>
-                    <select class="form-control" id="venta-producto"></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">CANTIDAD</label>
-                    <input type="number" class="form-control" id="venta-cantidad" value="1" min="1" required>
-                </div>
-                <button type="submit" class="btn btn-primary">REGISTRAR VENTA</button>
-            </form>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Modal Garantia -->
-    <div id="modal-garantia" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">NUEVA GARANTIA</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-garantia')">&times;</button>
+    <!-- ===== INVENTARIO ===== -->
+    <div id="page-inventory" class="page-section fade-in">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-inv" placeholder="Buscar inventario..." oninput="renderInventory()"></div>
+          <select class="tf-select" style="width:130px;padding:7px 10px" id="filter-inv-type" onchange="renderInventory()">
+            <option value="">Todos</option>
+            <option value="repuesto">Repuestos</option>
+            <option value="producto">Productos</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="openItemModal()"><i class="bi bi-plus-lg"></i> Agregar Item</button>
+      </div>
+      <div class="section-card">
+        <div style="overflow-x:auto">
+          <table class="tf-table">
+            <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Compatible</th><th>Stock</th><th>Precio Costo</th><th>Precio Venta</th><th>Acciones</th></tr></thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== POS ===== -->
+    <div id="page-pos" class="page-section fade-in">
+      <div class="pos-grid">
+        <div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+            <div class="search-wrap" style="flex:1"><i class="bi bi-search"></i><input class="search-input" id="search-pos" placeholder="Buscar producto..." style="width:100%" oninput="renderPOS()"></div>
+            <select class="tf-select" style="width:130px;padding:7px 10px" id="filter-pos-cat" onchange="renderPOS()">
+              <option value="">Todo</option>
+              <option value="repuesto">Repuestos</option>
+              <option value="producto">Productos</option>
+            </select>
+          </div>
+          <div id="pos-products-grid" class="row g-2"></div>
+        </div>
+        <div>
+          <div class="section-card" style="position:sticky;top:20px">
+            <div class="section-header"><div class="section-title"><i class="bi bi-cart3 text-success"></i> Carrito de Venta</div><button class="btn-action" onclick="clearCart()" title="Limpiar"><i class="bi bi-trash"></i></button></div>
+            <div style="padding:14px;min-height:200px;max-height:320px;overflow-y:auto" id="cart-items"><div style="color:var(--text-muted);font-size:12px;text-align:center;padding:40px 0">Carrito vacío</div></div>
+            <div style="padding:14px;border-top:1px solid var(--card-border)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;color:var(--text-secondary)"><span>Subtotal</span><span class="mono" id="pos-subtotal">$0.00</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:13px;font-weight:700"><span>TOTAL</span><span class="cart-total" id="pos-total">$0.00</span></div>
+              <label class="tf-label">Método de pago</label>
+              <select class="tf-select mb-3" id="pos-payment">
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+                <option value="transferencia">Transferencia</option>
+              </select>
+              <button class="btn-success" style="width:100%;font-size:14px;padding:11px" onclick="processPOSSale()"><i class="bi bi-check-circle"></i> Procesar Venta</button>
             </div>
-            <form id="form-garantia">
-                <div class="form-group">
-                    <label class="form-label">ORDEN</label>
-                    <select class="form-control" id="garantia-orden" required></select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">DESCRIPCION</label>
-                    <textarea class="form-control" id="garantia-descripcion" rows="3" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">GUARDAR</button>
-            </form>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Modal Nota -->
-    <div id="modal-nota" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">NUEVA NOTA</h3>
-                <button class="close-modal" onclick="cerrarModal('modal-nota')">&times;</button>
+    <!-- ===== GARANTÍAS ===== -->
+    <div id="page-garantias" class="page-section fade-in">
+      <div class="section-card">
+        <div class="section-header"><div class="section-title"><i class="bi bi-shield-check text-success"></i> Garantías Activas</div></div>
+        <div style="overflow-x:auto">
+          <table class="tf-table">
+            <thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Fecha Entrega</th><th>Vencimiento</th><th>Días Restantes</th><th>Estado</th></tr></thead>
+            <tbody id="garantias-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CONFIGURACIÓN ===== -->
+    <div id="page-config" class="page-section fade-in">
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="config-card">
+            <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="bi bi-palette text-info"></i> Apariencia</div>
+            <div class="config-item">
+              <div><div style="font-size:13px;font-weight:600">Tema Oscuro</div><div style="font-size:11px;color:var(--text-muted)">Cambiar entre modo claro y oscuro</div></div>
+              <label class="tf-toggle"><input type="checkbox" id="toggle-theme" onchange="toggleTheme()" checked><span class="toggle-slider"></span></label>
             </div>
-            <form id="form-nota">
-                <input type="hidden" id="nota-id">
-                <div class="form-group">
-                    <label class="form-label">TITULO</label>
-                    <input type="text" class="form-control" id="nota-titulo" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">CONTENIDO</label>
-                    <textarea class="form-control" id="nota-contenido" rows="5" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">GUARDAR</button>
-            </form>
+          </div>
+          <div class="config-card">
+            <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="bi bi-building text-warning"></i> Datos del Taller</div>
+            <div class="form-row mb-3">
+              <div><label class="tf-label">Nombre del Taller</label><input class="tf-input" id="cfg-nombre" placeholder="Mi Taller Técnico"></div>
+            </div>
+            <div class="form-row cols-2 mb-3">
+              <div><label class="tf-label">Teléfono</label><input class="tf-input" id="cfg-telefono" placeholder="+503 0000-0000"></div>
+              <div><label class="tf-label">Prefijo Órdenes</label><input class="tf-input" id="cfg-prefix" placeholder="ORD-"></div>
+            </div>
+            <div class="form-row mb-3">
+              <div><label class="tf-label">Dirección</label><input class="tf-input" id="cfg-direccion" placeholder="Dirección del taller"></div>
+            </div>
+            <div class="form-row cols-2 mb-3">
+              <div><label class="tf-label">Garantía por Defecto (días)</label><input class="tf-input mono" id="cfg-garantia" type="number" placeholder="30"></div>
+              <div><label class="tf-label">Moneda</label><select class="tf-select" id="cfg-moneda"><option value="$">$ (USD)</option><option value="Q">Q (GTQ)</option><option value="₡">₡ (CRC)</option></select></div>
+            </div>
+            <button class="btn-primary" onclick="saveConfig()"><i class="bi bi-save"></i> Guardar Configuración</button>
+          </div>
         </div>
+        <div class="col-lg-6">
+          <div class="config-card">
+            <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="bi bi-database text-danger"></i> Gestión de Datos</div>
+            <div class="config-item">
+              <div><div style="font-size:13px;font-weight:600">Exportar Datos</div><div style="font-size:11px;color:var(--text-muted)">Descarga todo en formato JSON</div></div>
+              <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="exportData()"><i class="bi bi-download"></i> Exportar</button>
+            </div>
+            <div class="config-item">
+              <div><div style="font-size:13px;font-weight:600">Importar Datos</div><div style="font-size:11px;color:var(--text-muted)">Restaura desde archivo JSON</div></div>
+              <label class="btn-secondary" style="font-size:12px;padding:6px 12px;cursor:pointer"><i class="bi bi-upload"></i> Importar<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+            </div>
+            <div class="config-item">
+              <div><div style="font-size:13px;font-weight:600;color:var(--accent-red)">Borrar Todo</div><div style="font-size:11px;color:var(--text-muted)">Elimina todos los datos del sistema</div></div>
+              <button class="btn-danger" style="font-size:12px;padding:6px 12px" onclick="resetAll()"><i class="bi bi-trash"></i> Borrar</button>
+            </div>
+          </div>
+          <div class="config-card">
+            <div style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="bi bi-info-circle text-info"></i> Acerca de</div>
+            <div style="font-size:12px;color:var(--text-secondary);line-height:1.8">
+              <div><b>TechFlow Workshop OS</b> v2.0.0</div>
+              <div>Sistema de gestión para talleres técnicos</div>
+              <div style="color:var(--text-muted);margin-top:8px">Datos almacenados en localStorage del navegador.<br>Compatible con todos los navegadores modernos.</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Matrix Effect
-        const canvas = document.getElementById('matrix-canvas');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        const katakana = 'ｦｧｨｩｪｫｬｭｮｯｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ';
-        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const nums = '0123456789';
-        const alphabet = katakana + latin + nums;
-
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const drops = [];
-
-        for (let x = 0; x < columns; x++) {
-            drops[x] = 1;
-        }
-
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = fontSize + 'px monospace';
-
-            for (let i = 0; i < drops.length; i++) {
-                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
-                drops[i]++;
-            }
-        }
-
-        let matrixInterval;
-
-        function startMatrix() {
-            matrixInterval = setInterval(drawMatrix, 33);
-        }
-
-        function stopMatrix() {
-            clearInterval(matrixInterval);
-        }
-
-        // Loading Screen Logic
-        const startBtn = document.getElementById('start-btn');
-        const loadingMessages = document.getElementById('loading-messages');
-        const loadingScreen = document.getElementById('loading-screen');
-        const appContainer = document.getElementById('app-container');
-
-        const messages = [
-            '> CARGANDO SISTEMA...',
-            '> INICIALIZANDO KERNEL...',
-            '> CARGANDO MODULOS...',
-            '> INICIANDO BASE DE DATOS...',
-            '> VERIFICANDO INTEGRIDAD...',
-            '> ESTABLECIENDO CONEXIONES...',
-            '> CARGANDO INTERFAZ...',
-            '> SISTEMA LISTO'
-        ];
-
-        startBtn.addEventListener('click', () => {
-            startBtn.style.display = 'none';
-            let msgIndex = 0;
-
-            function showNextMessage() {
-                if (msgIndex < messages.length) {
-                    const p = document.createElement('p');
-                    p.className = 'loading-message';
-                    p.textContent = messages[msgIndex];
-                    loadingMessages.appendChild(p);
-                    msgIndex++;
-                    setTimeout(showNextMessage, 400);
-                } else {
-                    setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                            appContainer.style.display = 'flex';
-                            stopMatrix();
-                            initApp();
-                        }, 500);
-                    }, 800);
-                }
-            }
-
-            showNextMessage();
-        });
-
-        // App Logic
-        let db = {
-            clientes: [],
-            productos: [],
-            ordenes: [],
-            ventas: [],
-            garantias: [],
-            notas: [],
-            actividad: [],
-            config: { nombre: 'NEXTCOM', moneda: '$' }
-        };
-
-        function loadDB() {
-            const saved = localStorage.getItem('nextcom_db');
-            if (saved) {
-                db = JSON.parse(saved);
-            }
-        }
-
-        function saveDB() {
-            localStorage.setItem('nextcom_db', JSON.stringify(db));
-        }
-
-        function logActividad(accion) {
-            db.actividad.unshift({
-                fecha: new Date().toLocaleString(),
-                accion: accion,
-                usuario: 'ADMIN'
-            });
-            if (db.actividad.length > 100) db.actividad.pop();
-            saveDB();
-        }
-
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2);
-        }
-
-        function initApp() {
-            loadDB();
-            actualizarDashboard();
-            renderClientes();
-            renderOrdenes();
-            renderProductos();
-            renderVentas();
-            renderGarantias();
-            renderNotas();
-            renderActividad();
-            cargarSelects();
-            setupEventListeners();
-            logActividad('Sistema iniciado');
-        }
-
-        function setupEventListeners() {
-            // Navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-                    
-                    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                    const sectionId = link.dataset.section;
-                    document.getElementById(sectionId).classList.add('active');
-                    
-                    document.getElementById('page-title').textContent = sectionId.toUpperCase();
-                });
-            });
-
-            // Forms
-            document.getElementById('form-cliente').addEventListener('submit', guardarCliente);
-            document.getElementById('form-producto').addEventListener('submit', guardarProducto);
-            document.getElementById('form-orden').addEventListener('submit', guardarOrden);
-            document.getElementById('form-venta').addEventListener('submit', guardarVenta);
-            document.getElementById('form-garantia').addEventListener('submit', guardarGarantia);
-            document.getElementById('form-nota').addEventListener('submit', guardarNota);
-
-            // Search
-            document.getElementById('search-cliente').addEventListener('input', (e) => renderClientes(e.target.value));
-            document.getElementById('search-orden').addEventListener('input', (e) => renderOrdenes(e.target.value));
-            document.getElementById('search-producto').addEventListener('input', (e) => renderProductos(e.target.value));
-
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                alert('SESION CERRADA');
-                location.reload();
-            });
-        }
-
-        // Dashboard
-        function actualizarDashboard() {
-            const moneda = db.config.moneda;
-            const hoy = new Date().toLocaleDateString();
-            
-            const ventasHoy = db.ventas
-                .filter(v => new Date(v.fecha).toLocaleDateString() === hoy)
-                .reduce((sum, v) => sum + v.total, 0);
-            
-            const ordenesActivas = db.ordenes.filter(o => o.estado !== 'ENTREGADO').length;
-            const stockBajo = db.productos.filter(p => p.stock < 5).length;
-
-            document.getElementById('stat-ventas-hoy').textContent = `${moneda}${ventasHoy.toFixed(2)}`;
-            document.getElementById('stat-ordenes-activas').textContent = ordenesActivas;
-            document.getElementById('stat-clientes-totales').textContent = db.clientes.length;
-            document.getElementById('stat-stock-bajo').textContent = stockBajo;
-
-            // Tabla ventas recientes
-            const tbody = document.querySelector('#tabla-ventas-recientes tbody');
-            tbody.innerHTML = '';
-            db.ventas.slice(0, 5).forEach(venta => {
-                const row = `<tr>
-                    <td>${venta.id.substr(0, 8)}</td>
-                    <td>${new Date(venta.fecha).toLocaleDateString()}</td>
-                    <td>${venta.cliente}</td>
-                    <td>${moneda}${venta.total.toFixed(2)}</td>
-                    <td><span class="badge badge-success">COMPLETADO</span></td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        // Clientes
-        function renderClientes(search = '') {
-            const tbody = document.querySelector('#tabla-clientes tbody');
-            tbody.innerHTML = '';
-            
-            const filtered = db.clientes.filter(c => 
-                c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-                c.telefono.includes(search)
-            );
-
-            filtered.forEach(cliente => {
-                const row = `<tr>
-                    <td>${cliente.id.substr(0, 8)}</td>
-                    <td>${cliente.nombre}</td>
-                    <td>${cliente.telefono}</td>
-                    <td>${cliente.email}</td>
-                    <td>
-                        <button class="btn" onclick="editarCliente('${cliente.id}')">EDITAR</button>
-                        <button class="btn" onclick="eliminarCliente('${cliente.id}')">ELIMINAR</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalCliente(id = null) {
-            document.getElementById('form-cliente').reset();
-            document.getElementById('cliente-id').value = '';
-            document.getElementById('modal-cliente-title').textContent = 'NUEVO CLIENTE';
-            
-            if (id) {
-                const cliente = db.clientes.find(c => c.id === id);
-                if (cliente) {
-                    document.getElementById('cliente-id').value = cliente.id;
-                    document.getElementById('cliente-nombre').value = cliente.nombre;
-                    document.getElementById('cliente-telefono').value = cliente.telefono;
-                    document.getElementById('cliente-email').value = cliente.email;
-                    document.getElementById('cliente-direccion').value = cliente.direccion;
-                    document.getElementById('modal-cliente-title').textContent = 'EDITAR CLIENTE';
-                }
-            }
-            
-            document.getElementById('modal-cliente').style.display = 'flex';
-        }
-
-        function guardarCliente(e) {
-            e.preventDefault();
-            const id = document.getElementById('cliente-id').value;
-            const clienteData = {
-                id: id || generateId(),
-                nombre: document.getElementById('cliente-nombre').value,
-                telefono: document.getElementById('cliente-telefono').value,
-                email: document.getElementById('cliente-email').value,
-                direccion: document.getElementById('cliente-direccion').value
-            };
-
-            if (id) {
-                const index = db.clientes.findIndex(c => c.id === id);
-                db.clientes[index] = clienteData;
-                logActividad(`Cliente editado: ${clienteData.nombre}`);
-            } else {
-                db.clientes.push(clienteData);
-                logActividad(`Cliente creado: ${clienteData.nombre}`);
-            }
-
-            saveDB();
-            cerrarModal('modal-cliente');
-            renderClientes();
-            actualizarDashboard();
-            cargarSelects();
-        }
-
-        function editarCliente(id) {
-            abrirModalCliente(id);
-        }
-
-        function eliminarCliente(id) {
-            if (confirm('¿CONFIRMAR ELIMINACION?')) {
-                db.clientes = db.clientes.filter(c => c.id !== id);
-                saveDB();
-                renderClientes();
-                actualizarDashboard();
-                cargarSelects();
-                logActividad(`Cliente eliminado: ${id}`);
-            }
-        }
-
-        // Productos
-        function renderProductos(search = '') {
-            const tbody = document.querySelector('#tabla-productos tbody');
-            tbody.innerHTML = '';
-            
-            const filtered = db.productos.filter(p => 
-                p.nombre.toLowerCase().includes(search.toLowerCase())
-            );
-
-            filtered.forEach(prod => {
-                const row = `<tr>
-                    <td>${prod.id.substr(0, 8)}</td>
-                    <td>${prod.nombre}</td>
-                    <td>${db.config.moneda}${prod.precio.toFixed(2)}</td>
-                    <td>${prod.stock}</td>
-                    <td>${prod.categoria}</td>
-                    <td>
-                        <button class="btn" onclick="editarProducto('${prod.id}')">EDITAR</button>
-                        <button class="btn" onclick="eliminarProducto('${prod.id}')">ELIMINAR</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalProducto(id = null) {
-            document.getElementById('form-producto').reset();
-            document.getElementById('producto-id').value = '';
-            document.getElementById('modal-producto-title').textContent = 'NUEVO PRODUCTO';
-            
-            if (id) {
-                const prod = db.productos.find(p => p.id === id);
-                if (prod) {
-                    document.getElementById('producto-id').value = prod.id;
-                    document.getElementById('producto-nombre').value = prod.nombre;
-                    document.getElementById('producto-precio').value = prod.precio;
-                    document.getElementById('producto-stock').value = prod.stock;
-                    document.getElementById('producto-categoria').value = prod.categoria;
-                    document.getElementById('modal-producto-title').textContent = 'EDITAR PRODUCTO';
-                }
-            }
-            
-            document.getElementById('modal-producto').style.display = 'flex';
-        }
-
-        function guardarProducto(e) {
-            e.preventDefault();
-            const id = document.getElementById('producto-id').value;
-            const prodData = {
-                id: id || generateId(),
-                nombre: document.getElementById('producto-nombre').value,
-                precio: parseFloat(document.getElementById('producto-precio').value),
-                stock: parseInt(document.getElementById('producto-stock').value),
-                categoria: document.getElementById('producto-categoria').value
-            };
-
-            if (id) {
-                const index = db.productos.findIndex(p => p.id === id);
-                db.productos[index] = prodData;
-                logActividad(`Producto editado: ${prodData.nombre}`);
-            } else {
-                db.productos.push(prodData);
-                logActividad(`Producto creado: ${prodData.nombre}`);
-            }
-
-            saveDB();
-            cerrarModal('modal-producto');
-            renderProductos();
-            actualizarDashboard();
-            cargarSelects();
-        }
-
-        function editarProducto(id) {
-            abrirModalProducto(id);
-        }
-
-        function eliminarProducto(id) {
-            if (confirm('¿CONFIRMAR ELIMINACION?')) {
-                db.productos = db.productos.filter(p => p.id !== id);
-                saveDB();
-                renderProductos();
-                actualizarDashboard();
-                cargarSelects();
-                logActividad(`Producto eliminado: ${id}`);
-            }
-        }
-
-        // Ordenes
-        function renderOrdenes(search = '') {
-            const tbody = document.querySelector('#tabla-ordenes tbody');
-            tbody.innerHTML = '';
-            
-            const filtered = db.ordenes.filter(o => 
-                o.equipo.toLowerCase().includes(search.toLowerCase()) ||
-                o.clienteNombre.toLowerCase().includes(search.toLowerCase())
-            );
-
-            filtered.forEach(orden => {
-                const row = `<tr>
-                    <td>${orden.id.substr(0, 8)}</td>
-                    <td>${new Date(orden.fecha).toLocaleDateString()}</td>
-                    <td>${orden.clienteNombre}</td>
-                    <td>${orden.equipo}</td>
-                    <td><span class="badge">${orden.estado}</span></td>
-                    <td>
-                        <button class="btn" onclick="editarOrden('${orden.id}')">EDITAR</button>
-                        <button class="btn" onclick="eliminarOrden('${orden.id}')">ELIMINAR</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalOrden(id = null) {
-            document.getElementById('form-orden').reset();
-            document.getElementById('orden-id').value = '';
-            document.getElementById('modal-orden-title').textContent = 'NUEVA ORDEN';
-            cargarSelects();
-            
-            if (id) {
-                const orden = db.ordenes.find(o => o.id === id);
-                if (orden) {
-                    document.getElementById('orden-id').value = orden.id;
-                    document.getElementById('orden-cliente').value = orden.clienteId;
-                    document.getElementById('orden-equipo').value = orden.equipo;
-                    document.getElementById('orden-problema').value = orden.problema;
-                    document.getElementById('orden-estado').value = orden.estado;
-                    document.getElementById('modal-orden-title').textContent = 'EDITAR ORDEN';
-                }
-            }
-            
-            document.getElementById('modal-orden').style.display = 'flex';
-        }
-
-        function guardarOrden(e) {
-            e.preventDefault();
-            const id = document.getElementById('orden-id').value;
-            const clienteId = document.getElementById('orden-cliente').value;
-            const cliente = db.clientes.find(c => c.id === clienteId);
-            
-            const ordenData = {
-                id: id || generateId(),
-                fecha: id ? db.ordenes.find(o => o.id === id).fecha : new Date().toISOString(),
-                clienteId: clienteId,
-                clienteNombre: cliente ? cliente.nombre : 'DESCONOCIDO',
-                equipo: document.getElementById('orden-equipo').value,
-                problema: document.getElementById('orden-problema').value,
-                estado: document.getElementById('orden-estado').value
-            };
-
-            if (id) {
-                const index = db.ordenes.findIndex(o => o.id === id);
-                db.ordenes[index] = ordenData;
-                logActividad(`Orden editada: ${ordenData.equipo}`);
-            } else {
-                db.ordenes.push(ordenData);
-                logActividad(`Orden creada: ${ordenData.equipo}`);
-            }
-
-            saveDB();
-            cerrarModal('modal-orden');
-            renderOrdenes();
-            actualizarDashboard();
-        }
-
-        function editarOrden(id) {
-            abrirModalOrden(id);
-        }
-
-        function eliminarOrden(id) {
-            if (confirm('¿CONFIRMAR ELIMINACION?')) {
-                db.ordenes = db.ordenes.filter(o => o.id !== id);
-                saveDB();
-                renderOrdenes();
-                actualizarDashboard();
-                logActividad(`Orden eliminada: ${id}`);
-            }
-        }
-
-        // Ventas
-        function renderVentas() {
-            const tbody = document.querySelector('#tabla-ventas tbody');
-            tbody.innerHTML = '';
-
-            db.ventas.forEach(venta => {
-                const row = `<tr>
-                    <td>${venta.id.substr(0, 8)}</td>
-                    <td>${new Date(venta.fecha).toLocaleDateString()}</td>
-                    <td>${venta.clienteNombre}</td>
-                    <td>${db.config.moneda}${venta.total.toFixed(2)}</td>
-                    <td>
-                        <button class="btn" onclick="verDetalleVenta('${venta.id}')">VER</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalVenta() {
-            document.getElementById('form-venta').reset();
-            cargarSelects();
-            document.getElementById('modal-venta').style.display = 'flex';
-        }
-
-        function guardarVenta(e) {
-            e.preventDefault();
-            const clienteId = document.getElementById('venta-cliente').value;
-            const productoId = document.getElementById('venta-producto').value;
-            const cantidad = parseInt(document.getElementById('venta-cantidad').value);
-            
-            const cliente = db.clientes.find(c => c.id === clienteId);
-            const producto = db.productos.find(p => p.id === productoId);
-            
-            if (!cliente || !producto) {
-                alert('ERROR: DATOS INVALIDOS');
-                return;
-            }
-
-            const total = producto.precio * cantidad;
-            
-            const venta = {
-                id: generateId(),
-                fecha: new Date().toISOString(),
-                clienteId: clienteId,
-                clienteNombre: cliente.nombre,
-                productoId: productoId,
-                productoNombre: producto.nombre,
-                cantidad: cantidad,
-                total: total
-            };
-
-            db.ventas.push(venta);
-            producto.stock -= cantidad;
-            
-            saveDB();
-            cerrarModal('modal-venta');
-            renderVentas();
-            renderProductos();
-            actualizarDashboard();
-            logActividad(`Venta registrada: ${total.toFixed(2)}`);
-        }
-
-        function verDetalleVenta(id) {
-            const venta = db.ventas.find(v => v.id === id);
-            if (venta) {
-                alert(`DETALLE VENTA:\nID: ${venta.id}\nFECHA: ${new Date(venta.fecha).toLocaleString()}\nCLIENTE: ${venta.clienteNombre}\nPRODUCTO: ${venta.productoNombre}\nCANTIDAD: ${venta.cantidad}\nTOTAL: ${db.config.moneda}${venta.total.toFixed(2)}`);
-            }
-        }
-
-        // Garantias
-        function renderGarantias() {
-            const tbody = document.querySelector('#tabla-garantias tbody');
-            tbody.innerHTML = '';
-
-            db.garantias.forEach(gar => {
-                const row = `<tr>
-                    <td>${gar.id.substr(0, 8)}</td>
-                    <td>${gar.ordenId.substr(0, 8)}</td>
-                    <td>${gar.clienteNombre}</td>
-                    <td>${new Date(gar.fecha).toLocaleDateString()}</td>
-                    <td><span class="badge">${gar.estado}</span></td>
-                    <td>
-                        <button class="btn" onclick="eliminarGarantia('${gar.id}')">ELIMINAR</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalGarantia() {
-            document.getElementById('form-garantia').reset();
-            cargarSelects();
-            document.getElementById('modal-garantia').style.display = 'flex';
-        }
-
-        function guardarGarantia(e) {
-            e.preventDefault();
-            const ordenId = document.getElementById('garantia-orden').value;
-            const orden = db.ordenes.find(o => o.id === ordenId);
-            
-            const garantia = {
-                id: generateId(),
-                fecha: new Date().toISOString(),
-                ordenId: ordenId,
-                clienteNombre: orden ? orden.clienteNombre : 'DESCONOCIDO',
-                descripcion: document.getElementById('garantia-descripcion').value,
-                estado: 'ACTIVA'
-            };
-
-            db.garantias.push(garantia);
-            saveDB();
-            cerrarModal('modal-garantia');
-            renderGarantias();
-            logActividad(`Garantia creada: ${ordenId}`);
-        }
-
-        function eliminarGarantia(id) {
-            if (confirm('¿CONFIRMAR ELIMINACION?')) {
-                db.garantias = db.garantias.filter(g => g.id !== id);
-                saveDB();
-                renderGarantias();
-                logActividad(`Garantia eliminada: ${id}`);
-            }
-        }
-
-        // Notas
-        function renderNotas() {
-            const tbody = document.querySelector('#tabla-notas tbody');
-            tbody.innerHTML = '';
-
-            db.notas.forEach(nota => {
-                const row = `<tr>
-                    <td>${nota.id.substr(0, 8)}</td>
-                    <td>${nota.titulo}</td>
-                    <td>${new Date(nota.fecha).toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn" onclick="editarNota('${nota.id}')">VER</button>
-                        <button class="btn" onclick="eliminarNota('${nota.id}')">ELIMINAR</button>
-                    </td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        function abrirModalNota(id = null) {
-            document.getElementById('form-nota').reset();
-            document.getElementById('nota-id').value = '';
-            
-            if (id) {
-                const nota = db.notas.find(n => n.id === id);
-                if (nota) {
-                    document.getElementById('nota-id').value = nota.id;
-                    document.getElementById('nota-titulo').value = nota.titulo;
-                    document.getElementById('nota-contenido').value = nota.contenido;
-                }
-            }
-            
-            document.getElementById('modal-nota').style.display = 'flex';
-        }
-
-        function guardarNota(e) {
-            e.preventDefault();
-            const id = document.getElementById('nota-id').value;
-            const notaData = {
-                id: id || generateId(),
-                fecha: id ? db.notas.find(n => n.id === id).fecha : new Date().toISOString(),
-                titulo: document.getElementById('nota-titulo').value,
-                contenido: document.getElementById('nota-contenido').value
-            };
-
-            if (id) {
-                const index = db.notas.findIndex(n => n.id === id);
-                db.notas[index] = notaData;
-            } else {
-                db.notas.push(notaData);
-            }
-
-            saveDB();
-            cerrarModal('modal-nota');
-            renderNotas();
-            logActividad(`Nota ${id ? 'editada' : 'creada'}: ${notaData.titulo}`);
-        }
-
-        function editarNota(id) {
-            abrirModalNota(id);
-        }
-
-        function eliminarNota(id) {
-            if (confirm('¿CONFIRMAR ELIMINACION?')) {
-                db.notas = db.notas.filter(n => n.id !== id);
-                saveDB();
-                renderNotas();
-                logActividad(`Nota eliminada: ${id}`);
-            }
-        }
-
-        // Actividad
-        function renderActividad() {
-            const tbody = document.querySelector('#tabla-actividad tbody');
-            tbody.innerHTML = '';
-
-            db.actividad.forEach(act => {
-                const row = `<tr>
-                    <td>${act.fecha}</td>
-                    <td>${act.accion}</td>
-                    <td>${act.usuario}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
-
-        // Utilidades
-        function cargarSelects() {
-            const clienteSelects = ['orden-cliente', 'venta-cliente'];
-            clienteSelects.forEach(id => {
-                const select = document.getElementById(id);
-                if (select) {
-                    select.innerHTML = '<option value="">SELECCIONAR</option>';
-                    db.clientes.forEach(c => {
-                        select.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
-                    });
-                }
-            });
-
-            const productoSelect = document.getElementById('venta-producto');
-            if (productoSelect) {
-                productoSelect.innerHTML = '<option value="">SELECCIONAR</option>';
-                db.productos.forEach(p => {
-                    productoSelect.innerHTML += `<option value="${p.id}">${p.nombre} - ${db.config.moneda}${p.precio.toFixed(2)} (${p.stock} disp)</option>`;
-                });
-            }
-
-            const ordenSelect = document.getElementById('garantia-orden');
-            if (ordenSelect) {
-                ordenSelect.innerHTML = '<option value="">SELECCIONAR</option>';
-                db.ordenes.forEach(o => {
-                    ordenSelect.innerHTML += `<option value="${o.id}">${o.equipo} - ${o.clienteNombre}</option>`;
-                });
-            }
-        }
-
-        function cerrarModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        function generarReporte() {
-            const tipo = document.getElementById('reporte-tipo').value;
-            alert(`GENERANDO REPORTE DE ${tipo.toUpperCase()}...\n\nESTA FUNCIONALIDAD ESTA EN DESARROLLO`);
-            logActividad(`Reporte generado: ${tipo}`);
-        }
-
-        function respaldarDatos() {
-            const dataStr = JSON.stringify(db);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `nextcom_backup_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            logActividad('Respaldo de datos creado');
-        }
-
-        function restaurarDatos() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = event => {
-                    try {
-                        db = JSON.parse(event.target.result);
-                        saveDB();
-                        initApp();
-                        alert('DATOS RESTAURADOS CORRECTAMENTE');
-                        logActividad('Datos restaurados desde backup');
-                    } catch (err) {
-                        alert('ERROR AL RESTAURAR DATOS');
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
-
-        function limpiarDatos() {
-            if (confirm('¿ADVERTENCIA: ESTO ELIMINARA TODOS LOS DATOS. CONTINUAR?')) {
-                localStorage.removeItem('nextcom_db');
-                db = {
-                    clientes: [],
-                    productos: [],
-                    ordenes: [],
-                    ventas: [],
-                    garantias: [],
-                    notas: [],
-                    actividad: [],
-                    config: { nombre: 'NEXTCOM', moneda: '$' }
-                };
-                initApp();
-                alert('DATOS ELIMINADOS');
-                logActividad('Datos limpiados completamente');
-            }
-        }
-
-        function guardarConfiguracion() {
-            db.config.nombre = document.getElementById('config-nombre').value;
-            db.config.moneda = document.getElementById('config-moneda').value;
-            saveDB();
-            alert('CONFIGURACION GUARDADA');
-            logActividad('Configuracion actualizada');
-        }
-
-        // Resize handler
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        // Start Matrix on load
-        startMatrix();
-    </script>
+  </div><!-- /page-content -->
+</div><!-- /main -->
+
+<!-- ===== MODAL ORDEN ===== -->
+<div class="modal-overlay" id="modal-order">
+  <div class="modal-box lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-order-title"><i class="bi bi-clipboard2-plus text-info"></i> Nueva Orden de Servicio</div>
+      <button class="modal-close" onclick="closeModal('modal-order')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-row cols-2 mb-3">
+      <div><label class="tf-label">Nombre del Cliente *</label><input class="tf-input" id="ord-cliente" placeholder="Nombre completo"></div>
+      <div><label class="tf-label">Teléfono *</label><input class="tf-input mono" id="ord-telefono" placeholder="+503 0000-0000"></div>
+    </div>
+    <div class="form-row cols-3 mb-3">
+      <div>
+        <label class="tf-label">Marca *</label>
+        <select class="tf-select" id="ord-marca" onchange="updateModelos()">
+          <option value="">Seleccionar...</option>
+          <option>Apple</option><option>Samsung</option><option>Huawei</option><option>Xiaomi</option>
+          <option>Motorola</option><option>LG</option><option>Sony</option><option>OnePlus</option>
+          <option>Realme</option><option>Nokia</option><option>Oppo</option><option>Vivo</option>
+          <option>Otra</option>
+        </select>
+      </div>
+      <div><label class="tf-label">Modelo *</label><input class="tf-input" id="ord-modelo" placeholder="Ej: iPhone 14, Galaxy S23..."></div>
+      <div>
+        <label class="tf-label">IMEI / Serie</label>
+        <input class="tf-input mono" id="ord-imei" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="form-row mb-3">
+      <div>
+        <label class="tf-label">Fallas Reportadas (selección múltiple)</label>
+        <div id="fallas-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="form-row cols-2 mb-3">
+      <div><label class="tf-label">Descripción Adicional</label><textarea class="tf-textarea" id="ord-desc" rows="2" placeholder="Observaciones, accesorios entregados..."></textarea></div>
+      <div>
+        <div class="form-row cols-2 mb-2">
+          <div><label class="tf-label">Fecha Recibido</label><input class="tf-input" id="ord-fecha-rec" type="date"></div>
+          <div><label class="tf-label">Fecha Promesa</label><input class="tf-input" id="ord-fecha-prom" type="date"></div>
+        </div>
+        <div class="form-row cols-2">
+          <div><label class="tf-label">Total ($)</label><input class="tf-input mono" id="ord-total" type="number" placeholder="0.00"></div>
+          <div><label class="tf-label">Garantía (días)</label><input class="tf-input mono" id="ord-garantia" type="number" placeholder="30"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row cols-2 mb-3">
+      <div>
+        <label class="tf-label">Repuesto / Pieza</label>
+        <select class="tf-select" id="ord-repuesto" onchange="checkRepuesto()">
+          <option value="">Sin repuesto</option>
+        </select>
+        <div id="repuesto-status" style="margin-top:6px"></div>
+      </div>
+      <div>
+        <label class="tf-label">Técnico Asignado</label>
+        <input class="tf-input" id="ord-tecnico" placeholder="Nombre del técnico">
+      </div>
+    </div>
+    <input type="hidden" id="ord-edit-id">
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-order')">Cancelar</button>
+      <button class="btn-primary" onclick="saveOrder()"><i class="bi bi-save"></i> Guardar Orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL VER ORDEN ===== -->
+<div class="modal-overlay" id="modal-view-order">
+  <div class="modal-box lg">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-file-text text-cyan"></i> Detalle de Orden</div>
+      <button class="modal-close" onclick="closeModal('modal-view-order')"><i class="bi bi-x"></i></button>
+    </div>
+    <div id="view-order-content"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-view-order')">Cerrar</button>
+      <button class="btn-primary" onclick="printCurrentOrder()"><i class="bi bi-printer"></i> Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL INVENTARIO ===== -->
+<div class="modal-overlay" id="modal-item">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-item-title"><i class="bi bi-box-seam text-warning"></i> Agregar Item</div>
+      <button class="modal-close" onclick="closeModal('modal-item')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-row cols-2 mb-3">
+      <div><label class="tf-label">Código *</label><input class="tf-input mono" id="item-codigo" placeholder="COD-001"></div>
+      <div>
+        <label class="tf-label">Tipo *</label>
+        <select class="tf-select" id="item-tipo">
+          <option value="repuesto">Repuesto</option>
+          <option value="producto">Producto</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Nombre *</label><input class="tf-input" id="item-nombre" placeholder="Ej: Pantalla iPhone 14, Batería Samsung A52..."></div>
+    </div>
+    <div class="form-row cols-2 mb-3">
+      <div><label class="tf-label">Compatible con</label><input class="tf-input" id="item-compat" placeholder="Ej: iPhone 14, Samsung A52"></div>
+      <div><label class="tf-label">Ubicación / Estante</label><input class="tf-input" id="item-ubicacion" placeholder="Ej: A3, Cajón 2"></div>
+    </div>
+    <div class="form-row cols-3 mb-3">
+      <div><label class="tf-label">Stock Actual</label><input class="tf-input mono" id="item-stock" type="number" placeholder="0"></div>
+      <div><label class="tf-label">Precio Costo ($)</label><input class="tf-input mono" id="item-costo" type="number" placeholder="0.00"></div>
+      <div><label class="tf-label">Precio Venta ($)</label><input class="tf-input mono" id="item-venta" type="number" placeholder="0.00"></div>
+    </div>
+    <input type="hidden" id="item-edit-id">
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-item')">Cancelar</button>
+      <button class="btn-primary" onclick="saveItem()"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CAMBIO ESTADO ===== -->
+<div class="modal-overlay" id="modal-status">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-arrow-repeat text-info"></i> Cambiar Estado</div>
+      <button class="modal-close" onclick="closeModal('modal-status')"><i class="bi bi-x"></i></button>
+    </div>
+    <div id="status-order-info" style="margin-bottom:14px"></div>
+    <label class="tf-label">Nuevo Estado</label>
+    <select class="tf-select mb-3" id="status-select">
+      <option value="Recibido">Recibido</option>
+      <option value="En Proceso">En Proceso</option>
+      <option value="Listo">Listo</option>
+      <option value="Entregado">Entregado</option>
+    </select>
+    <div id="status-entregado-extra" style="display:none">
+      <div class="alert-banner success"><i class="bi bi-star"></i> Al marcar como Entregado se activará la garantía y se registrará el ingreso en caja.</div>
+      <div class="form-row cols-2 mt-2">
+        <div><label class="tf-label">Cobrado ($)</label><input class="tf-input mono" id="status-cobrado" type="number" placeholder="0.00"></div>
+        <div>
+          <label class="tf-label">Método de Pago</label>
+          <select class="tf-select" id="status-payment">
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="status-order-id">
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('modal-status')">Cancelar</button>
+      <button class="btn-primary" onclick="applyStatus()"><i class="bi bi-check2"></i> Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+'use strict';
+
+// ========== STATE ==========
+const DEFAULT_STATE = {
+  orders: [],
+  inventory: [],
+  caja: { open: false, apertura: null, balance: 0, movimientos: [] },
+  config: { nombre: 'Mi Taller Técnico', telefono: '', prefix: 'ORD-', direccion: '', garantia: 30, moneda: '$' },
+  nextOrderNum: 1,
+  nextItemNum: 1,
+  cart: []
+};
+
+let S = loadState();
+let currentPrintOrder = null;
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('tf_state')) || deepClone(DEFAULT_STATE); }
+  catch { return deepClone(DEFAULT_STATE); }
+}
+function saveState() { localStorage.setItem('tf_state', JSON.stringify(S)); }
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+// ========== NAVIGATION ==========
+const pages = { dashboard:'Dashboard', orders:'Órdenes de Servicio', caja:'Caja', inventory:'Inventario', pos:'Venta POS', garantias:'Garantías', config:'Configuración' };
+function navigate(page) {
+  document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const navEl = document.querySelector(`.nav-item[onclick="navigate('${page}')"]`);
+  if(navEl) navEl.classList.add('active');
+  document.getElementById('topbar-title').textContent = pages[page] || page;
+  const fns = { dashboard: renderDashboard, orders: renderOrders, caja: renderCaja, inventory: renderInventory, pos: renderPOS, garantias: renderGarantias };
+  if(fns[page]) fns[page]();
+}
+
+// ========== TOAST ==========
+function toast(msg, type='info') {
+  const icons = { success:'bi-check-circle-fill', error:'bi-exclamation-circle-fill', info:'bi-info-circle-fill', warning:'bi-exclamation-triangle-fill' };
+  const t = document.createElement('div');
+  t.className = `toast-msg ${type}`;
+  t.innerHTML = `<i class="bi ${icons[type]||icons.info}"></i> ${msg}`;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(() => t.style.opacity = '0', 2800);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ========== FALLAS COMUNES ==========
+const FALLAS = ['Pantalla rota','Batería agotada','No enciende','No carga','Daño por agua','Micrófono dañado','Altavoz dañado','Cámara dañada','Botones dañados','Software / ROM','Señal / Antena','Conector carga','Vibrador','Touch no responde','Actualización fallida','Otro'];
+
+function renderFallas() {
+  const sel = (document.getElementById('ord-edit-id').value ? (S.orders.find(o=>o.id==document.getElementById('ord-edit-id').value)||{}).fallas||[] : []);
+  document.getElementById('fallas-grid').innerHTML = FALLAS.map(f => {
+    const checked = sel.includes(f);
+    return `<label style="cursor:pointer;user-select:none">
+      <input type="checkbox" value="${f}" class="falla-check" style="display:none" ${checked?'checked':''}>
+      <span class="chip ${checked?'green':''}" id="chip-${f.replace(/\s/g,'_')}" onclick="toggleFalla(this)">${f}</span>
+    </label>`;
+  }).join('');
+}
+function toggleFalla(el) {
+  const inp = el.previousElementSibling;
+  inp.checked = !inp.checked;
+  el.className = `chip ${inp.checked?'green':''}`;
+}
+function getSelectedFallas() {
+  return [...document.querySelectorAll('.falla-check:checked')].map(c=>c.value);
+}
+
+// ========== INVENTORY HELPERS ==========
+function populateRepuestos() {
+  const sel = document.getElementById('ord-repuesto');
+  sel.innerHTML = '<option value="">Sin repuesto</option>';
+  S.inventory.filter(i=>i.tipo==='repuesto').forEach(i => {
+    sel.innerHTML += `<option value="${i.id}">${i.nombre} (Stock: ${i.stock})</option>`;
+  });
+}
+function checkRepuesto() {
+  const id = document.getElementById('ord-repuesto').value;
+  const el = document.getElementById('repuesto-status');
+  if(!id) { el.innerHTML=''; return; }
+  const item = S.inventory.find(i=>i.id==id);
+  if(!item) return;
+  if(item.stock > 0) el.innerHTML = `<div class="alert-banner success"><i class="bi bi-check-circle"></i> Disponible: <b>${item.stock}</b> en stock</div>`;
+  else el.innerHTML = `<div class="alert-banner warning"><i class="bi bi-exclamation-triangle"></i> Sin stock — la orden quedará <b>Pieza Pendiente</b></div>`;
+}
+
+// ========== ORDERS ==========
+function openOrderModal(id=null) {
+  const today = new Date().toISOString().slice(0,10);
+  const prom = new Date(Date.now()+3*86400000).toISOString().slice(0,10);
+  document.getElementById('ord-fecha-rec').value = today;
+  document.getElementById('ord-fecha-prom').value = prom;
+  document.getElementById('ord-garantia').value = S.config.garantia || 30;
+  document.getElementById('ord-edit-id').value = '';
+  document.getElementById('modal-order-title').innerHTML = '<i class="bi bi-clipboard2-plus text-info"></i> Nueva Orden de Servicio';
+  if(id) {
+    const o = S.orders.find(x=>x.id===id);
+    if(!o) return;
+    document.getElementById('ord-edit-id').value = id;
+    document.getElementById('modal-order-title').innerHTML = `<i class="bi bi-pencil text-warning"></i> Editar Orden ${o.codigo}`;
+    document.getElementById('ord-cliente').value = o.cliente;
+    document.getElementById('ord-telefono').value = o.telefono;
+    document.getElementById('ord-marca').value = o.marca;
+    document.getElementById('ord-modelo').value = o.modelo;
+    document.getElementById('ord-imei').value = o.imei||'';
+    document.getElementById('ord-desc').value = o.descripcion||'';
+    document.getElementById('ord-fecha-rec').value = o.fechaRecibido;
+    document.getElementById('ord-fecha-prom').value = o.fechaPromesa;
+    document.getElementById('ord-total').value = o.total||'';
+    document.getElementById('ord-garantia').value = o.garantiaDias||30;
+    document.getElementById('ord-tecnico').value = o.tecnico||'';
+  } else {
+    ['ord-cliente','ord-telefono','ord-modelo','ord-imei','ord-desc','ord-total','ord-tecnico'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('ord-marca').value='';
+  }
+  populateRepuestos();
+  renderFallas();
+  checkRepuesto();
+  showModal('modal-order');
+}
+
+function saveOrder() {
+  const cliente = document.getElementById('ord-cliente').value.trim();
+  const telefono = document.getElementById('ord-telefono').value.trim();
+  const marca = document.getElementById('ord-marca').value;
+  const modelo = document.getElementById('ord-modelo').value.trim();
+  if(!cliente||!telefono||!marca||!modelo) { toast('Completa los campos obligatorios','error'); return; }
+  const editId = document.getElementById('ord-edit-id').value;
+  const repuestoId = document.getElementById('ord-repuesto').value;
+  let piezaPendiente = false;
+  if(repuestoId && !editId) {
+    const item = S.inventory.find(i=>i.id==repuestoId);
+    if(item) { if(item.stock>0) item.stock--; else piezaPendiente=true; }
+  }
+  if(editId) {
+    const idx = S.orders.findIndex(o=>o.id===editId);
+    if(idx>-1) {
+      S.orders[idx] = {...S.orders[idx],
+        cliente, telefono, marca, modelo,
+        imei: document.getElementById('ord-imei').value.trim(),
+        fallas: getSelectedFallas(),
+        descripcion: document.getElementById('ord-desc').value.trim(),
+        fechaRecibido: document.getElementById('ord-fecha-rec').value,
+        fechaPromesa: document.getElementById('ord-fecha-prom').value,
+        total: parseFloat(document.getElementById('ord-total').value)||0,
+        garantiaDias: parseInt(document.getElementById('ord-garantia').value)||30,
+        tecnico: document.getElementById('ord-tecnico').value.trim(),
+      };
+      toast('Orden actualizada','success');
+    }
+  } else {
+    const repuesto = repuestoId ? S.inventory.find(i=>i.id==repuestoId) : null;
+    const order = {
+      id: 'ord_' + Date.now(),
+      codigo: (S.config.prefix||'ORD-') + String(S.nextOrderNum++).padStart(4,'0'),
+      cliente, telefono, marca, modelo,
+      imei: document.getElementById('ord-imei').value.trim(),
+      fallas: getSelectedFallas(),
+      descripcion: document.getElementById('ord-desc').value.trim(),
+      fechaRecibido: document.getElementById('ord-fecha-rec').value,
+      fechaPromesa: document.getElementById('ord-fecha-prom').value,
+      total: parseFloat(document.getElementById('ord-total').value)||0,
+      garantiaDias: parseInt(document.getElementById('ord-garantia').value)||30,
+      tecnico: document.getElementById('ord-tecnico').value.trim(),
+      estado: piezaPendiente ? 'Recibido' : 'Recibido',
+      piezaPendiente,
+      repuestoId: repuestoId||null,
+      repuestoNombre: repuesto ? repuesto.nombre : null,
+      fechaCreado: new Date().toISOString(),
+      garantiaActivada: false
+    };
+    S.orders.unshift(order);
+    toast(`Orden ${order.codigo} creada${piezaPendiente?' — Pieza Pendiente':''}`, piezaPendiente?'warning':'success');
+  }
+  saveState();
+  closeModal('modal-order');
+  renderOrders();
+  updateBadges();
+  renderDashboard();
+}
+
+function renderOrders() {
+  const q = (document.getElementById('search-orders')||{}).value?.toLowerCase()||'';
+  const fs = (document.getElementById('filter-status')||{}).value||'';
+  let filtered = S.orders.filter(o => {
+    const match = !q || o.cliente.toLowerCase().includes(q) || o.codigo.toLowerCase().includes(q) || o.modelo.toLowerCase().includes(q) || o.telefono.includes(q);
+    const status = !fs || o.estado===fs;
+    return match && status;
+  });
+  const tbody = document.getElementById('orders-body');
+  if(!filtered.length) { tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Sin órdenes encontradas</td></tr>`; return; }
+  tbody.innerHTML = filtered.map(o => `
+    <tr>
+      <td><span class="mono" style="color:var(--accent-cyan)">${o.codigo}</span>${o.piezaPendiente?`<br><span class="chip red" style="margin-top:3px">⚠ Pieza Pendiente</span>`:''}</td>
+      <td><div style="font-weight:600">${esc(o.cliente)}</div><div style="font-size:11px;color:var(--text-muted)">${esc(o.telefono)}</div></td>
+      <td><div>${esc(o.marca)} ${esc(o.modelo)}</div><div style="font-size:11px;color:var(--text-muted)">${o.fallas?.slice(0,2).join(', ')||'-'}</div></td>
+      <td>${o.repuestoNombre?`<span class="chip">${esc(o.repuestoNombre)}</span>`:'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td>${statusBadge(o.estado)}</td>
+      <td><span style="font-size:11px;color:var(--text-secondary)">${fmtDate(o.fechaPromesa)}</span></td>
+      <td><span class="mono" style="color:var(--accent-green)">${S.config.moneda||'$'}${(o.total||0).toFixed(2)}</span></td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn-action view" onclick="viewOrder('${o.id}')" title="Ver Detalle"><i class="bi bi-eye"></i></button>
+          <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn-action print" onclick="printOrder('${o.id}')" title="Imprimir"><i class="bi bi-printer"></i></button>
+          <button class="btn-action wa" onclick="sendWA('${o.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+          <button class="btn-action" onclick="openStatusModal('${o.id}')" title="Cambiar Estado" style="color:var(--accent-orange)" ><i class="bi bi-arrow-repeat"></i></button>
+          <button class="btn-action del" onclick="deleteOrder('${o.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function deleteOrder(id) {
+  if(!confirm('¿Eliminar esta orden? Esta acción no se puede deshacer.')) return;
+  const o = S.orders.find(x=>x.id===id);
+  if(o && o.repuestoId && o.estado !== 'Entregado') {
+    const item = S.inventory.find(i=>i.id===o.repuestoId);
+    if(item) item.stock++;
+  }
+  S.orders = S.orders.filter(x=>x.id!==id);
+  saveState(); renderOrders(); updateBadges(); renderDashboard();
+  toast('Orden eliminada','info');
+}
+
+function viewOrder(id) {
+  const o = S.orders.find(x=>x.id===id);
+  if(!o) return;
+  currentPrintOrder = o;
+  const html = buildOrderTicket(o, true);
+  document.getElementById('view-order-content').innerHTML = html;
+  showModal('modal-view-order');
+}
+
+function buildOrderTicket(o, preview=false) {
+  const days = o.garantiaDias||30;
+  const venc = o.fechaEntrega ? new Date(new Date(o.fechaEntrega).getTime()+days*86400000).toLocaleDateString('es') : 'N/A';
+  return `
+    <div style="font-size:13px">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:700">${esc(S.config.nombre||'Taller Técnico')}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">${esc(S.config.direccion||'')} ${S.config.telefono?'| '+S.config.telefono:''}</div>
+        <div style="font-size:20px;font-weight:700;color:var(--accent-cyan);margin-top:8px;font-family:'JetBrains Mono',monospace">${o.codigo}</div>
+      </div>
+      <div class="row g-2 mb-3">
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Cliente</div><div style="font-weight:600">${esc(o.cliente)}</div></div>
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Teléfono</div><div class="mono">${esc(o.telefono)}</div></div>
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Equipo</div><div style="font-weight:600">${esc(o.marca)} ${esc(o.modelo)}</div></div>
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">IMEI/Serie</div><div class="mono">${esc(o.imei||'—')}</div></div>
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Recibido</div><div>${fmtDate(o.fechaRecibido)}</div></div>
+        <div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Promesa</div><div>${fmtDate(o.fechaPromesa)}</div></div>
+        <div class="col-12"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Fallas Reportadas</div><div>${(o.fallas||[]).join(', ')||'—'}</div></div>
+        ${o.descripcion?`<div class="col-12"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Observaciones</div><div>${esc(o.descripcion)}</div></div>`:''}
+        ${o.repuestoNombre?`<div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Repuesto</div><div>${esc(o.repuestoNombre)}</div></div>`:''}
+        ${o.tecnico?`<div class="col-6"><div style="font-size:10px;color:var(--text-muted);text-transform:uppercase">Técnico</div><div>${esc(o.tecnico)}</div></div>`:''}
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:600">Estado:</span> ${statusBadge(o.estado)}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700">
+        <span>Total</span><span class="mono" style="color:var(--accent-green)">${S.config.moneda||'$'}${(o.total||0).toFixed(2)}</span>
+      </div>
+      ${o.garantiaActivada ? `<div class="guarantee-card mt-3"><div style="font-size:11px;font-weight:700;color:var(--accent-green);margin-bottom:4px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>` : ''}
+    </div>
+  `;
+}
+
+function printCurrentOrder() {
+  if(!currentPrintOrder) return;
+  printOrder(currentPrintOrder.id);
+}
+
+function printOrder(id) {
+  const o = S.orders.find(x=>x.id===id);
+  if(!o) return;
+  const win = window.open('','_blank','width=400,height=600');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Orden ${o.codigo}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#000;max-width:400px;margin:0 auto;padding:20px}
+      .mono{font-family:'JetBrains Mono',monospace}
+      .label{font-size:10px;text-transform:uppercase;color:#666;font-weight:600}
+      .val{font-weight:600;margin-bottom:8px}
+      hr{border:1px dashed #ccc;margin:12px 0}
+      .total{font-size:18px;font-weight:700}
+      .center{text-align:center}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    </style>
+  </head><body>
+    <div class="center"><h2 style="margin:0">${esc(S.config.nombre||'Taller Técnico')}</h2>
+    <div style="color:#666">${esc(S.config.direccion||'')} ${S.config.telefono?'| '+S.config.telefono:''}</div>
+    <h1 class="mono" style="color:#4f6ef7;margin:8px 0">${o.codigo}</h1></div>
+    <hr>
+    <div class="grid">
+      <div><div class="label">Cliente</div><div class="val">${esc(o.cliente)}</div></div>
+      <div><div class="label">Teléfono</div><div class="val mono">${esc(o.telefono)}</div></div>
+      <div><div class="label">Equipo</div><div class="val">${esc(o.marca)} ${esc(o.modelo)}</div></div>
+      <div><div class="label">IMEI</div><div class="val mono">${esc(o.imei||'—')}</div></div>
+      <div><div class="label">Recibido</div><div class="val">${fmtDate(o.fechaRecibido)}</div></div>
+      <div><div class="label">Promesa</div><div class="val">${fmtDate(o.fechaPromesa)}</div></div>
+    </div>
+    <hr>
+    <div class="label">Fallas</div><div class="val">${(o.fallas||[]).join(', ')||'—'}</div>
+    ${o.descripcion?`<div class="label">Observaciones</div><div class="val">${esc(o.descripcion)}</div>`:''}
+    ${o.repuestoNombre?`<div class="label">Repuesto</div><div class="val">${esc(o.repuestoNombre)}</div>`:''}
+    <hr>
+    <div style="display:flex;justify-content:space-between"><span>Estado:</span><strong>${o.estado}</strong></div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px"><span class="total">TOTAL</span><span class="total mono">${S.config.moneda||'$'}${(o.total||0).toFixed(2)}</span></div>
+    ${o.garantiaActivada?`<hr><div style="color:green"><strong>✓ Garantía:</strong> ${o.garantiaDias||30} días</div>`:''}
+    <div class="center" style="margin-top:20px;color:#999;font-size:10px">¡Gracias por su preferencia!</div>
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(), 500);
+}
+
+function sendWA(id) {
+  const o = S.orders.find(x=>x.id===id);
+  if(!o) return;
+  const msg = encodeURIComponent(`Hola ${o.cliente}! 👋\nSu equipo *${o.marca} ${o.modelo}* (Orden: ${o.codigo}) está en estado: *${o.estado}*\nFecha Promesa: ${fmtDate(o.fechaPromesa)}\nTotal: ${S.config.moneda||'$'}${(o.total||0).toFixed(2)}\n\n${S.config.nombre||'TechFlow'}`);
+  const tel = o.telefono.replace(/\D/g,'');
+  window.open(`https://wa.me/${tel}?text=${msg}`,'_blank');
+}
+
+// ========== STATUS MODAL ==========
+function openStatusModal(id) {
+  const o = S.orders.find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById('status-order-id').value = id;
+  document.getElementById('status-select').value = o.estado;
+  document.getElementById('status-cobrado').value = o.total||'';
+  document.getElementById('status-order-info').innerHTML = `<div style="background:var(--hover-bg);border-radius:8px;padding:10px;font-size:12px"><b>${o.codigo}</b> — ${esc(o.cliente)} — ${esc(o.marca)} ${esc(o.modelo)}</div>`;
+  toggleEntregadoExtra();
+  document.getElementById('status-select').addEventListener('change', toggleEntregadoExtra);
+  showModal('modal-status');
+}
+function toggleEntregadoExtra() {
+  document.getElementById('status-entregado-extra').style.display = document.getElementById('status-select').value==='Entregado'?'block':'none';
+}
+function applyStatus() {
+  const id = document.getElementById('status-order-id').value;
+  const newStatus = document.getElementById('status-select').value;
+  const idx = S.orders.findIndex(o=>o.id===id);
+  if(idx<0) return;
+  const o = S.orders[idx];
+  const prev = o.estado;
+  o.estado = newStatus;
+  if(newStatus==='Entregado' && prev!=='Entregado') {
+    const now = new Date();
+    o.fechaEntrega = now.toISOString().slice(0,10);
+    o.garantiaActivada = true;
+    o.garantiaVence = new Date(now.getTime()+(o.garantiaDias||30)*86400000).toISOString().slice(0,10);
+    const cobrado = parseFloat(document.getElementById('status-cobrado').value)||o.total||0;
+    const metodoPago = document.getElementById('status-payment').value;
+    o.cobrado = cobrado;
+    if(S.caja.open) {
+      S.caja.balance += cobrado;
+      S.caja.movimientos.push({ fecha: now.toISOString(), tipo:'ingreso', desc:`Cobro orden ${o.codigo} — ${esc(o.cliente)} (${metodoPago})`, monto: cobrado });
+      toast('Ingreso registrado en caja','success');
+    } else toast('Nota: la caja está cerrada, el ingreso no se registró','warning');
+  }
+  if(newStatus!=='Entregado') o.garantiaActivada = false;
+  saveState();
+  closeModal('modal-status');
+  renderOrders();
+  updateBadges();
+  renderDashboard();
+  toast(`Estado actualizado a ${newStatus}`,'success');
+}
+
+// ========== INVENTORY ==========
+function openItemModal(id=null) {
+  document.getElementById('item-edit-id').value='';
+  document.getElementById('modal-item-title').innerHTML='<i class="bi bi-box-seam text-warning"></i> Agregar Item';
+  ['item-codigo','item-nombre','item-compat','item-ubicacion'].forEach(x=>document.getElementById(x).value='');
+  ['item-stock','item-costo','item-venta'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('item-tipo').value='repuesto';
+  if(id) {
+    const item = S.inventory.find(i=>i.id===id);
+    if(!item) return;
+    document.getElementById('item-edit-id').value=id;
+    document.getElementById('modal-item-title').innerHTML='<i class="bi bi-pencil text-warning"></i> Editar Item';
+    document.getElementById('item-codigo').value=item.codigo;
+    document.getElementById('item-tipo').value=item.tipo;
+    document.getElementById('item-nombre').value=item.nombre;
+    document.getElementById('item-compat').value=item.compat||'';
+    document.getElementById('item-ubicacion').value=item.ubicacion||'';
+    document.getElementById('item-stock').value=item.stock;
+    document.getElementById('item-costo').value=item.costo;
+    document.getElementById('item-venta').value=item.venta;
+  }
+  showModal('modal-item');
+}
+
+function saveItem() {
+  const codigo = document.getElementById('item-codigo').value.trim();
+  const nombre = document.getElementById('item-nombre').value.trim();
+  if(!codigo||!nombre) { toast('Código y nombre son requeridos','error'); return; }
+  const editId = document.getElementById('item-edit-id').value;
+  const data = {
+    codigo, nombre,
+    tipo: document.getElementById('item-tipo').value,
+    compat: document.getElementById('item-compat').value.trim(),
+    ubicacion: document.getElementById('item-ubicacion').value.trim(),
+    stock: parseInt(document.getElementById('item-stock').value)||0,
+    costo: parseFloat(document.getElementById('item-costo').value)||0,
+    venta: parseFloat(document.getElementById('item-venta').value)||0,
+  };
+  if(editId) {
+    const idx=S.inventory.findIndex(i=>i.id===editId);
+    if(idx>-1) S.inventory[idx]={...S.inventory[idx],...data};
+    toast('Item actualizado','success');
+  } else {
+    S.inventory.push({...data, id:'item_'+Date.now()});
+    toast('Item agregado','success');
+  }
+  saveState();
+  closeModal('modal-item');
+  renderInventory();
+  updateBadges();
+}
+
+function deleteItem(id) {
+  if(!confirm('¿Eliminar este item del inventario?')) return;
+  S.inventory=S.inventory.filter(i=>i.id!==id);
+  saveState(); renderInventory(); updateBadges();
+  toast('Item eliminado','info');
+}
+
+function adjustStock(id, delta) {
+  const item=S.inventory.find(i=>i.id===id);
+  if(!item) return;
+  item.stock=Math.max(0,item.stock+delta);
+  saveState(); renderInventory(); updateBadges();
+}
+
+function renderInventory() {
+  const q=(document.getElementById('search-inv')||{}).value?.toLowerCase()||'';
+  const ft=(document.getElementById('filter-inv-type')||{}).value||'';
+  let filtered=S.inventory.filter(i=>{
+    const m=!q||i.nombre.toLowerCase().includes(q)||i.codigo.toLowerCase().includes(q)||(i.compat||'').toLowerCase().includes(q);
+    const t=!ft||i.tipo===ft;
+    return m&&t;
+  });
+  const tbody=document.getElementById('inventory-body');
+  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Sin items en inventario</td></tr>`;return;}
+  tbody.innerHTML=filtered.map(i=>{
+    const sc=i.stock===0?'stock-low':i.stock<=3?'stock-med':'stock-ok';
+    return `<tr>
+      <td><span class="mono" style="font-size:11px">${esc(i.codigo)}</span></td>
+      <td><div style="font-weight:600">${esc(i.nombre)}</div>${i.ubicacion?`<div style="font-size:10px;color:var(--text-muted)">${esc(i.ubicacion)}</div>`:''}</td>
+      <td><span class="chip ${i.tipo==='repuesto'?'':'orange'}">${i.tipo==='repuesto'?'Repuesto':'Producto'}</span></td>
+      <td style="font-size:11px;color:var(--text-secondary)">${esc(i.compat||'—')}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="btn-action" onclick="adjustStock('${i.id}',-1)" style="width:22px;height:22px;font-size:11px"><i class="bi bi-dash"></i></button>
+          <span class="mono ${sc}" style="min-width:24px;text-align:center;font-weight:700">${i.stock}</span>
+          <button class="btn-action" onclick="adjustStock('${i.id}',1)" style="width:22px;height:22px;font-size:11px"><i class="bi bi-plus"></i></button>
+        </div>
+      </td>
+      <td class="mono" style="font-size:12px">${S.config.moneda||'$'}${i.costo.toFixed(2)}</td>
+      <td class="mono" style="font-size:12px;color:var(--accent-green)">${S.config.moneda||'$'}${i.venta.toFixed(2)}</td>
+      <td>
+        <div style="display:flex;gap:4px">
+          <button class="btn-action edit" onclick="openItemModal('${i.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn-action del" onclick="deleteItem('${i.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== CAJA ==========
+function abrirCaja() {
+  const monto=parseFloat(document.getElementById('caja-apertura-monto').value)||0;
+  S.caja={open:true,apertura:new Date().toISOString(),balance:monto,movimientos:[{fecha:new Date().toISOString(),tipo:'apertura',desc:'Apertura de caja',monto}]};
+  saveState(); renderCaja(); updateCajaIndicator();
+  toast('Caja abierta','success');
+}
+function cerrarCaja() {
+  if(!confirm('¿Cerrar la caja? Se registrará el cierre con el balance actual.')) return;
+  S.caja.movimientos.push({fecha:new Date().toISOString(),tipo:'cierre',desc:'Cierre de caja',monto:S.caja.balance});
+  S.caja.open=false; S.caja.apertura=null;
+  saveState(); renderCaja(); updateCajaIndicator();
+  toast('Caja cerrada','info');
+}
+function registrarMovimiento() {
+  const tipo=document.getElementById('mov-tipo').value;
+  const monto=parseFloat(document.getElementById('mov-monto').value)||0;
+  const desc=document.getElementById('mov-desc').value.trim();
+  if(!monto){toast('Ingresa un monto','error');return;}
+  if(tipo==='ingreso') S.caja.balance+=monto;
+  else { if(S.caja.balance<monto){toast('Saldo insuficiente','error');return;} S.caja.balance-=monto; }
+  S.caja.movimientos.push({fecha:new Date().toISOString(),tipo,desc:desc||tipo,monto});
+  document.getElementById('mov-monto').value='';
+  document.getElementById('mov-desc').value='';
+  saveState(); renderCaja();
+  toast(`${tipo==='ingreso'?'Ingreso':'Egreso'} registrado`,'success');
+}
+function renderCaja() {
+  const c=S.caja;
+  document.getElementById('caja-balance').textContent=`${S.config.moneda||'$'}${(c.balance||0).toFixed(2)}`;
+  const ingresos=c.movimientos.filter(m=>m.tipo==='ingreso'||m.tipo==='apertura').reduce((a,m)=>a+m.monto,0);
+  const egresos=c.movimientos.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  document.getElementById('caja-ingresos').textContent=`${S.config.moneda||'$'}${ingresos.toFixed(2)}`;
+  document.getElementById('caja-egresos').textContent=`${S.config.moneda||'$'}${egresos.toFixed(2)}`;
+  document.getElementById('caja-sub').textContent=c.open?'Caja abierta':'Caja cerrada';
+  document.getElementById('caja-closed-ui').style.display=c.open?'none':'block';
+  document.getElementById('caja-open-ui').style.display=c.open?'block':'none';
+  if(c.open&&c.apertura) document.getElementById('caja-hora-apertura').textContent=new Date(c.apertura).toLocaleTimeString('es');
+  const tbody=document.getElementById('caja-movimientos-body');
+  if(!c.movimientos.length){tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">Sin movimientos</td></tr>`;return;}
+  tbody.innerHTML=[...c.movimientos].reverse().map(m=>{
+    const color=m.tipo==='ingreso'||m.tipo==='apertura'?'var(--accent-green)':'var(--accent-red)';
+    const sign=m.tipo==='ingreso'||m.tipo==='apertura'?'+':'-';
+    return `<tr>
+      <td style="font-size:11px" class="mono">${new Date(m.fecha).toLocaleString('es')}</td>
+      <td><span class="chip ${m.tipo==='egreso'?'red':m.tipo==='cierre'?'orange':'green'}">${m.tipo}</span></td>
+      <td>${esc(m.desc)}</td>
+      <td class="mono" style="color:${color};font-weight:700">${sign}${S.config.moneda||'$'}${m.monto.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== POS ==========
+let cart=[];
+function renderPOS() {
+  const q=(document.getElementById('search-pos')||{}).value?.toLowerCase()||'';
+  const ft=(document.getElementById('filter-pos-cat')||{}).value||'';
+  const filtered=S.inventory.filter(i=>{
+    const m=!q||i.nombre.toLowerCase().includes(q)||(i.compat||'').toLowerCase().includes(q);
+    const t=!ft||i.tipo===ft;
+    return m&&t&&i.stock>0;
+  });
+  const grid=document.getElementById('pos-products-grid');
+  if(!filtered.length){grid.innerHTML=`<div class="col-12" style="text-align:center;padding:40px;color:var(--text-muted)">Sin productos disponibles</div>`;return;}
+  grid.innerHTML=filtered.map(i=>`
+    <div class="col-6 col-md-4 col-lg-3">
+      <div class="pos-product-card" onclick="addToCart('${i.id}')">
+        <div style="font-size:28px;margin-bottom:6px">${i.tipo==='repuesto'?'🔧':'📦'}</div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:4px">${esc(i.nombre)}</div>
+        ${i.compat?`<div style="font-size:10px;color:var(--text-muted)">${esc(i.compat)}</div>`:''}
+        <div class="price" style="margin-top:6px">${S.config.moneda||'$'}${i.venta.toFixed(2)}</div>
+        <div style="font-size:10px;color:var(--text-secondary);margin-top:2px">Stock: ${i.stock}</div>
+      </div>
+    </div>
+  `).join('');
+  renderCart();
+}
+function addToCart(id) {
+  const item=S.inventory.find(i=>i.id===id);
+  if(!item||item.stock<=0){toast('Sin stock','error');return;}
+  const ex=cart.find(c=>c.id===id);
+  if(ex){if(ex.qty>=item.stock){toast('Stock máximo alcanzado','warning');return;}ex.qty++;}
+  else cart.push({id,nombre:item.nombre,precio:item.venta,qty:1});
+  renderCart();
+  toast(`${item.nombre} agregado al carrito`,'info');
+}
+function removeFromCart(id){cart=cart.filter(c=>c.id!==id);renderCart();}
+function renderCart() {
+  const el=document.getElementById('cart-items');
+  if(!cart.length){el.innerHTML=`<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:40px 0">Carrito vacío</div>`;document.getElementById('pos-total').textContent='$0.00';document.getElementById('pos-subtotal').textContent='$0.00';return;}
+  el.innerHTML=cart.map(c=>`
+    <div class="cart-item">
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.nombre)}</div><div style="font-size:11px;color:var(--text-muted)" class="mono">${S.config.moneda||'$'}${c.precio.toFixed(2)} x ${c.qty}</div></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="mono" style="color:var(--accent-green);font-size:13px">${S.config.moneda||'$'}${(c.precio*c.qty).toFixed(2)}</span>
+        <button class="btn-action del" onclick="removeFromCart('${c.id}')" style="width:22px;height:22px;font-size:10px"><i class="bi bi-x"></i></button>
+      </div>
+    </div>
+  `).join('');
+  const total=cart.reduce((a,c)=>a+c.precio*c.qty,0);
+  document.getElementById('pos-total').textContent=`${S.config.moneda||'$'}${total.toFixed(2)}`;
+  document.getElementById('pos-subtotal').textContent=`${S.config.moneda||'$'}${total.toFixed(2)}`;
+}
+function clearCart(){cart=[];renderCart();}
+function processPOSSale() {
+  if(!cart.length){toast('Carrito vacío','error');return;}
+  const total=cart.reduce((a,c)=>a+c.precio*c.qty,0);
+  const metodo=document.getElementById('pos-payment').value;
+  cart.forEach(c=>{const item=S.inventory.find(i=>i.id===c.id);if(item)item.stock=Math.max(0,item.stock-c.qty);});
+  if(S.caja.open){
+    S.caja.balance+=total;
+    S.caja.movimientos.push({fecha:new Date().toISOString(),tipo:'ingreso',desc:`Venta POS (${metodo}) — ${cart.length} item(s)`,monto:total});
+  }
+  saveState();
+  clearCart();
+  renderPOS();
+  updateBadges();
+  toast(`Venta procesada: ${S.config.moneda||'$'}${total.toFixed(2)}`,'success');
+}
+
+// ========== GARANTÍAS ==========
+function renderGarantias() {
+  const garantias=S.orders.filter(o=>o.garantiaActivada&&o.garantiaVence);
+  const tbody=document.getElementById('garantias-body');
+  if(!garantias.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Sin garantías activas</td></tr>`;return;}
+  const today=new Date();
+  tbody.innerHTML=garantias.map(o=>{
+    const venc=new Date(o.garantiaVence);
+    const diffDays=Math.ceil((venc-today)/86400000);
+    const statusG=diffDays<0?'Vencida':diffDays<=7?'Por vencer':'Vigente';
+    const sc=diffDays<0?'red':diffDays<=7?'orange':'green';
+    return `<tr>
+      <td class="mono" style="color:var(--accent-cyan)">${o.codigo}</td>
+      <td><div style="font-weight:600">${esc(o.cliente)}</div><div class="mono" style="font-size:11px;color:var(--text-muted)">${esc(o.telefono)}</div></td>
+      <td>${esc(o.marca)} ${esc(o.modelo)}</td>
+      <td>${fmtDate(o.fechaEntrega)}</td>
+      <td>${fmtDate(o.garantiaVence)}</td>
+      <td class="mono" style="color:var(--${sc==='red'?'accent-red':sc==='orange'?'accent-orange':'accent-green'})">${diffDays<0?'Vencida':`${diffDays}d`}</td>
+      <td><span class="chip ${sc}">${statusG}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== DASHBOARD ==========
+function renderDashboard() {
+  const active=S.orders.filter(o=>o.estado!=='Entregado').length;
+  const pending=S.orders.filter(o=>o.piezaPendiente&&o.estado!=='Entregado').length;
+  const balance=S.caja.balance||0;
+  const garantias=S.orders.filter(o=>o.garantiaActivada&&o.garantiaVence&&new Date(o.garantiaVence)>=new Date()).length;
+  document.getElementById('ds-active').textContent=active;
+  document.getElementById('ds-pending').textContent=pending;
+  document.getElementById('ds-caja').textContent=`${S.config.moneda||'$'}${balance.toFixed(2)}`;
+  document.getElementById('ds-garantias').textContent=garantias;
+  const hoy=new Date().toISOString().slice(0,10);
+  const ingresosHoy=S.caja.movimientos.filter(m=>m.tipo==='ingreso'&&m.fecha.startsWith(hoy)).reduce((a,m)=>a+m.monto,0);
+  document.getElementById('ds-ingresos-hoy').textContent=`${S.config.moneda||'$'}${ingresosHoy.toFixed(2)}`;
+  document.getElementById('ds-total-orders').textContent=S.orders.length;
+  document.getElementById('ds-entregadas').textContent=S.orders.filter(o=>o.estado==='Entregado').length;
+  document.getElementById('ds-balance').textContent=`${S.config.moneda||'$'}${balance.toFixed(2)}`;
+  const recientes=S.orders.slice(0,5);
+  const tbody=document.getElementById('ds-orders-body');
+  if(!recientes.length){tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text-muted)">Sin órdenes aún</td></tr>`;return;}
+  tbody.innerHTML=recientes.map(o=>`<tr>
+    <td class="mono" style="color:var(--accent-cyan)">${o.codigo}</td>
+    <td>${esc(o.cliente)}</td>
+    <td>${esc(o.marca)} ${esc(o.modelo)}</td>
+    <td>${statusBadge(o.estado)}</td>
+    <td><button class="btn-action view" onclick="navigate('orders')" style="font-size:11px"><i class="bi bi-arrow-right"></i></button></td>
+  </tr>`).join('');
+  const alertsEl=document.getElementById('ds-alerts');
+  const alerts=[];
+  if(pending>0) alerts.push(`<div class="alert-banner warning"><i class="bi bi-exclamation-triangle"></i> ${pending} orden(es) con pieza pendiente</div>`);
+  const lowStock=S.inventory.filter(i=>i.stock===0);
+  if(lowStock.length) alerts.push(`<div class="alert-banner danger"><i class="bi bi-box-seam"></i> ${lowStock.length} item(s) sin stock</div>`);
+  const proxVencer=S.orders.filter(o=>{if(!o.garantiaActivada||!o.garantiaVence)return false;const d=Math.ceil((new Date(o.garantiaVence)-new Date())/86400000);return d>=0&&d<=7;});
+  if(proxVencer.length) alerts.push(`<div class="alert-banner warning"><i class="bi bi-shield-exclamation"></i> ${proxVencer.length} garantía(s) por vencer</div>`);
+  const vencidas=S.orders.filter(o=>o.estado!=='Entregado'&&o.fechaPromesa&&new Date(o.fechaPromesa)<new Date());
+  if(vencidas.length) alerts.push(`<div class="alert-banner danger"><i class="bi bi-clock"></i> ${vencidas.length} orden(es) fuera de fecha promesa</div>`);
+  alertsEl.innerHTML=alerts.length?alerts.join(''):` <div style="color:var(--text-muted);font-size:12px;text-align:center;padding:10px">Sin alertas activas ✓</div>`;
+}
+
+// ========== CONFIGURACIÓN ==========
+function loadConfig() {
+  const c=S.config;
+  document.getElementById('cfg-nombre').value=c.nombre||'';
+  document.getElementById('cfg-telefono').value=c.telefono||'';
+  document.getElementById('cfg-prefix').value=c.prefix||'ORD-';
+  document.getElementById('cfg-direccion').value=c.direccion||'';
+  document.getElementById('cfg-garantia').value=c.garantia||30;
+  document.getElementById('cfg-moneda').value=c.moneda||'$';
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  document.getElementById('toggle-theme').checked=dark;
+}
+function saveConfig() {
+  S.config={...S.config,
+    nombre:document.getElementById('cfg-nombre').value.trim(),
+    telefono:document.getElementById('cfg-telefono').value.trim(),
+    prefix:document.getElementById('cfg-prefix').value.trim()||'ORD-',
+    direccion:document.getElementById('cfg-direccion').value.trim(),
+    garantia:parseInt(document.getElementById('cfg-garantia').value)||30,
+    moneda:document.getElementById('cfg-moneda').value||'$',
+  };
+  saveState(); toast('Configuración guardada','success');
+}
+function toggleTheme() {
+  const isDark=document.getElementById('toggle-theme').checked;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  localStorage.setItem('tf_theme',isDark?'dark':'light');
+}
+function exportData() {
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`techflow_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();
+  toast('Datos exportados','success');
+}
+function importData(evt) {
+  const file=evt.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{try{S=JSON.parse(e.target.result);saveState();renderDashboard();updateBadges();toast('Datos importados','success');}catch{toast('Archivo inválido','error');}};
+  r.readAsText(file);
+}
+function resetAll() {
+  if(!confirm('¿Borrar TODOS los datos? Esta acción es irreversible.')) return;
+  if(!confirm('¿Confirmas? Se perderán todas las órdenes, inventario y movimientos de caja.')) return;
+  S=deepClone(DEFAULT_STATE);saveState();renderDashboard();updateBadges();navigate('dashboard');
+  toast('Datos eliminados','info');
+}
+
+// ========== BADGES & INDICATORS ==========
+function updateBadges() {
+  const active=S.orders.filter(o=>o.estado!=='Entregado').length;
+  document.getElementById('badge-orders').textContent=active;
+  const lowStock=S.inventory.filter(i=>i.stock===0);
+  const badge=document.getElementById('badge-inventory');
+  badge.style.display=lowStock.length?'inline-block':'none';
+  updateCajaIndicator();
+}
+function updateCajaIndicator() {
+  const el=document.getElementById('caja-indicator');
+  if(S.caja.open){el.className='caja-status open';el.textContent='CAJA ABIERTA';}
+  else{el.className='caja-status closed';el.textContent='CAJA CERRADA';}
+}
+
+// ========== HELPERS ==========
+function showModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(d){if(!d)return'—';try{return new Date(d+'T12:00:00').toLocaleDateString('es-SV',{day:'2-digit',month:'short',year:'numeric'});}catch{return d;}}
+function statusBadge(s){const map={'Recibido':'recibido','En Proceso':'proceso','Listo':'listo','Entregado':'entregado'};return`<span class="badge-status ${map[s]||'recibido'}">${s}</span>`;}
+
+// Cerrar modales con click fuera
+document.querySelectorAll('.modal-overlay').forEach(mo=>{mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('show');});});
+
+// ========== INIT ==========
+function init() {
+  const theme=localStorage.getItem('tf_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',theme);
+  updateBadges();
+  renderDashboard();
+  loadConfig();
+  // Seed default inventory if empty
+  if(!S.inventory.length) {
+    S.inventory=[
+      {id:'item_1',codigo:'PANT-IP14',nombre:'Pantalla iPhone 14',tipo:'repuesto',compat:'iPhone 14',ubicacion:'A1',stock:3,costo:85,venta:140},
+      {id:'item_2',codigo:'BAT-SS-A52',nombre:'Batería Samsung A52',tipo:'repuesto',compat:'Samsung A52',ubicacion:'A2',stock:5,costo:12,venta:28},
+      {id:'item_3',codigo:'PANT-SS-S23',nombre:'Pantalla Samsung S23',tipo:'repuesto',compat:'Samsung S23',ubicacion:'A3',stock:0,costo:120,venta:210},
+      {id:'item_4',codigo:'CARG-USB-C',nombre:'Cargador USB-C 25W',tipo:'producto',compat:'Universal',ubicacion:'B1',stock:10,costo:8,venta:18},
+      {id:'item_5',codigo:'FUNDA-IP14',nombre:'Funda Transparente iPhone 14',tipo:'producto',compat:'iPhone 14',ubicacion:'B2',stock:8,costo:3,venta:9},
+      {id:'item_6',codigo:'BAT-IP12',nombre:'Batería iPhone 12',tipo:'repuesto',compat:'iPhone 12',ubicacion:'A4',stock:2,costo:18,venta:42},
+    ];
+    saveState();
+  }
+  renderInventory();
+  renderCaja();
+  updateBadges();
+}
+
+init();
+</script>
 </body>
 </html>

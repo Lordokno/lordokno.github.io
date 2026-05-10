@@ -529,7 +529,29 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       </div>
     </div>
     <div class="form-row c2 mb-3">
-      <div><label class="tf-label">Repuesto / Pieza</label><select class="tf-select" id="ord-repuesto" onchange="checkRepuesto()"><option value="">Sin repuesto</option></select><div id="repuesto-status" style="margin-top:5px"></div></div>
+      <div>
+        <label class="tf-label">Repuesto / Pieza</label>
+        <div style="position:relative">
+          <div style="position:relative">
+            <i class="bi bi-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;z-index:1;pointer-events:none"></i>
+            <input class="tf-input" id="rep-search" placeholder="Buscar repuesto por nombre o modelo..." style="padding-left:30px" autocomplete="off" oninput="filterRepuestos()" onfocus="showRepDropdown()" onblur="hideRepDropdown()">
+          </div>
+          <div id="rep-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--modal-bg);border:1px solid var(--accent-blue);border-top:none;border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+            <div id="rep-dropdown-list"></div>
+          </div>
+        </div>
+        <input type="hidden" id="ord-repuesto">
+        <div id="repuesto-selected" style="margin-top:6px;display:none">
+          <div style="background:var(--hover-bg);border:1px solid var(--card-border);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:12px;font-weight:600" id="rep-sel-name"></div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:1px" id="rep-sel-info"></div>
+            </div>
+            <button onclick="clearRepuesto()" style="background:transparent;border:none;color:var(--accent-red);cursor:pointer;font-size:14px;padding:2px 5px" title="Quitar repuesto"><i class="bi bi-x-circle"></i></button>
+          </div>
+        </div>
+        <div id="repuesto-status" style="margin-top:5px"></div>
+      </div>
       <div><label class="tf-label">Técnico Asignado</label><input class="tf-input" id="ord-tecnico" placeholder="Nombre del técnico"></div>
     </div>
     <input type="hidden" id="ord-edit-id">
@@ -992,8 +1014,135 @@ const FALLAS=['Pantalla rota','Batería agotada','No enciende','No carga','Daño
 function renderFallas(sel=[]){document.getElementById('fallas-grid').innerHTML=FALLAS.map(f=>{const c=sel.includes(f);return`<label style="cursor:pointer;user-select:none"><input type="checkbox" value="${f}" class="fc" style="display:none" ${c?'checked':''}><span class="chip ${c?'g':''}" onclick="tF(this)">${f}</span></label>`;}).join('');}
 window.tF=function(el){const i=el.previousElementSibling;i.checked=!i.checked;el.className=`chip ${i.checked?'g':''}`;};
 function getSF(){return[...document.querySelectorAll('.fc:checked')].map(c=>c.value);}
-function popRep(selId=''){const s=document.getElementById('ord-repuesto');s.innerHTML='<option value="">Sin repuesto</option>';inventory.filter(i=>i.tipo==='repuesto').forEach(i=>s.innerHTML+=`<option value="${i.id}" ${i.id===selId?'selected':''}>${i.nombre} (Stock: ${i.stock})</option>`);}
-window.checkRepuesto=function(){const id=document.getElementById('ord-repuesto').value,el=document.getElementById('repuesto-status');if(!id){el.innerHTML='';return;}const item=inventory.find(i=>i.id===id);if(!item)return;el.innerHTML=item.stock>0?`<div class="ab s"><i class="bi bi-check-circle"></i> Disponible: <b>${item.stock}</b> en stock</div>`:`<div class="ab w"><i class="bi bi-exclamation-triangle"></i> Sin stock — quedará <b>Pieza Pendiente</b></div>`;};
+// ─── REPUESTO AUTOCOMPLETE ────────────────────────────────────────────────────
+let repDropdownVisible = false;
+let repHideTimer = null;
+
+function popRep(selId='') {
+  // New autocomplete: if selId given, pre-fill the selected item display
+  clearRepuesto();
+  if(selId) {
+    const item = inventory.find(i=>i.id===selId);
+    if(item) selectRepuesto(item, false);
+  }
+}
+
+window.filterRepuestos = function() {
+  const q = (document.getElementById('rep-search').value||'').trim().toLowerCase();
+  renderRepDropdown(q);
+};
+
+function renderRepDropdown(q) {
+  const list = document.getElementById('rep-dropdown-list');
+  // Split query into tokens for multi-word matching
+  const tokens = q ? q.split(/\s+/).filter(Boolean) : [];
+  const repuestos = inventory.filter(i => i.tipo === 'repuesto');
+  let filtered;
+  if(!tokens.length) {
+    // Show first 30 when empty
+    filtered = repuestos.slice(0, 30);
+  } else {
+    filtered = repuestos.filter(i => {
+      // Build a unified searchable string: nombre + compat + codigo
+      const haystack = [
+        (i.nombre||'').toLowerCase(),
+        (i.compat||'').toLowerCase(),
+        (i.codigo||'').toLowerCase()
+      ].join(' ');
+      // All tokens must appear somewhere in the haystack
+      return tokens.every(t => haystack.includes(t));
+    }).slice(0, 40);
+  }
+  if(!filtered.length) {
+    list.innerHTML = `<div style="padding:12px 14px;font-size:12px;color:var(--text-muted);text-align:center"><i class="bi bi-search" style="margin-right:5px"></i>Sin resultados${q?' para "'+esc(q)+'"':''}</div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(i => {
+    const sc = i.stock===0 ? '#ff4444' : i.stock<=3 ? '#ff9100' : '#00e676';
+    const stockTxt = i.stock===0 ? 'Sin stock' : `${i.stock} en stock`;
+    return `<div class="rep-drop-item" onmousedown="selectRepuesto_byId('${i.id}')" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);transition:background .12s;display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="min-width:0">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${highlightTokens(esc(i.nombre), tokens)}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:1px">${esc(i.compat||'')} ${i.codigo?'· '+i.codigo:''}</div>
+      </div>
+      <div style="flex-shrink:0;text-align:right">
+        <div style="font-size:13px;font-weight:700;color:#00e676;font-family:'JetBrains Mono',monospace">${mon()}${(i.venta||0).toFixed(2)}</div>
+        <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:${sc}">${stockTxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Hover style via JS since we can't use :hover inside innerHTML easily
+  list.querySelectorAll('.rep-drop-item').forEach(el => {
+    el.addEventListener('mouseover', () => el.style.background = 'var(--hover-bg)');
+    el.addEventListener('mouseout', () => el.style.background = '');
+  });
+}
+
+function highlightTokens(text, tokens) {
+  if(!tokens.length) return text;
+  let result = text;
+  tokens.forEach(t => {
+    const re = new RegExp(`(${t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    result = result.replace(re, '<mark style="background:rgba(79,110,247,.35);color:inherit;border-radius:2px;padding:0 1px">$1</mark>');
+  });
+  return result;
+}
+
+window.showRepDropdown = function() {
+  clearTimeout(repHideTimer);
+  repDropdownVisible = true;
+  document.getElementById('rep-dropdown').style.display = 'block';
+  renderRepDropdown((document.getElementById('rep-search').value||'').toLowerCase());
+};
+
+window.hideRepDropdown = function() {
+  repHideTimer = setTimeout(() => {
+    repDropdownVisible = false;
+    document.getElementById('rep-dropdown').style.display = 'none';
+  }, 180);
+};
+
+window.selectRepuesto_byId = function(id) {
+  const item = inventory.find(i=>i.id===id);
+  if(item) selectRepuesto(item, true);
+};
+
+function selectRepuesto(item, focusClose=true) {
+  document.getElementById('ord-repuesto').value = item.id;
+  document.getElementById('rep-search').value = '';
+  document.getElementById('rep-dropdown').style.display = 'none';
+  // Show selected card
+  document.getElementById('rep-sel-name').textContent = item.nombre;
+  const sc = item.stock===0 ? '#ff4444' : item.stock<=3 ? '#ff9100' : '#00e676';
+  document.getElementById('rep-sel-info').innerHTML =
+    `<span style="color:#00e676;font-family:'JetBrains Mono',monospace;font-weight:700">${mon()}${(item.venta||0).toFixed(2)}</span>` +
+    `<span style="margin:0 6px;opacity:.4">·</span>` +
+    `<span style="color:${sc};font-family:'JetBrains Mono',monospace">${item.stock} en stock</span>` +
+    `<span style="margin:0 6px;opacity:.4">·</span>` +
+    `<span style="color:var(--text-muted)">${esc(item.compat||'')}</span>`;
+  document.getElementById('repuesto-selected').style.display = 'block';
+  checkRepuesto();
+}
+
+window.clearRepuesto = function() {
+  document.getElementById('ord-repuesto').value = '';
+  document.getElementById('rep-search').value = '';
+  document.getElementById('repuesto-selected').style.display = 'none';
+  document.getElementById('rep-sel-name').textContent = '';
+  document.getElementById('rep-sel-info').textContent = '';
+  document.getElementById('repuesto-status').innerHTML = '';
+};
+
+window.checkRepuesto = function() {
+  const id = document.getElementById('ord-repuesto').value;
+  const el = document.getElementById('repuesto-status');
+  if(!id){el.innerHTML='';return;}
+  const item = inventory.find(i=>i.id===id);
+  if(!item) return;
+  el.innerHTML = item.stock>0
+    ? `<div class="ab s"><i class="bi bi-check-circle"></i> Disponible: <b>${item.stock}</b> unidades en stock — Precio venta: <b>${mon()}${(item.venta||0).toFixed(2)}</b></div>`
+    : `<div class="ab w"><i class="bi bi-exclamation-triangle"></i> Sin stock — la orden quedará <b>Pieza Pendiente</b></div>`;
+};
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 window.openOrderModal=function(id=null){
@@ -1007,7 +1156,7 @@ window.openOrderModal=function(id=null){
   document.getElementById('ord-garantia').value=configData.garantia||30;
   renderFallas(); popRep();
   if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');}
-  checkRepuesto(); showModal('modal-order');
+  showModal('modal-order');
 };
 
 window.saveOrder=async function(){
@@ -1102,7 +1251,30 @@ window.filterBrand=function(b){brandFilter=b;document.querySelectorAll('.brand-t
 
 window.setInvPage=function(p){const f=getFilteredInv();const tp=Math.max(1,Math.ceil(f.length/invPP));invPage=Math.max(1,Math.min(p,tp));renderInventory();};
 window.setInvPP=function(v){invPP=parseInt(v);invPage=1;renderInventory();};
-function getFilteredInv(){const q=(document.getElementById('search-inv')||{}).value?.toLowerCase()||'',ft=(document.getElementById('filter-inv-type')||{}).value||'';return inventory.filter(i=>{const m=!q||(i.nombre||'').toLowerCase().includes(q)||(i.codigo||'').toLowerCase().includes(q)||(i.compat||'').toLowerCase().includes(q);const t=!ft||i.tipo===ft;const b=!brandFilter||(i.compat||'').toLowerCase().includes(brandFilter.toLowerCase())||(i.nombre||'').toLowerCase().includes(brandFilter.toLowerCase());return m&&t&&b;});}
+
+function normalize(s){
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // remove accents
+    .replace(/[^a-z0-9\s]/g,' ');
+}
+
+function getFilteredInv(){
+  const raw = (document.getElementById('search-inv')||{}).value||'';
+  const ft  = (document.getElementById('filter-inv-type')||{}).value||'';
+  // Split into tokens, normalize each
+  const tokens = normalize(raw).split(/\s+/).filter(Boolean);
+  return inventory.filter(i=>{
+    // Build a unified normalized haystack from all searchable fields
+    const haystack = normalize(
+      [i.nombre, i.codigo, i.compat, i.ubicacion, i.tipo].join(' ')
+    );
+    // All tokens must appear in the haystack
+    const matchesQuery = !tokens.length || tokens.every(t => haystack.includes(t));
+    const matchesType = !ft || i.tipo === ft;
+    const matchesBrand = !brandFilter || normalize(i.compat+' '+i.nombre).includes(normalize(brandFilter));
+    return matchesQuery && matchesType && matchesBrand;
+  });
+}
 
 window.renderInventory=function(){
   const filtered=getFilteredInv(),total=filtered.length,page=filtered.slice((invPage-1)*invPP,invPage*invPP);
@@ -1131,7 +1303,16 @@ window.renderCaja=function(){const c=cajaData,m=mon();document.getElementById('c
 // ─── POS ──────────────────────────────────────────────────────────────────────
 window.setPosPage=function(p){const f=getFilteredPOS();const tp=Math.max(1,Math.ceil(f.length/posPP));posPage=Math.max(1,Math.min(p,tp));renderPOS();};
 window.setPosPP=function(v){posPP=parseInt(v);posPage=1;renderPOS();};
-function getFilteredPOS(){const q=(document.getElementById('search-pos')||{}).value?.toLowerCase()||'',ft=(document.getElementById('filter-pos-cat')||{}).value||'';return inventory.filter(i=>(!q||i.nombre.toLowerCase().includes(q)||(i.compat||'').toLowerCase().includes(q))&&(!ft||i.tipo===ft)&&i.stock>0);}
+function getFilteredPOS(){
+  const raw = (document.getElementById('search-pos')||{}).value||'';
+  const ft  = (document.getElementById('filter-pos-cat')||{}).value||'';
+  const tokens = normalize(raw).split(/\s+/).filter(Boolean);
+  return inventory.filter(i=>{
+    const haystack = normalize([i.nombre, i.codigo, i.compat, i.tipo].join(' '));
+    const matchesQuery = !tokens.length || tokens.every(t => haystack.includes(t));
+    return matchesQuery && (!ft || i.tipo===ft) && i.stock>0;
+  });
+}
 
 window.renderPOS=function(){
   const filtered=getFilteredPOS(),total=filtered.length,page=filtered.slice((posPage-1)*posPP,posPage*posPP);

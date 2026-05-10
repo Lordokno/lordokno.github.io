@@ -242,6 +242,15 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* GUARANTEE CARD */
 .gcard{background:linear-gradient(135deg,rgba(0,230,118,.07),rgba(0,212,255,.05));border:1px solid rgba(0,230,118,.2);border-radius:9px;padding:11px 14px;margin-top:8px;}
 
+/* ─── CLOCK ─── */
+#topbar-clock{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:8px;padding:4px 12px;}
+#clock-time{color:var(--accent-cyan);font-size:16px;font-weight:800;letter-spacing:2px;}
+#clock-date{color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;}
+
+.anticipo-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(255,145,0,.15);color:#ff9100;border:1px solid rgba(255,145,0,.3);}
+.anticipo-liberado{background:rgba(0,230,118,.12);color:#00e676;border-color:rgba(0,230,118,.3);}
+.saldo-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(79,110,247,.12);color:#4f6ef7;}
+
 .falla-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;background:var(--hover-bg);border:1px solid var(--card-border);color:var(--text-secondary);cursor:pointer;transition:var(--tr);user-select:none;}
 .falla-chip:hover{border-color:#4f6ef7;color:#4f6ef7;}
 .falla-chip.falla-active{background:rgba(0,230,118,.15);border-color:#00e676;color:#00e676;}
@@ -272,6 +281,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 @media print{#sidebar,#tc,.no-print{display:none!important;}#main{margin-left:0!important;}body{background:#fff;color:#000;}}
 @media(max-width:768px){#sidebar{transform:translateX(-100%);}#sidebar.mob{transform:translateX(0);}#main{margin-left:0;}.pos-layout{grid-template-columns:1fr;}.form-row.c2,.form-row.c3{grid-template-columns:1fr;}.search-input{width:140px;}.search-input:focus{width:180px;}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -313,6 +323,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <div class="topbar-title" id="topbar-title">Dashboard</div>
     </div>
     <div class="topbar-right">
+      <div id="topbar-clock" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-cyan);letter-spacing:1px;display:flex;align-items:center;gap:6px">
+        <span id="clock-time" style="font-weight:700;font-size:15px">--:--:--</span>
+        <span id="clock-date" style="font-size:10px;color:var(--text-muted)"></span>
+      </div>
       <div id="caja-indicator" class="caja-status closed">CAJA CERRADA</div>
     </div>
   </div>
@@ -320,12 +334,102 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 
     <!-- ══ DASHBOARD ══ -->
     <div id="page-dashboard" class="page-section active">
-      <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3"><div class="card-stat blue"><div class="stat-label">Órdenes Activas</div><div class="stat-value mono" id="ds-active">—</div><div class="stat-sub">Sin entregar</div><i class="bi bi-clipboard2 stat-icon"></i></div></div>
-        <div class="col-6 col-md-3"><div class="card-stat orange"><div class="stat-label">Piezas Pendientes</div><div class="stat-value mono" id="ds-pending">—</div><div class="stat-sub">Bloqueadas</div><i class="bi bi-box-seam stat-icon"></i></div></div>
-        <div class="col-6 col-md-3"><div class="card-stat green"><div class="stat-label">Balance Caja</div><div class="stat-value mono" id="ds-caja">—</div><div class="stat-sub">Saldo actual</div><i class="bi bi-cash stat-icon"></i></div></div>
-        <div class="col-6 col-md-3"><div class="card-stat purple"><div class="stat-label">Garantías</div><div class="stat-value mono" id="ds-garantias">—</div><div class="stat-sub">Vigentes</div><i class="bi bi-shield-check stat-icon"></i></div></div>
+
+      <!-- KPI CARDS ROW 1 -->
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+          <div class="card-stat blue" style="cursor:pointer" onclick="navigate('orders')">
+            <div class="stat-label">Órdenes Activas</div>
+            <div class="stat-value mono" id="ds-active">—</div>
+            <div class="stat-sub" id="ds-active-sub">Sin entregar</div>
+            <i class="bi bi-clipboard2 stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat orange" style="cursor:pointer" onclick="navigate('inventory')">
+            <div class="stat-label">Piezas Pendientes</div>
+            <div class="stat-value mono" id="ds-pending">—</div>
+            <div class="stat-sub">Órdenes bloqueadas</div>
+            <i class="bi bi-box-seam stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat green" style="cursor:pointer" onclick="navigate('caja')">
+            <div class="stat-label">Balance Caja</div>
+            <div class="stat-value mono" id="ds-caja">—</div>
+            <div class="stat-sub" id="ds-caja-sub">—</div>
+            <i class="bi bi-cash stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat purple" style="cursor:pointer" onclick="navigate('garantias')">
+            <div class="stat-label">Garantías Vigentes</div>
+            <div class="stat-value mono" id="ds-garantias">—</div>
+            <div class="stat-sub">Activas</div>
+            <i class="bi bi-shield-check stat-icon"></i>
+          </div>
+        </div>
       </div>
+
+      <!-- KPI CARDS ROW 2 -->
+      <div class="row g-3 mb-3">
+        <div class="col-6 col-md-3">
+          <div class="card-stat green" onclick="navigate('caja')" style="cursor:pointer">
+            <div class="stat-label">Ingresos Hoy</div>
+            <div class="stat-value mono" style="font-size:22px" id="ds-ingresos-hoy">—</div>
+            <div class="stat-sub" id="ds-ing-sub">Movimientos del día</div>
+            <i class="bi bi-graph-up-arrow stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat orange" style="cursor:pointer" onclick="navigate('orders')">
+            <div class="stat-label">Anticipos Retenidos</div>
+            <div class="stat-value mono" style="font-size:22px" id="ds-anticipos">—</div>
+            <div class="stat-sub">Por liberar</div>
+            <i class="bi bi-hourglass-split stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat blue">
+            <div class="stat-label">Total Órdenes</div>
+            <div class="stat-value mono" style="font-size:22px" id="ds-total-orders">—</div>
+            <div class="stat-sub" id="ds-entregadas-sub">— entregadas</div>
+            <i class="bi bi-clipboard-check stat-icon"></i>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card-stat red" style="cursor:pointer" onclick="navigate('inventory')">
+            <div class="stat-label">Sin Stock</div>
+            <div class="stat-value mono" style="font-size:22px" id="ds-sinstock">—</div>
+            <div class="stat-sub">Items agotados</div>
+            <i class="bi bi-exclamation-triangle stat-icon"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS + TABLE ROW -->
+      <div class="row g-3 mb-3">
+        <!-- Donut estados -->
+        <div class="col-md-4">
+          <div class="section-card" style="height:260px">
+            <div class="section-header" style="padding:12px 16px"><div class="section-title"><i class="bi bi-pie-chart" style="color:var(--accent-cyan)"></i> Estado de Órdenes</div></div>
+            <div style="padding:0;display:flex;align-items:center;justify-content:center;height:200px">
+              <canvas id="chart-estados" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+        <!-- Bar ingresos últimos 7 días -->
+        <div class="col-md-8">
+          <div class="section-card" style="height:260px">
+            <div class="section-header" style="padding:12px 16px"><div class="section-title"><i class="bi bi-bar-chart-line" style="color:var(--accent-orange)"></i> Ingresos Últimos 7 Días</div></div>
+            <div style="padding:8px 12px;height:200px">
+              <canvas id="chart-ingresos" style="width:100%;height:100%"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT ORDERS + ALERTS -->
       <div class="row g-3">
         <div class="col-lg-8">
           <div class="section-card">
@@ -333,24 +437,38 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
               <div class="section-title"><i class="bi bi-activity" style="color:var(--accent-cyan)"></i> Órdenes Recientes</div>
               <button class="btn-p no-print" style="font-size:12px;padding:5px 12px" onclick="navigate('orders');setTimeout(openOrderModal,100)"><i class="bi bi-plus"></i> Nueva</button>
             </div>
-            <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th></th></tr></thead><tbody id="ds-orders-body"></tbody></table></div>
-            <!-- Dashboard pagination -->
+            <div style="overflow-x:auto">
+              <table class="tf-table">
+                <thead><tr><th>ID</th><th>Cliente</th><th>Equipo</th><th>Estado</th><th>Anticipo</th><th></th></tr></thead>
+                <tbody id="ds-orders-body"></tbody>
+              </table>
+            </div>
             <div class="pagination-bar" id="ds-orders-pagination"></div>
           </div>
         </div>
         <div class="col-lg-4">
+          <!-- Mini progress: estado completitud -->
           <div class="section-card mb-3">
-            <div class="section-header"><div class="section-title"><i class="bi bi-bar-chart" style="color:var(--accent-orange)"></i> Resumen</div></div>
-            <div style="padding:14px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px"><span style="color:var(--text-secondary)">Ingresos hoy</span><span class="mono" style="color:#00e676" id="ds-ingresos-hoy">—</span></div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px"><span style="color:var(--text-secondary)">Total órdenes</span><span class="mono" id="ds-total-orders">—</span></div>
-              <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px"><span style="color:var(--text-secondary)">Entregadas</span><span class="mono" id="ds-entregadas">—</span></div>
+            <div class="section-header" style="padding:12px 16px"><div class="section-title"><i class="bi bi-speedometer2" style="color:var(--accent-green)"></i> Rendimiento</div></div>
+            <div style="padding:14px" id="ds-rendimiento">
+              <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--text-secondary)">Tasa de entrega</span><span class="mono" id="ds-tasa-entrega" style="color:#00e676">0%</span></div>
+                <div style="height:6px;background:var(--card-border);border-radius:99px;overflow:hidden"><div id="bar-entrega" style="height:100%;background:linear-gradient(90deg,#00e676,#69f0ae);border-radius:99px;transition:.6s;width:0%"></div></div>
+              </div>
+              <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--text-secondary)">Órdenes en proceso</span><span class="mono" id="ds-tasa-proceso" style="color:#ff9100">0%</span></div>
+                <div style="height:6px;background:var(--card-border);border-radius:99px;overflow:hidden"><div id="bar-proceso" style="height:100%;background:linear-gradient(90deg,#ff9100,#ffd600);border-radius:99px;transition:.6s;width:0%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:var(--text-secondary)">Stock disponible</span><span class="mono" id="ds-tasa-stock" style="color:#4f6ef7">0%</span></div>
+                <div style="height:6px;background:var(--card-border);border-radius:99px;overflow:hidden"><div id="bar-stock" style="height:100%;background:linear-gradient(90deg,#4f6ef7,#00d4ff);border-radius:99px;transition:.6s;width:0%"></div></div>
+              </div>
               <div class="divider"></div>
-              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700"><span>Balance</span><span class="mono" style="color:#00e676" id="ds-balance">—</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>Balance</span><span class="mono" style="color:#00e676" id="ds-balance">—</span></div>
             </div>
           </div>
           <div class="section-card">
-            <div class="section-header"><div class="section-title"><i class="bi bi-exclamation-triangle" style="color:#ff4444"></i> Alertas</div></div>
+            <div class="section-header" style="padding:12px 16px"><div class="section-title"><i class="bi bi-exclamation-triangle" style="color:#ff4444"></i> Alertas</div></div>
             <div style="padding:10px" id="ds-alerts"><div class="empty-state" style="padding:20px"><i class="bi bi-check2-circle"></i><p>Sin alertas</p></div></div>
           </div>
         </div>
@@ -369,7 +487,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <button class="btn-p no-print" onclick="openOrderModal()"><i class="bi bi-plus-lg"></i> Nueva Orden</button>
       </div>
       <div class="section-card">
-        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th>Repuesto</th><th>Estado</th><th>Promesa</th><th>Total</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
+        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th>Repuesto</th><th>Estado</th><th>Promesa</th><th>Total</th><th>Anticipo</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
         <div class="pagination-bar" id="orders-pagination"></div>
       </div>
     </div>
@@ -574,6 +692,21 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
           <div><label class="tf-label">Total ($)</label><input class="tf-input mono" id="ord-total" type="number" placeholder="0.00"></div>
           <div><label class="tf-label">Garantía (días)</label><input class="tf-input mono" id="ord-garantia" type="number" placeholder="30"></div>
         </div>
+        <div class="form-row c2 mt-2">
+          <div>
+            <label class="tf-label" style="color:var(--accent-orange)">Anticipo ($)</label>
+            <input class="tf-input mono" id="ord-anticipo" type="number" placeholder="0.00" min="0" step="0.01" oninput="previewAnticipo()">
+          </div>
+          <div>
+            <label class="tf-label">Método de Anticipo</label>
+            <select class="tf-select" id="ord-anticipo-metodo">
+              <option value="efectivo">Efectivo</option>
+              <option value="tarjeta">Tarjeta</option>
+              <option value="transferencia">Transferencia</option>
+            </select>
+          </div>
+        </div>
+        <div id="anticipo-preview" style="display:none;margin-top:6px"></div>
       </div>
     </div>
     <div class="form-row c2 mb-3">
@@ -667,9 +800,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <option>Recibido</option><option>En Proceso</option><option>Listo</option><option>Entregado</option>
     </select>
     <div id="status-entregado-extra" style="display:none">
-      <div class="ab s"><i class="bi bi-star"></i> Se activará la garantía y registrará en caja.</div>
+      <div class="ab s"><i class="bi bi-star"></i> Se activará la garantía. El saldo restante se registrará en caja.</div>
+      <div id="status-anticipo-info" style="margin-bottom:8px"></div>
       <div class="form-row c2 mt-2">
-        <div><label class="tf-label">Cobrado ($)</label><input class="tf-input mono" id="status-cobrado" type="number" placeholder="0.00"></div>
+        <div><label class="tf-label">Saldo a Cobrar ($)</label><input class="tf-input mono" id="status-cobrado" type="number" placeholder="0.00"></div>
         <div><label class="tf-label">Método</label><select class="tf-select" id="status-payment"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></div>
       </div>
     </div>
@@ -916,7 +1050,7 @@ let nextOrderNum=1, cart=[], currentPrintOrder=null, brandFilter='';
 // ─── PAGINATION STATE ─────────────────────────────────────────────────────────
 let ordPage=1, ordPP=10;
 let invPage=1, invPP=15;
-let posPage=1, posPP=20;
+let posPage=1, posPP=5;
 let dsPg=1, dsPP=5;
 
 // ─── CSV IMPORT STATE ─────────────────────────────────────────────────────────
@@ -1124,6 +1258,35 @@ const FALLAS=['Pantalla rota','Batería agotada','No enciende','No carga','Daño
 function renderFallas(sel=[]){document.getElementById('fallas-grid').innerHTML=FALLAS.map(f=>{const a=sel.includes(f);return'<button type="button" class="falla-chip '+(a?'falla-active':'')+'" data-falla="'+f+'" onclick="tF(this)">'+f+'</button>';}).join('');}
 window.tF=function(el){el.classList.toggle('falla-active');};
 function getSF(){return[...document.querySelectorAll('.falla-chip.falla-active')].map(b=>b.dataset.falla);}
+// ─── ANTICIPO PREVIEW ─────────────────────────────────────────────────────────
+window.previewAnticipo = function() {
+  const anticipo = parseFloat(document.getElementById('ord-anticipo').value)||0;
+  const total    = parseFloat(document.getElementById('ord-total').value)||0;
+  const el       = document.getElementById('anticipo-preview');
+  if(!el) return;
+  if(anticipo <= 0) { el.style.display='none'; return; }
+  const saldo = Math.max(0, total - anticipo);
+  const pct   = total > 0 ? Math.min(100, Math.round(anticipo/total*100)) : 0;
+  el.style.display = 'block';
+  el.innerHTML = `<div style="background:rgba(255,145,0,.08);border:1px solid rgba(255,145,0,.25);border-radius:8px;padding:9px 12px;font-size:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:var(--text-secondary)">Total del servicio</span>
+      <span class="mono" style="color:var(--text-primary)">${mon()}${total.toFixed(2)}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span style="color:#ff9100;font-weight:600"><i class="bi bi-hourglass-split"></i> Anticipo</span>
+      <span class="mono" style="color:#ff9100;font-weight:700">${mon()}${anticipo.toFixed(2)} (${pct}%)</span>
+    </div>
+    <div style="height:4px;background:var(--card-border);border-radius:99px;margin-bottom:6px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#ff9100,#ffd600);border-radius:99px;transition:.3s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--text-secondary)">Saldo al entregar</span>
+      <span class="mono" style="color:#00e676;font-weight:700">${mon()}${saldo.toFixed(2)}</span>
+    </div>
+  </div>`;
+};
+
 // ─── REPUESTO AUTOCOMPLETE ────────────────────────────────────────────────────
 let repDropdownVisible = false;
 let repHideTimer = null;
@@ -1264,8 +1427,11 @@ window.openOrderModal=function(id=null){
   document.getElementById('ord-fecha-rec').value=today;
   document.getElementById('ord-fecha-prom').value=new Date(Date.now()+3*86400000).toISOString().slice(0,10);
   document.getElementById('ord-garantia').value=configData.garantia||30;
+  document.getElementById('ord-anticipo').value='';
+  document.getElementById('ord-anticipo-metodo').value='efectivo';
+  document.getElementById('anticipo-preview').style.display='none';
   renderFallas(); popRep();
-  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');}
+  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();}
   showModal('modal-order');
 };
 
@@ -1276,14 +1442,23 @@ window.saveOrder=async function(){
   setSyncStatus('syncing');
   const editId=document.getElementById('ord-edit-id').value, repId=document.getElementById('ord-repuesto').value;
   try {
-    if(editId){await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim()});toast('Orden actualizada','success');}
+    if(editId){await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value});toast('Orden actualizada','success');}
     else {
       let pp=false,rn=null;
       if(repId){const item=inventory.find(i=>i.id===repId);if(item){rn=item.nombre;if(item.stock>0)await updateDoc(doc(db,'tf_inventory',repId),{stock:item.stock-1});else pp=true;}}
       const cod=(configData.prefix||'ORD-')+String(nextOrderNum).padStart(4,'0'); nextOrderNum++;
       await setDoc(doc(db,'tf_meta','counters'),{orderNum:nextOrderNum});
-      await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false});
-      toast(`Orden ${cod} creada${pp?' — Pieza Pendiente':''}`,pp?'warning':'success');
+      const anticipo=parseFloat(document.getElementById('ord-anticipo').value)||0;
+      const anticipoMetodo=document.getElementById('ord-anticipo-metodo').value;
+      // Register anticipo in caja immediately if caja is open
+      if(anticipo>0 && cajaData.open){
+        cajaData.balance+=anticipo;
+        cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'anticipo',desc:`Anticipo orden ${cod} — ${cliente} (${anticipoMetodo})`,monto:anticipo});
+        await setDoc(doc(db,'tf_meta','caja'),cajaData);
+      }
+      await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false});
+      const toastMsg=`Orden ${cod} creada${anticipo>0?' — Anticipo '+mon()+anticipo.toFixed(2):''}${pp?' — Pieza Pendiente':''}`;
+      toast(toastMsg,pp?'warning':'success');
     }
     closeModal('modal-order');
   } catch(e){toast('Error: '+e.message,'error');}
@@ -1294,10 +1469,15 @@ window.deleteOrder=async function(id){if(!confirm('¿Eliminar esta orden?')) ret
 
 window.viewOrder=function(id){const o=orders.find(x=>x.id===id);if(!o)return;currentPrintOrder=o;document.getElementById('view-order-content').innerHTML=buildTicket(o);showModal('modal-view-order');};
 
-function buildTicket(o){const days=o.garantiaDias||30,venc=o.fechaEntrega?new Date(new Date(o.fechaEntrega).getTime()+days*86400000).toLocaleDateString('es-SV'):'N/A';return`<div style="font-size:13px"><div style="text-align:center;margin-bottom:14px"><div style="font-size:17px;font-weight:800">${esc(configData.nombre)}</div><div style="font-size:11px;color:var(--text-secondary)">${esc(configData.direccion||'')} ${configData.telefono?'| '+configData.telefono:''}</div><div style="font-size:20px;font-weight:900;color:var(--accent-cyan);margin-top:7px;font-family:'JetBrains Mono',monospace">${o.codigo}</div></div><div class="row g-2 mb-3"><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Cliente</div><div style="font-weight:600">${esc(o.cliente)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Teléfono</div><div class="mono">${esc(o.telefono)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Equipo</div><div style="font-weight:600">${esc(o.marca)} ${esc(o.modelo)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">IMEI</div><div class="mono">${esc(o.imei||'—')}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Recibido</div><div>${fmtDate(o.fechaRecibido)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Promesa</div><div>${fmtDate(o.fechaPromesa)}</div></div><div class="col-12"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Fallas</div><div>${(o.fallas||[]).join(', ')||'—'}</div></div>${o.descripcion?`<div class="col-12"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Observaciones</div><div>${esc(o.descripcion)}</div></div>`:''}</div><div class="divider"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:600">Estado:</span>${statusBadge(o.estado)}</div><div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800"><span>Total</span><span class="mono" style="color:#00e676">${mon()}${(o.total||0).toFixed(2)}</span></div>${o.garantiaActivada?`<div class="gcard mt-3"><div style="font-size:11px;font-weight:700;color:#00e676;margin-bottom:3px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>`:''}</div>`;}
+function buildTicket(o){const days=o.garantiaDias||30,venc=o.fechaEntrega?new Date(new Date(o.fechaEntrega).getTime()+days*86400000).toLocaleDateString('es-SV'):'N/A';return`<div style="font-size:13px"><div style="text-align:center;margin-bottom:14px"><div style="font-size:17px;font-weight:800">${esc(configData.nombre)}</div><div style="font-size:11px;color:var(--text-secondary)">${esc(configData.direccion||'')} ${configData.telefono?'| '+configData.telefono:''}</div><div style="font-size:20px;font-weight:900;color:var(--accent-cyan);margin-top:7px;font-family:'JetBrains Mono',monospace">${o.codigo}</div></div><div class="row g-2 mb-3"><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Cliente</div><div style="font-weight:600">${esc(o.cliente)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Teléfono</div><div class="mono">${esc(o.telefono)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Equipo</div><div style="font-weight:600">${esc(o.marca)} ${esc(o.modelo)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">IMEI</div><div class="mono">${esc(o.imei||'—')}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Recibido</div><div>${fmtDate(o.fechaRecibido)}</div></div><div class="col-6"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Promesa</div><div>${fmtDate(o.fechaPromesa)}</div></div><div class="col-12"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Fallas</div><div>${(o.fallas||[]).join(', ')||'—'}</div></div>${o.descripcion?`<div class="col-12"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Observaciones</div><div>${esc(o.descripcion)}</div></div>`:''}</div><div class="divider"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:600">Estado:</span>${statusBadge(o.estado)}</div><div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800"><span>Total</span><span class="mono" style="color:#00e676">${mon()}${(o.total||0).toFixed(2)}</span></div>
+    ${o.anticipo>0?`<div style="margin-top:6px;padding:8px 10px;background:rgba(255,145,0,.08);border:1px solid rgba(255,145,0,.25);border-radius:7px;font-size:12px">
+      <div style="display:flex;justify-content:space-between"><span style="color:#ff9100">Anticipo recibido</span><span class="mono" style="color:#ff9100;font-weight:700">${mon()}${(o.anticipo||0).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text-secondary)">Saldo pendiente</span><span class="mono" style="color:#00e676;font-weight:700">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>
+    </div>`:''}
+    ${o.garantiaActivada?`<div class="gcard mt-3"><div style="font-size:11px;font-weight:700;color:#00e676;margin-bottom:3px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>`:''}</div>`;}
 
 window.printCurrentOrder=function(){if(currentPrintOrder)printOrder(currentPrintOrder.id);};
-window.printOrder=function(id){const o=orders.find(x=>x.id===id);if(!o)return;const w=window.open('','_blank','width=420,height=650');w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${o.codigo}</title><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"><style>body{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#000;max-width:400px;margin:0 auto;padding:20px}.mono{font-family:'JetBrains Mono',monospace}.lbl{font-size:10px;text-transform:uppercase;color:#666;font-weight:700}.val{font-weight:600;margin-bottom:8px}hr{border:1px dashed #ccc;margin:10px 0}.total{font-size:18px;font-weight:800}.center{text-align:center}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}</style></head><body><div class="center"><h2 style="margin:0">${esc(configData.nombre)}</h2><div style="color:#666;font-size:11px">${esc(configData.direccion)} ${configData.telefono?'| '+configData.telefono:''}</div><h1 class="mono" style="color:#4f6ef7;margin:6px 0">${o.codigo}</h1></div><hr><div class="g"><div><div class="lbl">Cliente</div><div class="val">${esc(o.cliente)}</div></div><div><div class="lbl">Teléfono</div><div class="val mono">${esc(o.telefono)}</div></div><div><div class="lbl">Equipo</div><div class="val">${esc(o.marca)} ${esc(o.modelo)}</div></div><div><div class="lbl">IMEI</div><div class="val mono">${esc(o.imei||'—')}</div></div><div><div class="lbl">Recibido</div><div class="val">${fmtDate(o.fechaRecibido)}</div></div><div><div class="lbl">Promesa</div><div class="val">${fmtDate(o.fechaPromesa)}</div></div></div><hr><div class="lbl">Fallas</div><div class="val">${(o.fallas||[]).join(', ')||'—'}</div>${o.descripcion?`<div class="lbl">Obs.</div><div class="val">${esc(o.descripcion)}</div>`:''}<hr><div style="display:flex;justify-content:space-between"><span>Estado:</span><strong>${o.estado}</strong></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span class="total">TOTAL</span><span class="total mono">${mon()}${(o.total||0).toFixed(2)}</span></div>${o.garantiaActivada?`<hr><div style="color:green"><strong>✓ Garantía: ${o.garantiaDias||30} días</strong></div>`:''}<div class="center" style="margin-top:18px;color:#999;font-size:10px">¡Gracias por su preferencia! — ${configData.nombre}</div></body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),500);};
+window.printOrder=function(id){const o=orders.find(x=>x.id===id);if(!o)return;const w=window.open('','_blank','width=420,height=650');w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${o.codigo}</title><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"><style>body{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#000;max-width:400px;margin:0 auto;padding:20px}.mono{font-family:'JetBrains Mono',monospace}.lbl{font-size:10px;text-transform:uppercase;color:#666;font-weight:700}.val{font-weight:600;margin-bottom:8px}hr{border:1px dashed #ccc;margin:10px 0}.total{font-size:18px;font-weight:800}.center{text-align:center}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}</style></head><body><div class="center"><h2 style="margin:0">${esc(configData.nombre)}</h2><div style="color:#666;font-size:11px">${esc(configData.direccion)} ${configData.telefono?'| '+configData.telefono:''}</div><h1 class="mono" style="color:#4f6ef7;margin:6px 0">${o.codigo}</h1></div><hr><div class="g"><div><div class="lbl">Cliente</div><div class="val">${esc(o.cliente)}</div></div><div><div class="lbl">Teléfono</div><div class="val mono">${esc(o.telefono)}</div></div><div><div class="lbl">Equipo</div><div class="val">${esc(o.marca)} ${esc(o.modelo)}</div></div><div><div class="lbl">IMEI</div><div class="val mono">${esc(o.imei||'—')}</div></div><div><div class="lbl">Recibido</div><div class="val">${fmtDate(o.fechaRecibido)}</div></div><div><div class="lbl">Promesa</div><div class="val">${fmtDate(o.fechaPromesa)}</div></div></div><hr><div class="lbl">Fallas</div><div class="val">${(o.fallas||[]).join(', ')||'—'}</div>${o.descripcion?`<div class="lbl">Obs.</div><div class="val">${esc(o.descripcion)}</div>`:''}<hr><div style="display:flex;justify-content:space-between"><span>Estado:</span><strong>${o.estado}</strong></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span class="total">TOTAL</span><span class="total mono">${mon()}${(o.total||0).toFixed(2)}</span></div>${o.anticipo>0?`<div style="margin-top:8px;padding:8px;background:#fff8e1;border-radius:6px;font-size:12px"><div style="display:flex;justify-content:space-between"><span>Anticipo:</span><span style="color:#e65100;font-family:'JetBrains Mono',monospace;font-weight:700">${mon()}${(o.anticipo||0).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between"><span>Saldo:</span><span style="color:#2e7d32;font-family:'JetBrains Mono',monospace;font-weight:700">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div></div>`:''} ${o.garantiaActivada?`<hr><div style="color:green"><strong>✓ Garantía: ${o.garantiaDias||30} días</strong></div>`:''}<div class="center" style="margin-top:18px;color:#999;font-size:10px">¡Gracias por su preferencia! — ${configData.nombre}</div></body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),500);};
 
 window.sendWA=function(id){const o=orders.find(x=>x.id===id);if(!o)return;const msg=encodeURIComponent(`Hola ${o.cliente}! 👋\nSu equipo *${o.marca} ${o.modelo}* (Orden: *${o.codigo}*) está: *${o.estado}*\nFecha Promesa: ${fmtDate(o.fechaPromesa)}\nTotal: ${mon()}${(o.total||0).toFixed(2)}\n\nGracias por confiar en ${configData.nombre||'Nextcom'} 🔧`);window.open(`https://wa.me/${o.telefono.replace(/\D/g,'')}?text=${msg}`,'_blank');};
 
@@ -1324,7 +1504,13 @@ window.renderOrders=function(){
     <td>${o.repuestoNombre?`<span class="chip" style="font-size:9px">${esc(o.repuestoNombre)}</span>`:'<span style="color:var(--text-muted)">—</span>'}</td>
     <td>${statusBadge(o.estado)}</td>
     <td style="font-size:11px;color:var(--text-secondary)">${fmtDate(o.fechaPromesa)}</td>
-    <td class="mono" style="color:#00e676">${mon()}${(o.total||0).toFixed(2)}</td>
+    <td>
+      <div class="mono" style="color:#00e676;font-size:11px">${mon()}${(o.total||0).toFixed(2)}</div>
+      ${(o.total&&o.anticipo)?`<div style="font-size:10px;color:var(--text-muted)">Saldo: <span class="mono">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>`:''}
+    </td>
+    <td>
+      ${o.anticipo>0?`<span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}"><i class="bi bi-${o.anticipoLiberado?'check-circle':'hourglass-split'}"></i>${mon()}${(o.anticipo||0).toFixed(2)}</span>`:'<span style="color:var(--text-muted);font-size:11px">—</span>'}
+    </td>
     <td class="no-print"><div style="display:flex;gap:3px;flex-wrap:wrap">
       <button class="btn-action view" onclick="viewOrder('${o.id}')" title="Ver"><i class="bi bi-eye"></i></button>
       <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
@@ -1338,14 +1524,39 @@ window.renderOrders=function(){
 };
 
 // Status modal
-window.openStatusModal=function(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('status-order-id').value=id;document.getElementById('status-select').value=o.estado;document.getElementById('status-cobrado').value=o.total||'';document.getElementById('status-order-info').innerHTML=`<div style="background:var(--hover-bg);border-radius:8px;padding:9px;font-size:12px"><b>${o.codigo}</b> — ${esc(o.cliente)} — ${esc(o.marca)} ${esc(o.modelo)}</div>`;toggleEntregadoExtra();showModal('modal-status');};
+window.openStatusModal=function(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('status-order-id').value=id;document.getElementById('status-select').value=o.estado;const saldoPend=(o.total||0)-(o.anticipo||0);
+  document.getElementById('status-cobrado').value=saldoPend>0?saldoPend.toFixed(2):'0.00';document.getElementById('status-order-info').innerHTML=`<div style="background:var(--hover-bg);border-radius:8px;padding:9px;font-size:12px"><b>${o.codigo}</b> — ${esc(o.cliente)} — ${esc(o.marca)} ${esc(o.modelo)}</div>`;toggleEntregadoExtra();showModal('modal-status');};
 window.toggleEntregadoExtra=function(){document.getElementById('status-entregado-extra').style.display=document.getElementById('status-select').value==='Entregado'?'block':'none';};
 window.applyStatus=async function(){
   const id=document.getElementById('status-order-id').value,ns=document.getElementById('status-select').value,o=orders.find(x=>x.id===id);if(!o)return;
   const btn=document.getElementById('btn-apply-status');btn.disabled=true;setSyncStatus('syncing');
   try{
     const up={estado:ns};
-    if(ns==='Entregado'&&o.estado!=='Entregado'){const now=new Date();up.fechaEntrega=now.toISOString().slice(0,10);up.garantiaActivada=true;up.garantiaVence=new Date(now.getTime()+(o.garantiaDias||30)*86400000).toISOString().slice(0,10);const cob=parseFloat(document.getElementById('status-cobrado').value)||o.total||0;up.cobrado=cob;if(cajaData.open){cajaData.balance+=cob;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'ingreso',desc:`Cobro orden ${o.codigo} — ${esc(o.cliente)} (${document.getElementById('status-payment').value})`,monto:cob});await setDoc(doc(db,'tf_meta','caja'),cajaData);toast('Ingreso registrado en caja','success');}else toast('Caja cerrada — ingreso NO registrado','warning');}
+    if(ns==='Entregado'&&o.estado!=='Entregado'){
+      const now=new Date();
+      up.fechaEntrega=now.toISOString().slice(0,10);
+      up.garantiaActivada=true;
+      up.garantiaVence=new Date(now.getTime()+(o.garantiaDias||30)*86400000).toISOString().slice(0,10);
+      const anticipo=o.anticipo||0;
+      let cobInput=parseFloat(document.getElementById('status-cobrado').value)||0;
+      // Saldo = cobrado en caja al entregar (total - anticipo ya pagado)
+      const saldo=cobInput;
+      up.cobrado=cobInput+anticipo; // total efectivamente cobrado
+      up.anticipoLiberado=true;
+      if(cajaData.open){
+        // Register the remaining balance collected at delivery
+        if(saldo>0){
+          cajaData.balance+=saldo;
+          cajaData.movimientos.push({fecha:now.toISOString(),tipo:'ingreso',desc:`Saldo orden ${o.codigo} — ${esc(o.cliente)} (${document.getElementById('status-payment').value})${anticipo>0?' [Anticipo: '+mon()+anticipo.toFixed(2)+']':''}`,monto:saldo});
+        }
+        // If anticipo was already registered when order was created, just mark liberation
+        if(anticipo>0 && !o.anticipoLiberado){
+          cajaData.movimientos.push({fecha:now.toISOString(),tipo:'anticipo-liberado',desc:`Anticipo liberado orden ${o.codigo} — ${esc(o.cliente)}`,monto:anticipo});
+        }
+        await setDoc(doc(db,'tf_meta','caja'),cajaData);
+        toast(anticipo>0?`Saldo ${mon()}${saldo.toFixed(2)} cobrado + anticipo ${mon()}${anticipo.toFixed(2)} liberado`:'Cobro registrado en caja','success');
+      } else toast('Caja cerrada — cobro NO registrado','warning');
+    }
     if(ns!=='Entregado')up.garantiaActivada=false;
     await updateDoc(doc(db,'tf_orders',id),up);closeModal('modal-status');toast(`Estado → ${ns}`,'success');
   }catch(e){toast('Error: '+e.message,'error');}
@@ -1408,7 +1619,7 @@ window.renderInventory=function(){
 window.abrirCaja=async function(){const monto=parseFloat(document.getElementById('caja-apertura-monto').value)||0;cajaData={open:true,apertura:new Date().toISOString(),balance:monto,movimientos:[{fecha:new Date().toISOString(),tipo:'apertura',desc:'Apertura de caja',monto}]};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();updateCajaIndicator();toast('Caja abierta','success');}catch(e){toast('Error: '+e.message,'error');}};
 window.cerrarCaja=async function(){if(!confirm('¿Cerrar la caja?'))return;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'cierre',desc:'Cierre de caja',monto:cajaData.balance});cajaData.open=false;cajaData.apertura=null;setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();updateCajaIndicator();toast('Caja cerrada','info');}catch(e){toast('Error: '+e.message,'error');}};
 window.registrarMovimiento=async function(){const tipo=document.getElementById('mov-tipo').value,monto=parseFloat(document.getElementById('mov-monto').value)||0,desc=document.getElementById('mov-desc').value.trim();if(!monto){toast('Ingresa un monto','error');return;}if(tipo==='egreso'&&cajaData.balance<monto){toast('Saldo insuficiente','error');return;}if(tipo==='ingreso')cajaData.balance+=monto;else cajaData.balance-=monto;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo,desc:desc||tipo,monto});document.getElementById('mov-monto').value='';document.getElementById('mov-desc').value='';setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();toast(`${tipo} registrado`,'success');}catch(e){toast('Error: '+e.message,'error');}};
-window.renderCaja=function(){const c=cajaData,m=mon();document.getElementById('caja-balance').textContent=`${m}${(c.balance||0).toFixed(2)}`;const ing=(c.movimientos||[]).filter(x=>x.tipo==='ingreso'||x.tipo==='apertura').reduce((a,x)=>a+x.monto,0),egr=(c.movimientos||[]).filter(x=>x.tipo==='egreso').reduce((a,x)=>a+x.monto,0);document.getElementById('caja-ingresos').textContent=`${m}${ing.toFixed(2)}`;document.getElementById('caja-egresos').textContent=`${m}${egr.toFixed(2)}`;document.getElementById('caja-sub').textContent=c.open?'Caja abierta':'Caja cerrada';document.getElementById('caja-closed-ui').style.display=c.open?'none':'block';document.getElementById('caja-open-ui').style.display=c.open?'block':'none';if(c.open&&c.apertura)document.getElementById('caja-hora-apertura').textContent=new Date(c.apertura).toLocaleTimeString('es-SV');const tb=document.getElementById('caja-movimientos-body');if(!(c.movimientos||[]).length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-state"><i class="bi bi-receipt"></i><p>Sin movimientos</p></div></td></tr>`;return;}tb.innerHTML=[...c.movimientos].reverse().map(mv=>`<tr><td class="mono" style="font-size:10px">${new Date(mv.fecha).toLocaleString('es-SV')}</td><td><span class="chip ${mv.tipo==='egreso'?'r':mv.tipo==='cierre'?'o':'g'}" style="font-size:9px">${mv.tipo}</span></td><td style="font-size:12px">${esc(mv.desc)}</td><td class="mono" style="color:${mv.tipo==='ingreso'||mv.tipo==='apertura'?'#00e676':'#ff4444'};font-weight:700">${mv.tipo==='ingreso'||mv.tipo==='apertura'?'+':'-'}${m}${mv.monto.toFixed(2)}</td></tr>`).join('');};
+window.renderCaja=function(){const c=cajaData,m=mon();document.getElementById('caja-balance').textContent=`${m}${(c.balance||0).toFixed(2)}`;const ing=(c.movimientos||[]).filter(x=>x.tipo==='ingreso'||x.tipo==='apertura').reduce((a,x)=>a+x.monto,0),egr=(c.movimientos||[]).filter(x=>x.tipo==='egreso').reduce((a,x)=>a+x.monto,0);document.getElementById('caja-ingresos').textContent=`${m}${ing.toFixed(2)}`;document.getElementById('caja-egresos').textContent=`${m}${egr.toFixed(2)}`;document.getElementById('caja-sub').textContent=c.open?'Caja abierta':'Caja cerrada';document.getElementById('caja-closed-ui').style.display=c.open?'none':'block';document.getElementById('caja-open-ui').style.display=c.open?'block':'none';if(c.open&&c.apertura)document.getElementById('caja-hora-apertura').textContent=new Date(c.apertura).toLocaleTimeString('es-SV');const tb=document.getElementById('caja-movimientos-body');if(!(c.movimientos||[]).length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-state"><i class="bi bi-receipt"></i><p>Sin movimientos</p></div></td></tr>`;return;}tb.innerHTML=[...c.movimientos].reverse().map(mv=>`<tr><td class="mono" style="font-size:10px">${new Date(mv.fecha).toLocaleString('es-SV')}</td><td><span class="chip ${mv.tipo==='egreso'?'r':mv.tipo==='cierre'?'o':mv.tipo==='anticipo'?'o':mv.tipo==='anticipo-liberado'?'g':'g'}" style="font-size:9px">${mv.tipo}</span></td><td style="font-size:12px">${esc(mv.desc)}</td><td class="mono" style="color:${mv.tipo==='ingreso'||mv.tipo==='apertura'?'#00e676':'#ff4444'};font-weight:700">${mv.tipo==='ingreso'||mv.tipo==='apertura'?'+':'-'}${m}${mv.monto.toFixed(2)}</td></tr>`).join('');};
 
 // ─── POS ──────────────────────────────────────────────────────────────────────
 window.setPosPage=function(p){const f=getFilteredPOS();const tp=Math.max(1,Math.ceil(f.length/posPP));posPage=Math.max(1,Math.min(p,tp));renderPOS();};
@@ -1458,26 +1669,155 @@ window.renderGarantias=function(){const g=orders.filter(o=>o.garantiaActivada&&o
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 window.setDsPg=function(p){const tp=Math.max(1,Math.ceil(orders.slice(0,20).length/dsPP));dsPg=Math.max(1,Math.min(p,tp));renderDashboard();};
 window.setDsPP=function(v){dsPP=parseInt(v);dsPg=1;renderDashboard();};
+
+// Chart instances
+let chartEstados=null, chartIngresos=null;
+
+function getChartColors(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  return {grid:dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.06)', text:dark?'#8888aa':'#555580', bg:dark?'#17172a':'#ffffff'};
+}
+
+function renderChartEstados(){
+  const recibido=orders.filter(o=>o.estado==='Recibido').length;
+  const proceso=orders.filter(o=>o.estado==='En Proceso').length;
+  const listo=orders.filter(o=>o.estado==='Listo').length;
+  const entregado=orders.filter(o=>o.estado==='Entregado').length;
+  const total=orders.length;
+  const c=document.getElementById('chart-estados');
+  if(!c)return;
+  if(chartEstados){chartEstados.destroy();chartEstados=null;}
+  if(!total){c.parentElement.innerHTML='<div class="empty-state" style="padding:40px"><i class="bi bi-pie-chart"></i><p>Sin datos</p></div>';return;}
+  const {text}=getChartColors();
+  chartEstados=new Chart(c,{
+    type:'doughnut',
+    data:{
+      labels:['Recibido','En Proceso','Listo','Entregado'],
+      datasets:[{data:[recibido,proceso,listo,entregado],backgroundColor:['#4f6ef7','#ff9100','#00d4ff','#00e676'],borderColor:'transparent',borderWidth:0,hoverOffset:6}]
+    },
+    options:{
+      cutout:'68%',responsive:false,
+      plugins:{
+        legend:{position:'bottom',labels:{color:text,font:{size:10,family:"'Space Grotesk',sans-serif"},padding:8,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} (${total?Math.round(ctx.parsed/total*100):0}%)`}}
+      }
+    }
+  });
+}
+
+function renderChartIngresos(){
+  const c=document.getElementById('chart-ingresos');
+  if(!c)return;
+  if(chartIngresos){chartIngresos.destroy();chartIngresos=null;}
+  // Build last 7 days data
+  const days=[];
+  const dataIngresos=[];
+  const dataEgresos=[];
+  const dataAnticipos=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const key=d.toISOString().slice(0,10);
+    const label=d.toLocaleDateString('es-SV',{weekday:'short',day:'numeric'});
+    days.push(label);
+    const movs=(cajaData.movimientos||[]).filter(m=>m.fecha&&m.fecha.startsWith(key));
+    dataIngresos.push(movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0));
+    dataEgresos.push(movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0));
+    dataAnticipos.push(movs.filter(m=>m.tipo==='anticipo').reduce((a,m)=>a+m.monto,0));
+  }
+  const {grid,text,bg}=getChartColors();
+  chartIngresos=new Chart(c,{
+    type:'bar',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'Ingresos',data:dataIngresos,backgroundColor:'rgba(0,230,118,0.75)',borderRadius:5,borderSkipped:false},
+        {label:'Anticipos',data:dataAnticipos,backgroundColor:'rgba(255,145,0,0.65)',borderRadius:5,borderSkipped:false},
+        {label:'Egresos',data:dataEgresos,backgroundColor:'rgba(255,68,68,0.55)',borderRadius:5,borderSkipped:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{color:text,font:{size:10,family:"'Space Grotesk',sans-serif"},padding:10,boxWidth:10}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${mon()}${ctx.parsed.y.toFixed(2)}`}}
+      },
+      scales:{
+        x:{grid:{color:grid},ticks:{color:text,font:{size:9}}},
+        y:{grid:{color:grid},ticks:{color:text,font:{size:9},callback:v=>`${mon()}${v}`},beginAtZero:true}
+      }
+    }
+  });
+}
+
 window.renderDashboard=function(){
-  const m=mon(),active=orders.filter(o=>o.estado!=='Entregado').length,pending=orders.filter(o=>o.piezaPendiente&&o.estado!=='Entregado').length,gVig=orders.filter(o=>o.garantiaActivada&&o.garantiaVence&&new Date(o.garantiaVence)>=new Date()).length;
+  const m=mon();
+  const active=orders.filter(o=>o.estado!=='Entregado').length;
+  const pending=orders.filter(o=>o.piezaPendiente&&o.estado!=='Entregado').length;
+  const gVig=orders.filter(o=>o.garantiaActivada&&o.garantiaVence&&new Date(o.garantiaVence)>=new Date()).length;
+  const entregadas=orders.filter(o=>o.estado==='Entregado').length;
+  const sinStock=inventory.filter(i=>i.stock===0).length;
+  const anticiposRet=orders.filter(o=>o.anticipo>0&&!o.anticipoLiberado).reduce((a,o)=>a+(o.anticipo||0),0);
+
+  // KPI row 1
   document.getElementById('ds-active').textContent=active;
+  document.getElementById('ds-active-sub').textContent=`${orders.filter(o=>o.estado==='En Proceso').length} en proceso`;
   document.getElementById('ds-pending').textContent=pending;
+  const cajaLbl=cajaData.open?'Caja abierta':'Caja cerrada';
   document.getElementById('ds-caja').textContent=`${m}${(cajaData.balance||0).toFixed(2)}`;
+  document.getElementById('ds-caja-sub').textContent=cajaLbl;
   document.getElementById('ds-garantias').textContent=gVig;
-  const hoy=new Date().toISOString().slice(0,10),ih=(cajaData.movimientos||[]).filter(mv=>mv.tipo==='ingreso'&&mv.fecha.startsWith(hoy)).reduce((a,mv)=>a+mv.monto,0);
+
+  // KPI row 2
+  const hoy=new Date().toISOString().slice(0,10);
+  const ih=(cajaData.movimientos||[]).filter(mv=>mv.tipo==='ingreso'&&mv.fecha&&mv.fecha.startsWith(hoy)).reduce((a,mv)=>a+mv.monto,0);
+  const movHoy=(cajaData.movimientos||[]).filter(mv=>mv.fecha&&mv.fecha.startsWith(hoy)).length;
   document.getElementById('ds-ingresos-hoy').textContent=`${m}${ih.toFixed(2)}`;
+  document.getElementById('ds-ing-sub').textContent=`${movHoy} movimiento${movHoy!==1?'s':''} hoy`;
+  document.getElementById('ds-anticipos').textContent=`${m}${anticiposRet.toFixed(2)}`;
   document.getElementById('ds-total-orders').textContent=orders.length;
-  document.getElementById('ds-entregadas').textContent=orders.filter(o=>o.estado==='Entregado').length;
+  document.getElementById('ds-entregadas-sub').textContent=`${entregadas} entregada${entregadas!==1?'s':''}`;
+  document.getElementById('ds-sinstock').textContent=sinStock;
+
+  // Balance
   document.getElementById('ds-balance').textContent=`${m}${(cajaData.balance||0).toFixed(2)}`;
+
+  // Progress bars
+  const totalO=orders.length||1;
+  const pctEntrega=Math.round(entregadas/totalO*100);
+  const pctProceso=Math.round(orders.filter(o=>o.estado==='En Proceso').length/totalO*100);
+  const totalInv=inventory.length||1;
+  const pctStock=Math.round(inventory.filter(i=>i.stock>0).length/totalInv*100);
+  document.getElementById('ds-tasa-entrega').textContent=pctEntrega+'%';
+  document.getElementById('bar-entrega').style.width=pctEntrega+'%';
+  document.getElementById('ds-tasa-proceso').textContent=pctProceso+'%';
+  document.getElementById('bar-proceso').style.width=pctProceso+'%';
+  document.getElementById('ds-tasa-stock').textContent=pctStock+'%';
+  document.getElementById('bar-stock').style.width=pctStock+'%';
+
+  // Charts
+  renderChartEstados();
+  renderChartIngresos();
+
+  // Recent orders table
   const recent=orders.slice(0,20),total=recent.length,page=recent.slice((dsPg-1)*dsPP,dsPg*dsPP),tb=document.getElementById('ds-orders-body');
-  if(!page.length){tb.innerHTML=`<tr><td colspan="5"><div class="empty-state" style="padding:18px"><i class="bi bi-clipboard2"></i><p>Sin órdenes</p></div></td></tr>`;}
-  else tb.innerHTML=page.map(o=>`<tr><td class="mono" style="color:var(--accent-cyan);font-size:11px">${o.codigo}</td><td style="font-size:12px">${esc(o.cliente)}</td><td style="font-size:12px">${esc(o.marca)} ${esc(o.modelo)}</td><td>${statusBadge(o.estado)}</td><td><button class="btn-action view" onclick="viewOrder('${o.id}')"><i class="bi bi-eye"></i></button></td></tr>`).join('');
+  if(!page.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty-state" style="padding:18px"><i class="bi bi-clipboard2"></i><p>Sin órdenes</p></div></td></tr>`;}
+  else tb.innerHTML=page.map(o=>`<tr>
+    <td class="mono" style="color:var(--accent-cyan);font-size:11px">${o.codigo}</td>
+    <td style="font-size:12px">${esc(o.cliente)}</td>
+    <td style="font-size:12px">${esc(o.marca)} ${esc(o.modelo)}</td>
+    <td>${statusBadge(o.estado)}</td>
+    <td>${o.anticipo>0?`<span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}" style="font-size:9px">${mon()}${(o.anticipo||0).toFixed(2)}</span>`:'<span style="color:var(--text-muted)">—</span>'}</td>
+    <td><button class="btn-action view" onclick="viewOrder('${o.id}')"><i class="bi bi-eye"></i></button></td>
+  </tr>`).join('');
   buildPagination('ds-orders-pagination',total,dsPg,dsPP,'setDsPg','setDsPP');
+
+  // Alerts
   const alerts=[];
   if(pending>0)alerts.push(`<div class="ab w"><i class="bi bi-exclamation-triangle"></i> ${pending} orden(es) con pieza pendiente</div>`);
-  const ls=inventory.filter(i=>i.stock===0);if(ls.length)alerts.push(`<div class="ab d"><i class="bi bi-box-seam"></i> ${ls.length} item(s) sin stock</div>`);
-  const pv=orders.filter(o=>{if(!o.garantiaActivada||!o.garantiaVence)return false;return Math.ceil((new Date(o.garantiaVence)-new Date())/86400000)<=7&&Math.ceil((new Date(o.garantiaVence)-new Date())/86400000)>=0;});
-  if(pv.length)alerts.push(`<div class="ab w"><i class="bi bi-shield-exclamation"></i> ${pv.length} garantía(s) por vencer</div>`);
+  if(sinStock)alerts.push(`<div class="ab d"><i class="bi bi-box-seam"></i> ${sinStock} item(s) sin stock</div>`);
+  if(anticiposRet>0)alerts.push(`<div class="ab w"><i class="bi bi-hourglass-split"></i> ${m}${anticiposRet.toFixed(2)} en anticipos retenidos</div>`);
+  const pv=orders.filter(o=>{if(!o.garantiaActivada||!o.garantiaVence)return false;const d=Math.ceil((new Date(o.garantiaVence)-new Date())/86400000);return d>=0&&d<=7;});
+  if(pv.length)alerts.push(`<div class="ab w"><i class="bi bi-shield-exclamation"></i> ${pv.length} garantía(s) por vencer en 7 días</div>`);
   const venc=orders.filter(o=>o.estado!=='Entregado'&&o.fechaPromesa&&new Date(o.fechaPromesa+'T23:59:00')<new Date());
   if(venc.length)alerts.push(`<div class="ab d"><i class="bi bi-clock-history"></i> ${venc.length} orden(es) fuera de fecha promesa</div>`);
   document.getElementById('ds-alerts').innerHTML=alerts.length?alerts.join(''):`<div class="empty-state" style="padding:16px"><i class="bi bi-check2-circle"></i><p>Sin alertas</p></div>`;
@@ -1877,6 +2217,18 @@ window.showModal=function(id){document.getElementById(id).classList.add('show');
 window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
 window.toggleSidebar=function(){document.getElementById('sidebar').classList.toggle('mob');};
 document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('show');}));
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock(){
+  const now=new Date();
+  const timeEl=document.getElementById('clock-time');
+  const dateEl=document.getElementById('clock-date');
+  if(!timeEl||!dateEl) return;
+  timeEl.textContent=now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  dateEl.textContent=now.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
 if(window.innerWidth<=768)document.getElementById('burger').style.display='flex';
 const savedTheme=localStorage.getItem('nc_theme')||'dark';
 document.documentElement.setAttribute('data-theme',savedTheme);

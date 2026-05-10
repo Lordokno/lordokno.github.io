@@ -242,6 +242,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* GUARANTEE CARD */
 .gcard{background:linear-gradient(135deg,rgba(0,230,118,.07),rgba(0,212,255,.05));border:1px solid rgba(0,230,118,.2);border-radius:9px;padding:11px 14px;margin-top:8px;}
 
+.falla-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;background:var(--hover-bg);border:1px solid var(--card-border);color:var(--text-secondary);cursor:pointer;transition:var(--tr);user-select:none;}
+.falla-chip:hover{border-color:#4f6ef7;color:#4f6ef7;}
+.falla-chip.falla-active{background:rgba(0,230,118,.15);border-color:#00e676;color:#00e676;}
+
 /* ─── PEDIDOS / PROVEEDORES ─── */
 .prov-tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
 .prov-tab{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg);cursor:pointer;transition:var(--tr);font-size:13px;font-weight:600;color:var(--text-secondary);user-select:none;}
@@ -1117,9 +1121,9 @@ window.downloadTemplate=function(){
 
 // ─── FALLAS ───────────────────────────────────────────────────────────────────
 const FALLAS=['Pantalla rota','Batería agotada','No enciende','No carga','Daño por agua','Micrófono dañado','Altavoz dañado','Cámara dañada','Botones dañados','Software / ROM','Señal / Antena','Conector carga','Vibrador','Touch no responde','Actualización fallida','Otro'];
-function renderFallas(sel=[]){document.getElementById('fallas-grid').innerHTML=FALLAS.map(f=>{const c=sel.includes(f);return`<label style="cursor:pointer;user-select:none"><input type="checkbox" value="${f}" class="fc" style="display:none" ${c?'checked':''}><span class="chip ${c?'g':''}" onclick="tF(this)">${f}</span></label>`;}).join('');}
-window.tF=function(el){const i=el.previousElementSibling;i.checked=!i.checked;el.className=`chip ${i.checked?'g':''}`;};
-function getSF(){return[...document.querySelectorAll('.fc:checked')].map(c=>c.value);}
+function renderFallas(sel=[]){document.getElementById('fallas-grid').innerHTML=FALLAS.map(f=>{const a=sel.includes(f);return'<button type="button" class="falla-chip '+(a?'falla-active':'')+'" data-falla="'+f+'" onclick="tF(this)">'+f+'</button>';}).join('');}
+window.tF=function(el){el.classList.toggle('falla-active');};
+function getSF(){return[...document.querySelectorAll('.falla-chip.falla-active')].map(b=>b.dataset.falla);}
 // ─── REPUESTO AUTOCOMPLETE ────────────────────────────────────────────────────
 let repDropdownVisible = false;
 let repHideTimer = null;

@@ -242,6 +242,29 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* GUARANTEE CARD */
 .gcard{background:linear-gradient(135deg,rgba(0,230,118,.07),rgba(0,212,255,.05));border:1px solid rgba(0,230,118,.2);border-radius:9px;padding:11px 14px;margin-top:8px;}
 
+/* ─── PEDIDOS / PROVEEDORES ─── */
+.prov-tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.prov-tab{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg);cursor:pointer;transition:var(--tr);font-size:13px;font-weight:600;color:var(--text-secondary);user-select:none;}
+.prov-tab:hover{border-color:#4f6ef7;color:#4f6ef7;}
+.prov-tab.active{background:linear-gradient(135deg,rgba(79,110,247,.2),rgba(0,212,255,.1));border-color:#4f6ef7;color:var(--accent-cyan);}
+.prov-tab .prov-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.prov-tab .tab-count{background:rgba(79,110,247,.2);color:#4f6ef7;font-size:9px;font-weight:800;padding:1px 6px;border-radius:99px;font-family:'JetBrains Mono',monospace;}
+.prov-panel{display:none;animation:fadeIn .2s ease;}
+.prov-panel.active{display:block;}
+.pedido-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);transition:var(--tr);}
+.pedido-item:hover{background:var(--hover-bg);}
+.pedido-item:last-child{border-bottom:none;}
+.pedido-qty{width:52px;background:var(--input-bg);border:1px solid var(--input-border);border-radius:7px;padding:5px 8px;color:var(--text-primary);font-size:12px;font-family:'JetBrains Mono',monospace;text-align:center;outline:none;transition:var(--tr);}
+.pedido-qty:focus{border-color:#4f6ef7;}
+.pedido-nombre{flex:1;font-size:13px;font-weight:500;color:var(--text-primary);}
+.pedido-nota{font-size:11px;color:var(--text-muted);min-width:120px;background:transparent;border:none;border-bottom:1px solid var(--input-border);padding:3px 0;outline:none;color:var(--text-secondary);width:160px;transition:var(--tr);}
+.pedido-nota:focus{border-color:#4f6ef7;}
+.pedido-nombre-edit{flex:1;background:var(--input-bg);border:1px solid var(--input-border);border-radius:7px;padding:5px 9px;color:var(--text-primary);font-size:13px;outline:none;transition:var(--tr);}
+.pedido-nombre-edit:focus{border-color:#4f6ef7;}
+.add-pedido-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--card-border);flex-wrap:wrap;align-items:center;}
+.wa-preview{background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:14px;font-size:12px;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);max-height:300px;overflow-y:auto;line-height:1.7;}
+.prov-color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
 @media print{#sidebar,#tc,.no-print{display:none!important;}#main{margin-left:0!important;}body{background:#fff;color:#000;}}
 @media(max-width:768px){#sidebar{transform:translateX(-100%);}#sidebar.mob{transform:translateX(0);}#main{margin-left:0;}.pos-layout{grid-template-columns:1fr;}.form-row.c2,.form-row.c3{grid-template-columns:1fr;}.search-input{width:140px;}.search-input:focus{width:180px;}}
 </style>
@@ -268,6 +291,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   <div class="nav-item" onclick="navigate('caja')"><i class="bi bi-cash-stack"></i> Caja</div>
   <div class="nav-item" onclick="navigate('inventory')"><i class="bi bi-boxes"></i> Inventario <span class="nav-badge" id="badge-inventory" style="display:none">!</span></div>
   <div class="nav-item" onclick="navigate('pos')"><i class="bi bi-lightning-charge"></i> Venta POS</div>
+  <div class="nav-item" onclick="navigate('pedidos')"><i class="bi bi-bag-plus"></i> Pedidos <span class="nav-badge" id="badge-pedidos" style="display:none">!</span></div>
   <div class="nav-sec">Sistema</div>
   <div class="nav-item" onclick="navigate('garantias')"><i class="bi bi-shield-check"></i> Garantías</div>
   <div class="nav-item" onclick="navigate('config')"><i class="bi bi-gear"></i> Configuración</div>
@@ -495,6 +519,26 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       </div>
     </div>
 
+    <!-- ══ PEDIDOS A PROVEEDORES ══ -->
+    <div id="page-pedidos" class="page-section">
+
+      <!-- Header con tabs de proveedores -->
+      <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px">Proveedor activo</div>
+          <div class="prov-tab-bar" id="prov-tabs"></div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:28px">
+          <button class="btn-s no-print" style="font-size:12px;padding:6px 12px" onclick="openProvModal()"><i class="bi bi-plus-circle"></i> Nuevo Proveedor</button>
+          <button class="btn-p no-print" style="font-size:12px;padding:6px 12px" onclick="sendCurrentPedido()"><i class="bi bi-whatsapp"></i> Enviar por WhatsApp</button>
+        </div>
+      </div>
+
+      <!-- Panels por proveedor -->
+      <div id="prov-panels"></div>
+
+    </div>
+
   </div><!-- /page-content -->
 </div><!-- /main -->
 
@@ -674,6 +718,67 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <div class="modal-footer">
       <button class="btn-s" onclick="resetImport()"><i class="bi bi-arrow-left"></i> Atrás</button>
       <button class="btn-p" id="btn-do-import" style="display:none" onclick="executeImport()"><i class="bi bi-cloud-upload"></i> Importar a Firebase</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PROVEEDOR ══ -->
+<div class="modal-overlay" id="modal-prov">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-prov-title"><i class="bi bi-shop" style="color:var(--accent-cyan)"></i> Nuevo Proveedor</div>
+      <button class="modal-close" onclick="closeModal('modal-prov')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Nombre del Proveedor *</label><input class="tf-input" id="prov-nombre" placeholder="Ej: ST Technologies"></div>
+    </div>
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label">WhatsApp *</label><input class="tf-input mono" id="prov-wa" placeholder="+503 7000-0000"></div>
+      <div>
+        <label class="tf-label">Color de identificación</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="prov-color-picker">
+          <label style="cursor:pointer" title="Azul"><input type="radio" name="prov-color" value="#4f6ef7" style="display:none" checked><span class="prov-color-dot" style="background:#4f6ef7;width:22px;height:22px;outline:3px solid transparent;border:2px solid transparent;outline-offset:2px;cursor:pointer" onclick="selectProvColor('#4f6ef7',this)"></span></label>
+          <label style="cursor:pointer" title="Cyan"><input type="radio" name="prov-color" value="#00d4ff" style="display:none"><span class="prov-color-dot" style="background:#00d4ff;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#00d4ff',this)"></span></label>
+          <label style="cursor:pointer" title="Verde"><input type="radio" name="prov-color" value="#00e676" style="display:none"><span class="prov-color-dot" style="background:#00e676;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#00e676',this)"></span></label>
+          <label style="cursor:pointer" title="Naranja"><input type="radio" name="prov-color" value="#ff9100" style="display:none"><span class="prov-color-dot" style="background:#ff9100;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#ff9100',this)"></span></label>
+          <label style="cursor:pointer" title="Rojo"><input type="radio" name="prov-color" value="#ff4444" style="display:none"><span class="prov-color-dot" style="background:#ff4444;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#ff4444',this)"></span></label>
+          <label style="cursor:pointer" title="Púrpura"><input type="radio" name="prov-color" value="#bb86fc" style="display:none"><span class="prov-color-dot" style="background:#bb86fc;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#bb86fc',this)"></span></label>
+          <label style="cursor:pointer" title="Amarillo"><input type="radio" name="prov-color" value="#ffd600" style="display:none"><span class="prov-color-dot" style="background:#ffd600;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#ffd600',this)"></span></label>
+          <label style="cursor:pointer" title="Rosa"><input type="radio" name="prov-color" value="#f06292" style="display:none"><span class="prov-color-dot" style="background:#f06292;width:22px;height:22px;cursor:pointer" onclick="selectProvColor('#f06292',this)"></span></label>
+        </div>
+      </div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Mensaje de encabezado (opcional)</label><input class="tf-input" id="prov-header" placeholder="Ej: Buenas tardes, mi pedido del día:"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Mensaje de cierre (opcional)</label><input class="tf-input" id="prov-footer" placeholder="Ej: Gracias, para las 3:30 pm."></div>
+    </div>
+    <input type="hidden" id="prov-edit-id">
+    <input type="hidden" id="prov-selected-color" value="#4f6ef7">
+    <div class="modal-footer">
+      <button class="btn-s" onclick="closeModal('modal-prov')">Cancelar</button>
+      <button class="btn-p" id="btn-prov-del" style="display:none;background:rgba(255,68,68,.1);color:#ff4444;border:1px solid rgba(255,68,68,.3)" onclick="deleteCurrentProv()"><i class="bi bi-trash"></i> Eliminar</button>
+      <button class="btn-p" onclick="saveProv()"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL PREVIEW WA ══ -->
+<div class="modal-overlay" id="modal-wa-preview">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-whatsapp" style="color:#25d366"></i> Vista Previa del Pedido</div>
+      <button class="modal-close" onclick="closeModal('modal-wa-preview')"><i class="bi bi-x"></i></button>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace">Mensaje que se enviará</div>
+      <div class="wa-preview" id="wa-preview-text"></div>
+    </div>
+    <div class="ab i" style="font-size:11px"><i class="bi bi-info-circle"></i> Se abrirá WhatsApp Web/App con el mensaje listo para enviar.</div>
+    <div class="modal-footer">
+      <button class="btn-s" onclick="closeModal('modal-wa-preview')">Cancelar</button>
+      <button class="btn-p" style="background:linear-gradient(135deg,#25d366,#128c7e)" onclick="confirmSendWA()"><i class="bi bi-send"></i> Abrir WhatsApp</button>
     </div>
   </div>
 </div>
@@ -874,6 +979,7 @@ async function init() {
     setSyncStatus('ok');
     hideLoader();
     renderAll(); loadConfigUI(); updateCajaIndicator(); updateBadges();
+    await loadProveedores();
   } catch(e){ console.error(e); setSyncStatus('error'); setLoadMsg('Error: '+e.message); setTimeout(hideLoader,3000); }
 }
 function setLoadMsg(m){const el=document.getElementById('load-msg');if(el)el.textContent=m;}
@@ -1384,9 +1490,385 @@ window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return
 window.updateBadges=function(){document.getElementById('badge-orders').textContent=orders.filter(o=>o.estado!=='Entregado').length;const ls=inventory.filter(i=>i.stock===0),bi=document.getElementById('badge-inventory');bi.style.display=ls.length?'inline-block':'none';};
 window.updateCajaIndicator=function(){const el=document.getElementById('caja-indicator');if(cajaData.open){el.className='caja-status open';el.textContent='CAJA ABIERTA';}else{el.className='caja-status closed';el.textContent='CAJA CERRADA';}};
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── MÓDULO PEDIDOS A PROVEEDORES ────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// State: persisted in Firestore + local cache
+let proveedores = [];      // [{id, nombre, wa, color, header, footer}]
+let pedidosDia = {};       // { provId: [ {id, nombre, qty, nota} ] }
+let activProvId = null;
+let waPreviewTarget = null; // provId for WA send
+
+const COL_PROV = 'tf_proveedores';
+const COL_PED  = 'tf_pedidos';   // one doc per prov per day: tf_pedidos/{provId_YYYY-MM-DD}
+
+// ─── LOAD PROVEEDORES ────────────────────────────────────────────────────────
+async function loadProveedores() {
+  try {
+    const snap = await getDocs(collection(db, COL_PROV));
+    proveedores = [];
+    snap.forEach(d => proveedores.push({id: d.id, ...d.data()}));
+    // Sort by nombre
+    proveedores.sort((a,b) => (a.nombre||'').localeCompare(b.nombre||''));
+    // Seed defaults if empty
+    if(!proveedores.length) {
+      await seedDefaultProveedores();
+    }
+    await loadPedidosHoy();
+  } catch(e) {
+    console.error('Error cargando proveedores:', e);
+  }
+}
+
+async function seedDefaultProveedores() {
+  const defaults = [
+    {nombre:'ST Technologies', wa:'+50300000001', color:'#4f6ef7', header:'Buenas tardes, mi pedido del día:', footer:'Para las 3:30 pm. Gracias!'},
+    {nombre:'Punto Movil',      wa:'+50300000002', color:'#00e676', header:'Buenas tardes, pedido:', footer:'Gracias, para las 3:30.'},
+  ];
+  for(const p of defaults) {
+    const ref = doc(collection(db, COL_PROV));
+    await setDoc(ref, p);
+    proveedores.push({id: ref.id, ...p});
+  }
+}
+
+// ─── LOAD PEDIDOS DEL DÍA ────────────────────────────────────────────────────
+async function loadPedidosHoy() {
+  const today = new Date().toISOString().slice(0,10);
+  pedidosDia = {};
+  for(const prov of proveedores) {
+    pedidosDia[prov.id] = [];
+    try {
+      const snap = await getDoc(doc(db, COL_PED, `${prov.id}_${today}`));
+      if(snap.exists() && snap.data().items) {
+        pedidosDia[prov.id] = snap.data().items;
+      }
+    } catch(e) {}
+  }
+  if(!activProvId && proveedores.length) activProvId = proveedores[0].id;
+  renderPedidos();
+  updateBadgesPedidos();
+}
+
+// ─── SAVE PEDIDOS ─────────────────────────────────────────────────────────────
+async function savePedidosProv(provId) {
+  const today = new Date().toISOString().slice(0,10);
+  try {
+    await setDoc(doc(db, COL_PED, `${provId}_${today}`), {
+      provId,
+      fecha: today,
+      items: pedidosDia[provId] || []
+    });
+  } catch(e) {
+    console.error('Error guardando pedido:', e);
+  }
+}
+
+// ─── RENDER TABS + PANELS ────────────────────────────────────────────────────
+window.renderPedidos = function() {
+  if(!proveedores.length) {
+    document.getElementById('prov-tabs').innerHTML = `<div style="color:var(--text-muted);font-size:12px">Sin proveedores. Agrega uno con el botón.</div>`;
+    document.getElementById('prov-panels').innerHTML = '';
+    return;
+  }
+  // Tabs
+  document.getElementById('prov-tabs').innerHTML = proveedores.map(p => {
+    const items = pedidosDia[p.id] || [];
+    const count = items.filter(i => i.qty > 0).length;
+    const isActive = p.id === activProvId;
+    return `<div class="prov-tab ${isActive?'active':''}" onclick="switchProv('${p.id}')">
+      <span class="prov-dot" style="background:${p.color||'#4f6ef7'}"></span>
+      <span>${esc(p.nombre)}</span>
+      ${count ? `<span class="tab-count">${count}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  // Panels
+  document.getElementById('prov-panels').innerHTML = proveedores.map(p => {
+    const items = pedidosDia[p.id] || [];
+    const isActive = p.id === activProvId;
+    const totalItems = items.filter(i=>i.qty>0).length;
+    return `<div class="prov-panel ${isActive?'active':''}" id="panel-${p.id}">
+      <div class="section-card">
+
+        <!-- Provider header bar -->
+        <div class="section-header">
+          <div class="section-title">
+            <span class="prov-color-dot" style="background:${p.color||'#4f6ef7'};width:10px;height:10px;border-radius:50%"></span>
+            ${esc(p.nombre)}
+            <span style="font-size:11px;font-weight:400;color:var(--text-muted)">${p.wa||'Sin WhatsApp'}</span>
+            ${totalItems ? `<span class="chip g" style="font-size:9px">${totalItems} item${totalItems>1?'s':''} hoy</span>` : ''}
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-s no-print" style="font-size:11px;padding:5px 10px" onclick="openProvModal('${p.id}')"><i class="bi bi-pencil"></i> Editar</button>
+            <button class="btn-s no-print" style="font-size:11px;padding:5px 10px" onclick="clearPedidoProv('${p.id}')"><i class="bi bi-trash"></i> Limpiar</button>
+          </div>
+        </div>
+
+        <!-- Pedidos list -->
+        <div id="pedidos-list-${p.id}">
+          ${renderPedidoItems(p.id)}
+        </div>
+
+        <!-- Add item row -->
+        <div class="add-pedido-row">
+          <input class="tf-input" id="new-item-nombre-${p.id}" placeholder="Nombre del repuesto / producto..." style="flex:1;min-width:180px" onkeydown="if(event.key==='Enter')addPedidoItem('${p.id}')">
+          <input class="pedido-qty" id="new-item-qty-${p.id}" type="number" placeholder="Qty" min="1" value="1" style="width:60px" onkeydown="if(event.key==='Enter')addPedidoItem('${p.id}')">
+          <input class="tf-input" id="new-item-nota-${p.id}" placeholder="Nota (opcional)" style="width:160px" onkeydown="if(event.key==='Enter')addPedidoItem('${p.id}')">
+          <button class="btn-p" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="addPedidoItem('${p.id}')"><i class="bi bi-plus"></i> Agregar</button>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div style="padding:10px 14px;border-top:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:11px;color:var(--text-muted)">
+            <i class="bi bi-clock" style="margin-right:4px"></i>Pedido del día — ${new Date().toLocaleDateString('es-SV',{weekday:'long',day:'numeric',month:'long'})}
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-g no-print" style="font-size:12px;padding:6px 12px" onclick="sendProvWA('${p.id}')"><i class="bi bi-whatsapp"></i> Enviar a ${esc(p.nombre)}</button>
+          </div>
+        </div>
+
+      </div>
+    </div>`;
+  }).join('');
+
+  updateBadgesPedidos();
+};
+
+function renderPedidoItems(provId) {
+  const items = pedidosDia[provId] || [];
+  if(!items.length) return `<div class="empty-state" style="padding:28px"><i class="bi bi-clipboard-plus"></i><p>Sin items hoy. Agrega el primer pedido abajo.</p></div>`;
+  return items.map((item,idx) => `
+    <div class="pedido-item" id="pedido-row-${provId}-${idx}">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);width:24px;text-align:right;flex-shrink:0">${idx+1}</div>
+      <input class="pedido-qty" type="number" min="1" value="${item.qty||1}"
+        onchange="updatePedidoField('${provId}',${idx},'qty',this.value)"
+        style="width:56px;flex-shrink:0">
+      <div class="pedido-nombre">${esc(item.nombre)}</div>
+      <input class="pedido-nota" value="${esc(item.nota||'')}" placeholder="Nota..."
+        onchange="updatePedidoField('${provId}',${idx},'nota',this.value)">
+      <button class="btn-action del" onclick="removePedidoItem('${provId}',${idx})" title="Eliminar" style="flex-shrink:0"><i class="bi bi-x"></i></button>
+    </div>
+  `).join('');
+}
+
+// ─── SWITCH PROVEEDOR ────────────────────────────────────────────────────────
+window.switchProv = function(id) {
+  activProvId = id;
+  renderPedidos();
+};
+
+// ─── ADD / REMOVE / UPDATE ITEMS ─────────────────────────────────────────────
+window.addPedidoItem = async function(provId) {
+  const nombreEl = document.getElementById(`new-item-nombre-${provId}`);
+  const qtyEl    = document.getElementById(`new-item-qty-${provId}`);
+  const notaEl   = document.getElementById(`new-item-nota-${provId}`);
+  const nombre = (nombreEl.value||'').trim();
+  if(!nombre) { nombreEl.focus(); toast('Escribe el nombre del item','warning'); return; }
+  const qty = parseInt(qtyEl.value)||1;
+  const nota = (notaEl.value||'').trim();
+  if(!pedidosDia[provId]) pedidosDia[provId] = [];
+  pedidosDia[provId].push({nombre, qty, nota});
+  // Clear inputs
+  nombreEl.value=''; qtyEl.value='1'; notaEl.value='';
+  nombreEl.focus();
+  // Re-render just the list (fast, no full page rebuild)
+  const listEl = document.getElementById(`pedidos-list-${provId}`);
+  if(listEl) listEl.innerHTML = renderPedidoItems(provId);
+  updateTabBadge(provId);
+  await savePedidosProv(provId);
+};
+
+window.removePedidoItem = async function(provId, idx) {
+  if(!pedidosDia[provId]) return;
+  pedidosDia[provId].splice(idx, 1);
+  const listEl = document.getElementById(`pedidos-list-${provId}`);
+  if(listEl) listEl.innerHTML = renderPedidoItems(provId);
+  updateTabBadge(provId);
+  await savePedidosProv(provId);
+};
+
+window.updatePedidoField = async function(provId, idx, field, value) {
+  if(!pedidosDia[provId] || !pedidosDia[provId][idx]) return;
+  if(field === 'qty') pedidosDia[provId][idx].qty = Math.max(1, parseInt(value)||1);
+  else                pedidosDia[provId][idx].nota = value;
+  await savePedidosProv(provId);
+};
+
+window.clearPedidoProv = async function(provId) {
+  if(!confirm('¿Limpiar todos los items del pedido de hoy para este proveedor?')) return;
+  pedidosDia[provId] = [];
+  const listEl = document.getElementById(`pedidos-list-${provId}`);
+  if(listEl) listEl.innerHTML = renderPedidoItems(provId);
+  updateTabBadge(provId);
+  await savePedidosProv(provId);
+  toast('Pedido limpiado','info');
+};
+
+// ─── BADGE UPDATE (lightweight) ──────────────────────────────────────────────
+function updateTabBadge(provId) {
+  // Update just the tab count chip without full re-render
+  const items = pedidosDia[provId] || [];
+  const count = items.filter(i=>i.qty>0).length;
+  const tab = document.querySelector(`[onclick="switchProv('${provId}')"]`);
+  if(!tab) return;
+  let chip = tab.querySelector('.tab-count');
+  if(count) {
+    if(!chip) { chip = document.createElement('span'); chip.className='tab-count'; tab.appendChild(chip); }
+    chip.textContent = count;
+  } else if(chip) chip.remove();
+  updateBadgesPedidos();
+}
+
+function updateBadgesPedidos() {
+  const totalPending = proveedores.reduce((sum, p) => {
+    return sum + (pedidosDia[p.id]||[]).filter(i=>i.qty>0).length;
+  }, 0);
+  const badge = document.getElementById('badge-pedidos');
+  if(!badge) return;
+  if(totalPending > 0) { badge.style.display='inline-block'; badge.textContent=totalPending; }
+  else badge.style.display='none';
+}
+
+// ─── WHATSAPP SEND ────────────────────────────────────────────────────────────
+function buildWAMessage(provId) {
+  const prov  = proveedores.find(p=>p.id===provId);
+  const items = (pedidosDia[provId]||[]).filter(i=>i.qty>0);
+  if(!prov || !items.length) return '';
+  const header = prov.header || `Pedido del día — ${new Date().toLocaleDateString('es-SV')}:`;
+  const footer = prov.footer || '';
+  const lines  = items.map((item,i) => {
+    const nota = item.nota ? ` (${item.nota})` : '';
+    return `${i+1}. ${item.qty}x ${item.nombre}${nota}`;
+  }).join('\n');
+  return `${header}\n\n${lines}${footer?'\n\n'+footer:''}`;
+}
+
+window.sendCurrentPedido = function() { if(activProvId) sendProvWA(activProvId); };
+
+window.sendProvWA = function(provId) {
+  const items = (pedidosDia[provId]||[]).filter(i=>i.qty>0);
+  if(!items.length) { toast('Agrega items al pedido primero','warning'); return; }
+  const msg = buildWAMessage(provId);
+  waPreviewTarget = provId;
+  document.getElementById('wa-preview-text').textContent = msg;
+  showModal('modal-wa-preview');
+};
+
+window.confirmSendWA = function() {
+  if(!waPreviewTarget) return;
+  const prov = proveedores.find(p=>p.id===waPreviewTarget);
+  if(!prov) return;
+  const msg = buildWAMessage(waPreviewTarget);
+  const tel = (prov.wa||'').replace(/\D/g,'');
+  if(!tel) { toast('El proveedor no tiene WhatsApp configurado','error'); return; }
+  const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+  closeModal('modal-wa-preview');
+  toast(`Pedido enviado a ${prov.nombre}`,'success');
+};
+
+// ─── PROVEEDOR CRUD ───────────────────────────────────────────────────────────
+window.openProvModal = function(id=null) {
+  document.getElementById('prov-edit-id').value = '';
+  document.getElementById('prov-nombre').value = '';
+  document.getElementById('prov-wa').value = '';
+  document.getElementById('prov-header').value = '';
+  document.getElementById('prov-footer').value = '';
+  document.getElementById('prov-selected-color').value = '#4f6ef7';
+  document.getElementById('modal-prov-title').innerHTML = '<i class="bi bi-shop" style="color:var(--accent-cyan)"></i> Nuevo Proveedor';
+  document.getElementById('btn-prov-del').style.display = 'none';
+  // Reset color selection
+  document.querySelectorAll('#prov-color-picker .prov-color-dot').forEach(el => el.style.outline='none');
+  const firstDot = document.querySelector('#prov-color-picker .prov-color-dot');
+  if(firstDot) firstDot.style.outline = '2px solid white';
+  if(id) {
+    const prov = proveedores.find(p=>p.id===id);
+    if(!prov) return;
+    document.getElementById('prov-edit-id').value = id;
+    document.getElementById('prov-nombre').value = prov.nombre||'';
+    document.getElementById('prov-wa').value = prov.wa||'';
+    document.getElementById('prov-header').value = prov.header||'';
+    document.getElementById('prov-footer').value = prov.footer||'';
+    document.getElementById('prov-selected-color').value = prov.color||'#4f6ef7';
+    document.getElementById('modal-prov-title').innerHTML = `<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar ${esc(prov.nombre)}`;
+    document.getElementById('btn-prov-del').style.display = 'inline-flex';
+    // Highlight correct color dot
+    document.querySelectorAll('#prov-color-picker .prov-color-dot').forEach(el => {
+      el.style.outline = el.style.background === prov.color ? '2px solid white' : 'none';
+    });
+  }
+  showModal('modal-prov');
+};
+
+window.selectProvColor = function(color, el) {
+  document.getElementById('prov-selected-color').value = color;
+  document.querySelectorAll('#prov-color-picker .prov-color-dot').forEach(d => d.style.outline='none');
+  el.style.outline = '2px solid white';
+  el.style.outlineOffset = '2px';
+};
+
+window.saveProv = async function() {
+  const nombre = document.getElementById('prov-nombre').value.trim();
+  const wa     = document.getElementById('prov-wa').value.trim();
+  if(!nombre) { toast('El nombre es requerido','error'); return; }
+  const data = {
+    nombre,
+    wa,
+    color:  document.getElementById('prov-selected-color').value || '#4f6ef7',
+    header: document.getElementById('prov-header').value.trim() || `Pedido del día — ${nombre}:`,
+    footer: document.getElementById('prov-footer').value.trim(),
+  };
+  setSyncStatus('syncing');
+  try {
+    const editId = document.getElementById('prov-edit-id').value;
+    if(editId) {
+      await updateDoc(doc(db, COL_PROV, editId), data);
+      const idx = proveedores.findIndex(p=>p.id===editId);
+      if(idx>-1) proveedores[idx] = {...proveedores[idx], ...data};
+      toast('Proveedor actualizado','success');
+    } else {
+      const ref = doc(collection(db, COL_PROV));
+      await setDoc(ref, data);
+      proveedores.push({id: ref.id, ...data});
+      pedidosDia[ref.id] = [];
+      activProvId = ref.id;
+      toast(`Proveedor "${nombre}" creado`,'success');
+    }
+    setSyncStatus('ok');
+    closeModal('modal-prov');
+    renderPedidos();
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Error: '+e.message,'error');
+  }
+};
+
+window.deleteCurrentProv = async function() {
+  const id = document.getElementById('prov-edit-id').value;
+  if(!id) return;
+  const prov = proveedores.find(p=>p.id===id);
+  if(!confirm(`¿Eliminar el proveedor "${prov?.nombre}"? Se perderán sus pedidos.`)) return;
+  setSyncStatus('syncing');
+  try {
+    await deleteDoc(doc(db, COL_PROV, id));
+    proveedores = proveedores.filter(p=>p.id!==id);
+    delete pedidosDia[id];
+    if(activProvId === id) activProvId = proveedores[0]?.id || null;
+    setSyncStatus('ok');
+    closeModal('modal-prov');
+    renderPedidos();
+    toast('Proveedor eliminado','info');
+  } catch(e) {
+    setSyncStatus('error');
+    toast('Error: '+e.message,'error');
+  }
+};
+
 // ─── NAV ──────────────────────────────────────────────────────────────────────
-const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',config:'Configuración'};
-window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias};if(fns[page])fns[page]();};
+const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',config:'Configuración',pedidos:'Pedidos a Proveedores'};
+window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,pedidos:renderPedidos};if(fns[page])fns[page]();};
 window.showModal=function(id){document.getElementById(id).classList.add('show');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
 window.toggleSidebar=function(){document.getElementById('sidebar').classList.toggle('mob');};

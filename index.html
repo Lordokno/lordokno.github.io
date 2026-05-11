@@ -247,6 +247,18 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 #clock-time{color:var(--accent-cyan);font-size:16px;font-weight:800;letter-spacing:2px;}
 #clock-date{color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;}
 
+.cliente-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:13px;padding:16px;transition:var(--tr);display:flex;flex-direction:column;gap:10px;}
+.cliente-card:hover{border-color:rgba(79,110,247,.4);transform:translateY(-2px);}
+.cli-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.cli-frecuente{background:linear-gradient(135deg,rgba(255,214,0,.15),rgba(255,145,0,.1));border-color:rgba(255,214,0,.3);}
+.cli-frecuente .cli-avatar{background:linear-gradient(135deg,#ffd600,#ff9100);}
+.cli-stat{display:flex;flex-direction:column;align-items:center;background:var(--hover-bg);border-radius:8px;padding:6px 10px;min-width:52px;}
+.cli-stat-val{font-size:15px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text-primary);}
+.cli-stat-lbl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;}
+.hist-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.hist-item:last-child{border-bottom:none;}
+.hist-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+
 .anticipo-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(255,145,0,.15);color:#ff9100;border:1px solid rgba(255,145,0,.3);}
 .anticipo-liberado{background:rgba(0,230,118,.12);color:#00e676;border-color:rgba(0,230,118,.3);}
 .saldo-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;background:rgba(79,110,247,.12);color:#4f6ef7;}
@@ -279,11 +291,150 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 .prov-color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
 
 @media print{#sidebar,#tc,.no-print{display:none!important;}#main{margin-left:0!important;}body{background:#fff;color:#000;}}
-@media(max-width:768px){#sidebar{transform:translateX(-100%);}#sidebar.mob{transform:translateX(0);}#main{margin-left:0;}.pos-layout{grid-template-columns:1fr;}.form-row.c2,.form-row.c3{grid-template-columns:1fr;}.search-input{width:140px;}.search-input:focus{width:180px;}}
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE — MOBILE FIRST
+   ═══════════════════════════════════════════════════ */
+
+/* Sidebar overlay */
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99;backdrop-filter:blur(2px);}
+#sidebar-overlay.show{display:block;}
+
+/* ── TABLET + MOBILE (≤992px) ── */
+@media(max-width:992px){
+  :root{--sidebar-width:240px;}
+  #sidebar{transform:translateX(-100%);z-index:200;transition:transform .28s cubic-bezier(.4,0,.2,1);}
+  #sidebar.mob{transform:translateX(0);}
+  #main{margin-left:0!important;}
+  #burger{display:flex!important;}
+  .pos-layout{grid-template-columns:1fr;}
+  .pos-list-item{padding:8px 10px;}
+  .form-row.c3{grid-template-columns:1fr 1fr;}
+  #topbar-clock #clock-date{display:none;}
+}
+
+/* ── MOBILE (≤640px) ── */
+@media(max-width:640px){
+  .page-content{padding:12px 10px 80px;}
+  /* Topbar */
+  .topbar{padding:0 12px;height:50px;}
+  .topbar-title{font-size:13px;}
+  #caja-indicator{font-size:9px;padding:2px 7px;}
+  #topbar-clock{display:none;}
+
+  /* Sidebar */
+  #sidebar{width:82vw;max-width:280px;}
+
+  /* KPI cards tighter */
+  .card-stat{padding:12px 14px;border-radius:11px;}
+  .stat-value{font-size:22px;}
+  .stat-icon{font-size:24px;}
+
+  /* Section headers wrap */
+  .section-header{padding:10px 12px;flex-wrap:wrap;gap:6px;}
+  .section-title{font-size:12px;}
+
+  /* Tables: hide less important cols, make text smaller */
+  .tf-table thead th{padding:7px 8px;font-size:8px;}
+  .tf-table tbody td{padding:7px 8px;font-size:11px;}
+
+  /* Forms */
+  .form-row.c2,.form-row.c3{grid-template-columns:1fr;}
+  .tf-input,.tf-select,.tf-textarea{font-size:14px;padding:9px 11px;}
+
+  /* Buttons */
+  .btn-p,.btn-s,.btn-d,.btn-g{font-size:12px;padding:8px 12px;}
+  .btn-action{width:32px;height:32px;font-size:14px;}
+
+  /* Modal */
+  .modal-box{padding:16px;border-radius:14px;}
+  .modal-box.lg{max-width:100%;}
+
+  /* POS */
+  .pos-list-item{gap:8px;padding:9px 10px;}
+  .pos-item-icon{width:32px;height:32px;font-size:16px;}
+  .pos-item-name{font-size:12px;}
+  .pos-item-price{font-size:13px;}
+
+  /* Charts */
+  #chart-estados{width:160px!important;height:160px!important;}
+
+  /* Pagination */
+  .pagination-bar{flex-direction:column;align-items:flex-start;gap:6px;padding:8px 12px;}
+  .pg-btn{width:30px;height:30px;font-size:11px;}
+
+  /* Search */
+  .search-input{width:130px;}
+  .search-input:focus{width:160px;}
+
+  /* Brand tabs wrap */
+  #brand-tabs{gap:3px;}
+  .brand-tab{padding:3px 8px;font-size:10px;}
+
+  /* Provider tabs */
+  .prov-tab{padding:6px 10px;font-size:12px;}
+
+  /* Falla chips */
+  .falla-chip{font-size:10px;padding:3px 7px;}
+
+  /* Upload zone */
+  .upload-zone{padding:18px;}
+
+  /* Config card */
+  .config-card{padding:14px;}
+  .config-item{flex-direction:column;align-items:flex-start;gap:8px;}
+
+  /* Add-pedido-row */
+  .add-pedido-row{flex-direction:column;gap:8px;}
+  .add-pedido-row .tf-input,.add-pedido-row .pedido-qty{width:100%;}
+}
+
+/* ── BOTTOM NAV BAR (mobile only) ── */
+#bottom-nav{display:none;}
+@media(max-width:640px){
+  #bottom-nav{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--sidebar-bg);border-top:1px solid var(--card-border);
+    z-index:150;height:58px;padding:0 4px;
+    justify-content:space-around;align-items:center;
+  }
+  .bnav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:10px;cursor:pointer;transition:var(--tr);color:var(--text-muted);flex:1;max-width:64px;position:relative;}
+  .bnav-item.active{color:var(--accent-cyan);}
+  .bnav-item i{font-size:20px;line-height:1;}
+  .bnav-item span{font-size:9px;font-weight:600;letter-spacing:.3px;white-space:nowrap;}
+  .bnav-badge{position:absolute;top:3px;right:8px;background:var(--accent-red);color:#fff;font-size:8px;font-weight:800;padding:0 4px;border-radius:99px;font-family:'JetBrains Mono',monospace;min-width:14px;text-align:center;}
+}
+
+/* ── Small screens: hide orders table cols ── */
+@media(max-width:580px){
+  .col-hide-xs{display:none!important;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- BOTTOM NAV (mobile) -->
+<div id="bottom-nav">
+  <div class="bnav-item active" id="bn-dashboard" onclick="navigate('dashboard');closeMobileNav('bn-dashboard')">
+    <i class="bi bi-grid-1x2"></i><span>Inicio</span>
+  </div>
+  <div class="bnav-item" id="bn-orders" onclick="navigate('orders');closeMobileNav('bn-orders')">
+    <i class="bi bi-clipboard2-check"></i><span>Órdenes</span>
+    <span class="bnav-badge" id="bn-badge-orders" style="display:none">0</span>
+  </div>
+  <div class="bnav-item" id="bn-clientes" onclick="navigate('clientes');closeMobileNav('bn-clientes')">
+    <i class="bi bi-people"></i><span>Clientes</span>
+  </div>
+  <div class="bnav-item" id="bn-caja" onclick="navigate('caja');closeMobileNav('bn-caja')">
+    <i class="bi bi-cash-stack"></i><span>Caja</span>
+  </div>
+  <div class="bnav-item" id="bn-more" onclick="toggleSidebar()">
+    <i class="bi bi-grid-3x3-gap"></i><span>Más</span>
+  </div>
+</div>
 
 <!-- LOADING -->
 <div id="loading-screen">
@@ -301,6 +452,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   <div class="nav-sec">Principal</div>
   <div class="nav-item active" onclick="navigate('dashboard')"><i class="bi bi-grid-1x2"></i> Dashboard</div>
   <div class="nav-item" onclick="navigate('orders')"><i class="bi bi-clipboard2-check"></i> Órdenes <span class="nav-badge" id="badge-orders">0</span></div>
+  <div class="nav-item" onclick="navigate('clientes')"><i class="bi bi-people"></i> Clientes <span class="nav-badge" id="badge-clientes" style="display:none">0</span></div>
   <div class="nav-sec">Operaciones</div>
   <div class="nav-item" onclick="navigate('caja')"><i class="bi bi-cash-stack"></i> Caja</div>
   <div class="nav-item" onclick="navigate('inventory')"><i class="bi bi-boxes"></i> Inventario <span class="nav-badge" id="badge-inventory" style="display:none">!</span></div>
@@ -487,7 +639,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <button class="btn-p no-print" onclick="openOrderModal()"><i class="bi bi-plus-lg"></i> Nueva Orden</button>
       </div>
       <div class="section-card">
-        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th>Repuesto</th><th>Estado</th><th>Promesa</th><th>Total</th><th>Anticipo</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
+        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th class="col-hide-xs">Repuesto</th><th>Estado</th><th class="col-hide-xs">Promesa</th><th>Total</th><th class="col-hide-xs">Anticipo</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
         <div class="pagination-bar" id="orders-pagination"></div>
       </div>
     </div>
@@ -639,6 +791,33 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ══ CLIENTES ══ -->
+    <div id="page-clientes" class="page-section">
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-clientes" placeholder="Buscar cliente..." oninput="renderClientes()"></div>
+          <select class="tf-select" style="width:140px;padding:6px 10px;font-size:12px" id="filter-clientes-sort" onchange="renderClientes()">
+            <option value="nombre">A–Z Nombre</option>
+            <option value="ordenes">Más órdenes</option>
+            <option value="reciente">Más reciente</option>
+          </select>
+        </div>
+        <button class="btn-p no-print" onclick="openClienteModal()"><i class="bi bi-person-plus"></i> Agregar Cliente</button>
+      </div>
+
+      <!-- Stats row -->
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><div class="card-stat blue" style="padding:12px 16px"><div class="stat-label">Total Clientes</div><div class="stat-value mono" style="font-size:22px" id="cli-total">0</div><i class="bi bi-people stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat green" style="padding:12px 16px"><div class="stat-label">Frecuentes</div><div class="stat-value mono" style="font-size:22px" id="cli-frecuentes">0</div><div class="stat-sub">3+ reparaciones</div><i class="bi bi-star stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat orange" style="padding:12px 16px"><div class="stat-label">Con Anticipo</div><div class="stat-value mono" style="font-size:22px" id="cli-con-anticipo">0</div><div class="stat-sub">Pendiente de cobro</div><i class="bi bi-hourglass-split stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat purple" style="padding:12px 16px"><div class="stat-label">Este Mes</div><div class="stat-value mono" style="font-size:22px" id="cli-mes">0</div><div class="stat-sub">Nuevos clientes</div><i class="bi bi-person-plus stat-icon"></i></div></div>
+      </div>
+
+      <!-- Clientes grid -->
+      <div id="clientes-grid" class="row g-3"></div>
+      <div class="pagination-bar section-card" id="clientes-pagination" style="border-top:none;border-radius:0 0 14px 14px;display:none"></div>
     </div>
 
     <!-- ══ PEDIDOS A PROVEEDORES ══ -->
@@ -921,6 +1100,43 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   </div>
 </div>
 
+<!-- ══ MODAL CLIENTE ══ -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cliente-title"><i class="bi bi-person-plus" style="color:var(--accent-cyan)"></i> Nuevo Cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-cliente')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label">Nombre *</label><input class="tf-input" id="cli-nombre" placeholder="Nombre completo"></div>
+      <div><label class="tf-label">Teléfono / WhatsApp *</label><input class="tf-input mono" id="cli-telefono" placeholder="+503 0000-0000"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Correo electrónico</label><input class="tf-input" id="cli-email" placeholder="correo@ejemplo.com" type="email"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Dirección / Notas</label><textarea class="tf-textarea" id="cli-notas" rows="2" placeholder="Dirección, referencias, notas del cliente..."></textarea></div>
+    </div>
+    <input type="hidden" id="cli-edit-id">
+    <div class="modal-footer">
+      <button class="btn-s" onclick="closeModal('modal-cliente')">Cancelar</button>
+      <button class="btn-p" id="btn-save-cliente" onclick="saveCliente()"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL HISTORIAL CLIENTE ══ -->
+<div class="modal-overlay" id="modal-historial">
+  <div class="modal-box lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-hist-title"><i class="bi bi-clock-history" style="color:var(--accent-cyan)"></i> Historial del Cliente</div>
+      <button class="modal-close" onclick="closeModal('modal-historial')"><i class="bi bi-x"></i></button>
+    </div>
+    <div id="modal-hist-content"></div>
+    <div class="modal-footer"><button class="btn-s" onclick="closeModal('modal-historial')">Cerrar</button></div>
+  </div>
+</div>
+
 <div id="tc"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1117,6 +1333,7 @@ async function init() {
     setSyncStatus('ok');
     hideLoader();
     renderAll(); loadConfigUI(); updateCajaIndicator(); updateBadges();
+    await loadClientes();
     await loadProveedores();
   } catch(e){ console.error(e); setSyncStatus('error'); setLoadMsg('Error: '+e.message); setTimeout(hideLoader,3000); }
 }
@@ -1432,6 +1649,7 @@ window.openOrderModal=function(id=null){
   document.getElementById('anticipo-preview').style.display='none';
   renderFallas(); popRep();
   if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();}
+  setupClienteAutocomplete();
   showModal('modal-order');
 };
 
@@ -1459,6 +1677,7 @@ window.saveOrder=async function(){
       await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false});
       const toastMsg=`Orden ${cod} creada${anticipo>0?' — Anticipo '+mon()+anticipo.toFixed(2):''}${pp?' — Pieza Pendiente':''}`;
       toast(toastMsg,pp?'warning':'success');
+      await autoSaveCliente(cliente, telefono);
     }
     closeModal('modal-order');
   } catch(e){toast('Error: '+e.message,'error');}
@@ -1831,8 +2050,356 @@ window.exportData=function(){const blob=new Blob([JSON.stringify({orders,invento
 window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={open:false,apertura:null,balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$'};nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-window.updateBadges=function(){document.getElementById('badge-orders').textContent=orders.filter(o=>o.estado!=='Entregado').length;const ls=inventory.filter(i=>i.stock===0),bi=document.getElementById('badge-inventory');bi.style.display=ls.length?'inline-block':'none';};
+window.updateBadges=function(){
+  const activeOrds=orders.filter(o=>o.estado!=='Entregado').length;
+  document.getElementById('badge-orders').textContent=activeOrds;
+  // Sync bottom nav badge
+  const bnBadge=document.getElementById('bn-badge-orders');
+  if(bnBadge){bnBadge.textContent=activeOrds;bnBadge.style.display=activeOrds>0?'inline-block':'none';}
+  const ls=inventory.filter(i=>i.stock===0),bi=document.getElementById('badge-inventory');
+  bi.style.display=ls.length?'inline-block':'none';
+};
 window.updateCajaIndicator=function(){const el=document.getElementById('caja-indicator');if(cajaData.open){el.className='caja-status open';el.textContent='CAJA ABIERTA';}else{el.className='caja-status closed';el.textContent='CAJA CERRADA';}};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── MÓDULO CLIENTES ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let clientes = [];
+let cliPage = 1, cliPP = 12;
+const COL_CLI = 'tf_clientes';
+
+// ─── LOAD ─────────────────────────────────────────────────────────────────────
+async function loadClientes() {
+  try {
+    const snap = await getDocs(collection(db, COL_CLI));
+    clientes = [];
+    snap.forEach(d => clientes.push({id: d.id, ...d.data()}));
+  } catch(e) { console.error('Error cargando clientes:', e); }
+}
+
+// ─── AUTO-SAVE CLIENT FROM ORDER ─────────────────────────────────────────────
+async function autoSaveCliente(nombre, telefono) {
+  if(!nombre || !telefono) return;
+  const norm = telefono.replace(/\D/g,'');
+  const exists = clientes.find(c => c.telefono.replace(/\D/g,'') === norm);
+  if(exists) {
+    // Update lastSeen + ordenes count
+    const totalOrds = orders.filter(o => o.telefono.replace(/\D/g,'') === norm).length;
+    await updateDoc(doc(db, COL_CLI, exists.id), {
+      lastSeen: new Date().toISOString(),
+      totalOrdenes: totalOrds
+    });
+    exists.lastSeen = new Date().toISOString();
+    exists.totalOrdenes = totalOrds;
+  } else {
+    const data = {
+      nombre, telefono, email: '', notas: '',
+      creado: new Date().toISOString(),
+      lastSeen: new Date().toISOString(),
+      totalOrdenes: 1
+    };
+    const ref = doc(collection(db, COL_CLI));
+    await setDoc(ref, data);
+    clientes.push({id: ref.id, ...data});
+  }
+  updateBadgeClientes();
+}
+
+// ─── AUTOCOMPLETE IN ORDER FORM ───────────────────────────────────────────────
+let cliAcTimer = null;
+window.setupClienteAutocomplete = function() {
+  const nomEl = document.getElementById('ord-cliente');
+  const telEl = document.getElementById('ord-telefono');
+  if(!nomEl || !telEl) return;
+
+  // Create dropdown if not exists
+  if(!document.getElementById('cli-ac-drop')) {
+    const drop = document.createElement('div');
+    drop.id = 'cli-ac-drop';
+    drop.style.cssText = 'display:none;position:absolute;top:100%;left:0;right:0;background:var(--modal-bg);border:1px solid var(--accent-blue);border-top:none;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:600;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+    nomEl.parentElement.style.position = 'relative';
+    nomEl.parentElement.appendChild(drop);
+  }
+
+  nomEl.oninput = () => {
+    clearTimeout(cliAcTimer);
+    cliAcTimer = setTimeout(() => renderCliAC(nomEl.value), 120);
+  };
+  nomEl.onfocus = () => renderCliAC(nomEl.value);
+  nomEl.onblur = () => setTimeout(() => {
+    const d = document.getElementById('cli-ac-drop');
+    if(d) d.style.display = 'none';
+  }, 200);
+
+  telEl.oninput = () => {
+    clearTimeout(cliAcTimer);
+    cliAcTimer = setTimeout(() => {
+      const q = telEl.value.replace(/\D/g,'');
+      if(q.length >= 4) renderCliACByTel(q);
+    }, 150);
+  };
+};
+
+function renderCliAC(q) {
+  const drop = document.getElementById('cli-ac-drop');
+  if(!drop) return;
+  const norm = (q||'').toLowerCase().trim();
+  const matches = norm.length < 2 ? [] :
+    clientes.filter(c =>
+      (c.nombre||'').toLowerCase().includes(norm) ||
+      (c.telefono||'').includes(norm)
+    ).slice(0, 8);
+  if(!matches.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = matches.map(c => {
+    const ords = orders.filter(o => o.telefono.replace(/\D/g,'') === c.telefono.replace(/\D/g,'')).length;
+    return `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:10px"
+      onmousedown="fillClienteFromAC('${c.id}')"
+      onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background=''">
+      <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4f6ef7,#00d4ff);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">${(c.nombre||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.nombre)}</div>
+        <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace">${esc(c.telefono)}</div>
+      </div>
+      <div style="flex-shrink:0"><span class="chip ${ords>=3?'g':''}" style="font-size:9px">${ords} reparac.</span></div>
+    </div>`;
+  }).join('');
+  drop.style.display = 'block';
+}
+
+function renderCliACByTel(q) {
+  const drop = document.getElementById('cli-ac-drop');
+  if(!drop) return;
+  const match = clientes.find(c => c.telefono.replace(/\D/g,'').includes(q));
+  if(match) fillClienteFromAC(match.id);
+}
+
+window.fillClienteFromAC = function(id) {
+  const c = clientes.find(x => x.id === id);
+  if(!c) return;
+  const nomEl = document.getElementById('ord-cliente');
+  const telEl = document.getElementById('ord-telefono');
+  if(nomEl) nomEl.value = c.nombre;
+  if(telEl) telEl.value = c.telefono;
+  const drop = document.getElementById('cli-ac-drop');
+  if(drop) drop.style.display = 'none';
+  toast(`Cliente: ${c.nombre}`,'info');
+};
+
+// ─── RENDER CLIENTES GRID ─────────────────────────────────────────────────────
+window.setCliPage = function(p){ cliPage=p; renderClientes(); };
+window.setCliPP  = function(v){ cliPP=parseInt(v); cliPage=1; renderClientes(); };
+
+window.renderClientes = function() {
+  const q = (document.getElementById('search-clientes')||{}).value?.toLowerCase()||'';
+  const sort = (document.getElementById('filter-clientes-sort')||{}).value||'nombre';
+
+  // Build enriched list
+  let list = clientes.map(c => {
+    const tel = c.telefono.replace(/\D/g,'');
+    const clientOrders = orders.filter(o => o.telefono.replace(/\D/g,'') === tel);
+    const anticipo = clientOrders.filter(o=>o.anticipo>0&&!o.anticipoLiberado).reduce((a,o)=>a+(o.anticipo||0),0);
+    return {...c, _orders: clientOrders, _anticipo: anticipo, _totalOrds: clientOrders.length};
+  });
+
+  // Filter
+  if(q) list = list.filter(c =>
+    (c.nombre||'').toLowerCase().includes(q) ||
+    (c.telefono||'').includes(q) ||
+    (c.email||'').toLowerCase().includes(q)
+  );
+
+  // Sort
+  if(sort==='ordenes') list.sort((a,b)=>b._totalOrds-a._totalOrds);
+  else if(sort==='reciente') list.sort((a,b)=>new Date(b.lastSeen||0)-new Date(a.lastSeen||0));
+  else list.sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+
+  // Stats
+  const mes = new Date(); mes.setDate(1);
+  document.getElementById('cli-total').textContent = clientes.length;
+  document.getElementById('cli-frecuentes').textContent = list.filter(c=>c._totalOrds>=3).length;
+  document.getElementById('cli-con-anticipo').textContent = list.filter(c=>c._anticipo>0).length;
+  document.getElementById('cli-mes').textContent = clientes.filter(c=>c.creado&&new Date(c.creado)>=mes).length;
+
+  // Pagination
+  const total = list.length;
+  const page  = list.slice((cliPage-1)*cliPP, cliPage*cliPP);
+  const grid  = document.getElementById('clientes-grid');
+  const pagEl = document.getElementById('clientes-pagination');
+
+  if(!list.length) {
+    grid.innerHTML = `<div class="col-12"><div class="empty-state"><i class="bi bi-people"></i><p>Sin clientes encontrados. Las órdenes generan clientes automáticamente.</p></div></div>`;
+    pagEl.style.display='none'; return;
+  }
+
+  grid.innerHTML = page.map(c => {
+    const freq = c._totalOrds >= 3;
+    const lastOrd = c._orders.sort((a,b)=>new Date(b.fechaRecibido||0)-new Date(a.fechaRecibido||0))[0];
+    const initials = (c.nombre||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    return `<div class="col-12 col-sm-6 col-lg-4">
+      <div class="cliente-card ${freq?'cli-frecuente':''}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="cli-avatar">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.nombre)}</div>
+            <div class="mono" style="font-size:11px;color:var(--text-muted)">${esc(c.telefono)}</div>
+            ${freq?'<span class="chip g" style="font-size:9px;margin-top:2px"><i class="bi bi-star-fill"></i> Cliente frecuente</span>':''}
+          </div>
+        </div>
+
+        ${c.email?`<div style="font-size:11px;color:var(--text-secondary)"><i class="bi bi-envelope" style="margin-right:4px;color:var(--text-muted)"></i>${esc(c.email)}</div>`:''}
+
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div class="cli-stat"><div class="cli-stat-val">${c._totalOrds}</div><div class="cli-stat-lbl">Reparac.</div></div>
+          <div class="cli-stat"><div class="cli-stat-val" style="color:${c._anticipo>0?'#ff9100':'var(--text-primary)'}">${c._anticipo>0?mon()+c._anticipo.toFixed(0):'—'}</div><div class="cli-stat-lbl">Anticipo</div></div>
+          <div class="cli-stat" style="flex:1"><div class="cli-stat-val" style="font-size:10px;color:var(--text-secondary)">${lastOrd?fmtDate(lastOrd.fechaRecibido):'—'}</div><div class="cli-stat-lbl">Última visita</div></div>
+        </div>
+
+        ${lastOrd?`<div style="background:var(--hover-bg);border-radius:7px;padding:7px 10px;font-size:11px;color:var(--text-secondary)"><span style="color:var(--text-muted)">Último:</span> ${esc(lastOrd.marca)} ${esc(lastOrd.modelo)} — ${statusBadge(lastOrd.estado)}</div>`:''}
+
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn-g" style="flex:1;font-size:11px;padding:6px 8px" onclick="openHistorial('${c.id}')"><i class="bi bi-clock-history"></i> Historial</button>
+          <button class="btn-s" style="font-size:11px;padding:6px 10px" onclick="openClienteModal('${c.id}')"><i class="bi bi-pencil"></i></button>
+          <button class="btn-s" style="font-size:11px;padding:6px 10px;border-color:#25d366;color:#25d366" onclick="waCliente('${c.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+          <button class="btn-s" style="font-size:11px;padding:6px 10px" onclick="newOrderFromClient('${c.id}')"><i class="bi bi-plus"></i> Orden</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  pagEl.style.display = total > cliPP ? 'flex' : 'none';
+  if(total > cliPP) buildPagination('clientes-pagination', total, cliPage, cliPP, 'setCliPage', 'setCliPP');
+  updateBadgeClientes();
+};
+
+// ─── HISTORIAL ────────────────────────────────────────────────────────────────
+window.openHistorial = function(id) {
+  const c = clientes.find(x=>x.id===id);
+  if(!c) return;
+  const tel = c.telefono.replace(/\D/g,'');
+  const clientOrders = orders
+    .filter(o=>o.telefono.replace(/\D/g,'')===tel)
+    .sort((a,b)=>new Date(b.fechaCreado||b.fechaRecibido||0)-new Date(a.fechaCreado||a.fechaRecibido||0));
+
+  const totalGastado = clientOrders.filter(o=>o.estado==='Entregado').reduce((a,o)=>a+(o.total||0),0);
+  document.getElementById('modal-hist-title').innerHTML =
+    `<i class="bi bi-clock-history" style="color:var(--accent-cyan)"></i> Historial — ${esc(c.nombre)}`;
+
+  const initials = (c.nombre||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  let html = `
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--card-border);margin-bottom:14px">
+      <div class="cli-avatar" style="width:48px;height:48px;font-size:18px">${initials}</div>
+      <div>
+        <div style="font-size:15px;font-weight:700">${esc(c.nombre)}</div>
+        <div class="mono" style="font-size:12px;color:var(--text-muted)">${esc(c.telefono)}</div>
+        ${c.email?`<div style="font-size:11px;color:var(--text-secondary)">${esc(c.email)}</div>`:''}
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Total gastado</div>
+        <div class="mono" style="font-size:18px;font-weight:800;color:#00e676">${mon()}${totalGastado.toFixed(2)}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${clientOrders.length} reparaciones</div>
+      </div>
+    </div>`;
+
+  if(!clientOrders.length) {
+    html += `<div class="empty-state"><i class="bi bi-clipboard2-x"></i><p>Sin órdenes registradas</p></div>`;
+  } else {
+    html += `<div style="max-height:420px;overflow-y:auto">`;
+    clientOrders.forEach((o, i) => {
+      const dotColor = o.estado==='Entregado'?'#00e676':o.estado==='En Proceso'?'#ff9100':o.estado==='Listo'?'#00d4ff':'#4f6ef7';
+      html += `<div class="hist-item">
+        <div class="hist-dot" style="background:${dotColor}"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="mono" style="font-size:11px;color:var(--accent-cyan)">${o.codigo}</span>
+            ${statusBadge(o.estado)}
+            ${o.anticipo>0?`<span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}" style="font-size:9px">${mon()}${(o.anticipo||0).toFixed(2)}</span>`:''}
+          </div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">${esc(o.marca)} ${esc(o.modelo)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${(o.fallas||[]).slice(0,3).join(', ')||'—'}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${fmtDate(o.fechaRecibido)}</div>
+        </div>
+        <div style="flex-shrink:0;text-align:right">
+          <div class="mono" style="font-size:13px;font-weight:700;color:#00e676">${mon()}${(o.total||0).toFixed(2)}</div>
+          <button class="btn-action view" onclick="viewOrder('${o.id}');closeModal('modal-historial')" title="Ver orden" style="margin-top:4px"><i class="bi bi-eye"></i></button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('modal-hist-content').innerHTML = html;
+  showModal('modal-historial');
+};
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+window.openClienteModal = function(id=null) {
+  document.getElementById('cli-edit-id').value = '';
+  document.getElementById('cli-nombre').value = '';
+  document.getElementById('cli-telefono').value = '';
+  document.getElementById('cli-email').value = '';
+  document.getElementById('cli-notas').value = '';
+  document.getElementById('modal-cliente-title').innerHTML = '<i class="bi bi-person-plus" style="color:var(--accent-cyan)"></i> Nuevo Cliente';
+  if(id) {
+    const c = clientes.find(x=>x.id===id); if(!c) return;
+    document.getElementById('cli-edit-id').value = id;
+    document.getElementById('cli-nombre').value = c.nombre||'';
+    document.getElementById('cli-telefono').value = c.telefono||'';
+    document.getElementById('cli-email').value = c.email||'';
+    document.getElementById('cli-notas').value = c.notas||'';
+    document.getElementById('modal-cliente-title').innerHTML = `<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar ${esc(c.nombre)}`;
+  }
+  showModal('modal-cliente');
+};
+
+window.saveCliente = async function() {
+  const nombre = document.getElementById('cli-nombre').value.trim();
+  const telefono = document.getElementById('cli-telefono').value.trim();
+  if(!nombre||!telefono) { toast('Nombre y teléfono son requeridos','error'); return; }
+  const btn = document.getElementById('btn-save-cliente'); btn.disabled=true;
+  const data = {nombre, telefono, email:document.getElementById('cli-email').value.trim(), notas:document.getElementById('cli-notas').value.trim()};
+  setSyncStatus('syncing');
+  try {
+    const editId = document.getElementById('cli-edit-id').value;
+    if(editId) {
+      await updateDoc(doc(db,COL_CLI,editId), data);
+      const idx = clientes.findIndex(c=>c.id===editId);
+      if(idx>-1) clientes[idx]={...clientes[idx],...data};
+      toast('Cliente actualizado','success');
+    } else {
+      const ref = doc(collection(db,COL_CLI));
+      const full = {...data, creado:new Date().toISOString(), lastSeen:new Date().toISOString(), totalOrdenes:0};
+      await setDoc(ref, full);
+      clientes.push({id:ref.id,...full});
+      toast('Cliente agregado','success');
+    }
+    setSyncStatus('ok'); closeModal('modal-cliente'); renderClientes();
+  } catch(e){ toast('Error: '+e.message,'error'); setSyncStatus('error'); }
+  btn.disabled=false;
+};
+
+window.waCliente = function(id) {
+  const c = clientes.find(x=>x.id===id); if(!c) return;
+  const tel = c.telefono.replace(/\D/g,'');
+  if(!tel) { toast('Sin número configurado','error'); return; }
+  const msg = encodeURIComponent(`Hola ${c.nombre}! 👋 Le contactamos desde ${configData.nombre||'Nextcom'}.`);
+  window.open(`https://wa.me/${tel}?text=${msg}`,'_blank');
+};
+
+window.newOrderFromClient = function(id) {
+  const c = clientes.find(x=>x.id===id); if(!c) return;
+  navigate('orders');
+  setTimeout(() => {
+    openOrderModal();
+    document.getElementById('ord-cliente').value = c.nombre;
+    document.getElementById('ord-telefono').value = c.telefono;
+  }, 120);
+};
+
+function updateBadgeClientes() {
+  const b = document.getElementById('badge-clientes');
+  if(b) { b.textContent=clientes.length; b.style.display=clientes.length>0?'inline-block':'none'; }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── MÓDULO PEDIDOS A PROVEEDORES ────────────────────────────────────────────
@@ -2211,11 +2778,29 @@ window.deleteCurrentProv = async function() {
 };
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
-const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',config:'Configuración',pedidos:'Pedidos a Proveedores'};
-window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,pedidos:renderPedidos};if(fns[page])fns[page]();};
+const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',config:'Configuración',pedidos:'Pedidos a Proveedores',clientes:'Clientes'};
+window.closeMobileNav=function(activeId){
+  // Update bottom nav active state
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById(activeId);
+  if(el) el.classList.add('active');
+  // Close sidebar on mobile
+  if(window.innerWidth<=640) closeSidebar();
+};
+window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;if(window.innerWidth<=640)closeSidebar();const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,pedidos:renderPedidos,clientes:renderClientes};if(fns[page])fns[page]();};
 window.showModal=function(id){document.getElementById(id).classList.add('show');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
-window.toggleSidebar=function(){document.getElementById('sidebar').classList.toggle('mob');};
+window.toggleSidebar=function(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  sb.classList.toggle('mob');
+  if(ov) ov.classList.toggle('show', sb.classList.contains('mob'));
+};
+window.closeSidebar=function(){
+  document.getElementById('sidebar').classList.remove('mob');
+  const ov=document.getElementById('sidebar-overlay');
+  if(ov) ov.classList.remove('show');
+};
 document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('show');}));
 // ─── CLOCK ────────────────────────────────────────────────────────────────────
 function updateClock(){
@@ -2229,7 +2814,7 @@ function updateClock(){
 updateClock();
 setInterval(updateClock, 1000);
 
-if(window.innerWidth<=768)document.getElementById('burger').style.display='flex';
+// burger shown via CSS media query
 const savedTheme=localStorage.getItem('nc_theme')||'dark';
 document.documentElement.setAttribute('data-theme',savedTheme);
 document.getElementById('toggle-theme').checked=savedTheme==='dark';

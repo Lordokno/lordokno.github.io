@@ -267,6 +267,35 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 .falla-chip:hover{border-color:#4f6ef7;color:#4f6ef7;}
 .falla-chip.falla-active{background:rgba(0,230,118,.15);border-color:#00e676;color:#00e676;}
 
+
+/* ─── MOBILE ORDER CARDS ────────────────────────────── */
+.ord-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:var(--tr);}
+.ord-card-head{display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;user-select:none;}
+.ord-card-head:active{background:var(--hover-bg);}
+.ord-card-chevron{font-size:13px;color:var(--text-muted);transition:transform .2s ease;flex-shrink:0;margin-left:auto;}
+.ord-card-chevron.open{transform:rotate(180deg);}
+.ord-card-body{display:none;padding:0 13px 12px;border-top:1px solid rgba(255,255,255,.05);}
+.ord-card-body.open{display:block;}
+.ord-detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.ord-detail-row:last-child{border-bottom:none;}
+.ord-detail-label{color:var(--text-muted);font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+.ord-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);}
+.ord-actions .btn-action{width:38px;height:38px;border-radius:9px;font-size:15px;}
+.ord-actions .btn-p,.ord-actions .btn-g{font-size:12px;padding:7px 12px;flex:1;}
+
+/* Hide desktop table on mobile, show cards */
+@media(max-width:640px){
+  #orders-table-wrap{display:none!important;}
+  #orders-cards-wrap{display:block!important;}
+  .orders-top-bar{flex-direction:column;align-items:stretch!important;}
+  .orders-top-bar .search-wrap{width:100%;}
+  .orders-top-bar .search-input{width:100%!important;}
+  .orders-top-bar .tf-select{width:100%!important;}
+}
+@media(min-width:641px){
+  #orders-table-wrap{display:block!important;}
+  #orders-cards-wrap{display:none!important;}
+}
 /* ─── PEDIDOS / PROVEEDORES ─── */
 .prov-tab-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
 .prov-tab{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;border:1px solid var(--card-border);background:var(--card-bg);cursor:pointer;transition:var(--tr);font-size:13px;font-weight:600;color:var(--text-secondary);user-select:none;}
@@ -629,9 +658,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 
     <!-- ══ ÓRDENES ══ -->
     <div id="page-orders" class="page-section">
-      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-orders" placeholder="Buscar órdenes..." oninput="ordPage=1;renderOrders()"></div>
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2 orders-top-bar">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%">
+          <div class="search-wrap" style="flex:1"><i class="bi bi-search"></i><input class="search-input" id="search-orders" placeholder="Buscar órdenes..." style="width:100%" oninput="ordPage=1;renderOrders()"></div>
           <select class="tf-select" style="width:140px;padding:6px 10px;font-size:12px" id="filter-status" onchange="ordPage=1;renderOrders()">
             <option value="">Todos los estados</option><option>Recibido</option><option>En Proceso</option><option>Listo</option><option>Entregado</option>
           </select>
@@ -639,7 +668,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <button class="btn-p no-print" onclick="openOrderModal()"><i class="bi bi-plus-lg"></i> Nueva Orden</button>
       </div>
       <div class="section-card">
-        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th class="col-hide-xs">Repuesto</th><th>Estado</th><th class="col-hide-xs">Promesa</th><th>Total</th><th class="col-hide-xs">Anticipo</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
+        <!-- Desktop table -->
+        <div id="orders-table-wrap" style="overflow-x:auto"><table class="tf-table"><thead><tr><th>ID</th><th>Cliente</th><th>Equipo / Falla</th><th class="col-hide-xs">Repuesto</th><th>Estado</th><th class="col-hide-xs">Promesa</th><th>Total</th><th class="col-hide-xs">Anticipo</th><th class="no-print">Acciones</th></tr></thead><tbody id="orders-body"></tbody></table></div>
+        <!-- Mobile cards -->
+        <div id="orders-cards-wrap" style="padding:10px 10px 4px;display:none"></div>
         <div class="pagination-bar" id="orders-pagination"></div>
       </div>
     </div>
@@ -809,7 +841,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 
       <!-- Stats row -->
       <div class="row g-2 mb-3">
-        <div class="col-6 col-md-3"><div class="card-stat blue" style="padding:12px 16px"><div class="stat-label">Total Clientes</div><div class="stat-value mono" style="font-size:22px" id="cli-total">0</div><i class="bi bi-people stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat blue" style="padding:12px 16px"><div class="stat-label">Total Clientes</div><div class="stat-value mono" style="font-size:22px" id="cli-total">0</div><div class="stat-sub" id="cli-total-sub">Registrados</div><i class="bi bi-people stat-icon"></i></div></div>
         <div class="col-6 col-md-3"><div class="card-stat green" style="padding:12px 16px"><div class="stat-label">Frecuentes</div><div class="stat-value mono" style="font-size:22px" id="cli-frecuentes">0</div><div class="stat-sub">3+ reparaciones</div><i class="bi bi-star stat-icon"></i></div></div>
         <div class="col-6 col-md-3"><div class="card-stat orange" style="padding:12px 16px"><div class="stat-label">Con Anticipo</div><div class="stat-value mono" style="font-size:22px" id="cli-con-anticipo">0</div><div class="stat-sub">Pendiente de cobro</div><i class="bi bi-hourglass-split stat-icon"></i></div></div>
         <div class="col-6 col-md-3"><div class="card-stat purple" style="padding:12px 16px"><div class="stat-label">Este Mes</div><div class="stat-value mono" style="font-size:22px" id="cli-mes">0</div><div class="stat-sub">Nuevos clientes</div><i class="bi bi-person-plus stat-icon"></i></div></div>
@@ -1710,12 +1742,28 @@ function getFilteredOrders(){
   return orders.filter(o=>{const m=!q||o.cliente.toLowerCase().includes(q)||o.codigo.toLowerCase().includes(q)||(o.modelo||'').toLowerCase().includes(q)||(o.telefono||'').includes(q);return m&&(!fs||o.estado===fs);});
 }
 
+window.toggleOrderCard=function(id){
+  const body=document.getElementById('ocard-body-'+id);
+  const chev=document.getElementById('ocard-chev-'+id);
+  if(!body||!chev) return;
+  const open=body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+};
+
 window.renderOrders=function(){
   const filtered=getFilteredOrders();
   const total=filtered.length;
   const page=filtered.slice((ordPage-1)*ordPP,ordPage*ordPP);
+
+  // ── Desktop table ──────────────────────────────────────────────────────────
   const tbody=document.getElementById('orders-body');
-  if(!filtered.length){tbody.innerHTML=`<tr><td colspan="8"><div class="empty-state"><i class="bi bi-clipboard2-x"></i><p>Sin órdenes encontradas</p></div></td></tr>`;buildPagination('orders-pagination',0,1,ordPP,'setOrdPage','setOrdPP');return;}
+  if(!filtered.length){
+    tbody.innerHTML=`<tr><td colspan="9"><div class="empty-state"><i class="bi bi-clipboard2-x"></i><p>Sin órdenes encontradas</p></div></td></tr>`;
+    buildPagination('orders-pagination',0,1,ordPP,'setOrdPage','setOrdPP');
+    const mw=document.getElementById('orders-cards-wrap');
+    if(mw) mw.innerHTML='<div class="empty-state"><i class="bi bi-clipboard2-x"></i><p>Sin órdenes encontradas</p></div>';
+    return;
+  }
   tbody.innerHTML=page.map(o=>`<tr>
     <td><span class="mono" style="color:var(--accent-cyan);font-size:11px">${o.codigo}</span>${o.piezaPendiente&&o.estado!=='Entregado'?`<br><span class="chip r" style="margin-top:2px;font-size:9px">⚠ Pieza</span>`:''}</td>
     <td><div style="font-weight:600">${esc(o.cliente)}</div><div style="font-size:10px;color:var(--text-muted)">${esc(o.telefono)}</div></td>
@@ -1723,13 +1771,8 @@ window.renderOrders=function(){
     <td>${o.repuestoNombre?`<span class="chip" style="font-size:9px">${esc(o.repuestoNombre)}</span>`:'<span style="color:var(--text-muted)">—</span>'}</td>
     <td>${statusBadge(o.estado)}</td>
     <td style="font-size:11px;color:var(--text-secondary)">${fmtDate(o.fechaPromesa)}</td>
-    <td>
-      <div class="mono" style="color:#00e676;font-size:11px">${mon()}${(o.total||0).toFixed(2)}</div>
-      ${(o.total&&o.anticipo)?`<div style="font-size:10px;color:var(--text-muted)">Saldo: <span class="mono">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>`:''}
-    </td>
-    <td>
-      ${o.anticipo>0?`<span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}"><i class="bi bi-${o.anticipoLiberado?'check-circle':'hourglass-split'}"></i>${mon()}${(o.anticipo||0).toFixed(2)}</span>`:'<span style="color:var(--text-muted);font-size:11px">—</span>'}
-    </td>
+    <td><div class="mono" style="color:#00e676;font-size:11px">${mon()}${(o.total||0).toFixed(2)}</div>${(o.total&&o.anticipo)?`<div style="font-size:10px;color:var(--text-muted)">Saldo: <span class="mono">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>`:''}</td>
+    <td>${o.anticipo>0?`<span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}"><i class="bi bi-${o.anticipoLiberado?'check-circle':'hourglass-split'}"></i>${mon()}${(o.anticipo||0).toFixed(2)}</span>`:'<span style="color:var(--text-muted);font-size:11px">—</span>'}</td>
     <td class="no-print"><div style="display:flex;gap:3px;flex-wrap:wrap">
       <button class="btn-action view" onclick="viewOrder('${o.id}')" title="Ver"><i class="bi bi-eye"></i></button>
       <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
@@ -1739,6 +1782,71 @@ window.renderOrders=function(){
       <button class="btn-action del" onclick="deleteOrder('${o.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
     </div></td>
   </tr>`).join('');
+
+  // ── Mobile cards ───────────────────────────────────────────────────────────
+  const mwrap=document.getElementById('orders-cards-wrap');
+  if(mwrap){
+    mwrap.innerHTML=page.map(o=>{
+      const saldo=Math.max(0,(o.total||0)-(o.anticipo||0));
+      const pieza=o.piezaPendiente&&o.estado!=='Entregado';
+      return `<div class="ord-card">
+        <!-- VISIBLE HEAD: cliente + equipo/falla + estado -->
+        <div class="ord-card-head" onclick="toggleOrderCard('${o.id}')">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+              <span class="mono" style="font-size:10px;color:var(--accent-cyan)">${o.codigo}</span>
+              ${statusBadge(o.estado)}
+              ${pieza?'<span class="chip r" style="font-size:9px">⚠ Pieza</span>':''}
+            </div>
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(o.cliente)}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:1px">${esc(o.marca)} ${esc(o.modelo)}</div>
+            ${(o.fallas||[]).length?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px">${o.fallas.slice(0,2).join(' · ')}</div>`:''}
+          </div>
+          <div style="flex-shrink:0;text-align:right;margin-right:6px">
+            <div class="mono" style="font-size:14px;font-weight:800;color:#00e676">${mon()}${(o.total||0).toFixed(2)}</div>
+            ${o.anticipo>0?`<div style="font-size:10px;color:#ff9100" class="mono">-${mon()}${(o.anticipo||0).toFixed(2)}</div>`:''}
+          </div>
+          <i class="bi bi-chevron-down ord-card-chevron" id="ocard-chev-${o.id}"></i>
+        </div>
+
+        <!-- EXPANDED BODY: all details + actions -->
+        <div class="ord-card-body" id="ocard-body-${o.id}">
+          <div class="ord-detail-row">
+            <span class="ord-detail-label">Teléfono</span>
+            <span class="mono" style="font-size:12px">${esc(o.telefono)}</span>
+          </div>
+          ${o.repuestoNombre?`<div class="ord-detail-row"><span class="ord-detail-label">Repuesto</span><span class="chip" style="font-size:10px">${esc(o.repuestoNombre)}</span></div>`:''}
+          <div class="ord-detail-row">
+            <span class="ord-detail-label">Fecha Promesa</span>
+            <span style="font-size:12px">${fmtDate(o.fechaPromesa)}</span>
+          </div>
+          <div class="ord-detail-row">
+            <span class="ord-detail-label">Técnico</span>
+            <span style="font-size:12px">${esc(o.tecnico||'—')}</span>
+          </div>
+          ${o.anticipo>0?`<div class="ord-detail-row">
+            <span class="ord-detail-label">Anticipo</span>
+            <span class="anticipo-badge ${o.anticipoLiberado?'anticipo-liberado':''}" style="font-size:10px"><i class="bi bi-${o.anticipoLiberado?'check-circle':'hourglass-split'}"></i>${mon()}${(o.anticipo||0).toFixed(2)}</span>
+          </div>
+          <div class="ord-detail-row">
+            <span class="ord-detail-label">Saldo pendiente</span>
+            <span class="mono" style="color:#00e676;font-weight:700">${mon()}${saldo.toFixed(2)}</span>
+          </div>`:''}
+          ${o.descripcion?`<div class="ord-detail-row"><span class="ord-detail-label">Obs.</span><span style="font-size:11px;color:var(--text-secondary)">${esc(o.descripcion)}</span></div>`:''}
+          <!-- Actions -->
+          <div class="ord-actions">
+            <button class="btn-action view" onclick="viewOrder('${o.id}')" title="Ver detalle"><i class="bi bi-eye"></i></button>
+            <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+            <button class="btn-action wa" onclick="sendWA('${o.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+            <button class="btn-action print" onclick="printOrder('${o.id}')" title="Imprimir"><i class="bi bi-printer"></i></button>
+            <button class="btn-g" onclick="openStatusModal('${o.id}')"><i class="bi bi-arrow-repeat"></i> Estado</button>
+            <button class="btn-action del" onclick="deleteOrder('${o.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   buildPagination('orders-pagination',total,ordPage,ordPP,'setOrdPage','setOrdPP');
 };
 
@@ -2217,6 +2325,8 @@ window.renderClientes = function() {
   // Stats
   const mes = new Date(); mes.setDate(1);
   document.getElementById('cli-total').textContent = clientes.length;
+  const subEl=document.getElementById('cli-total-sub');
+  if(subEl) subEl.textContent=clientes.length===1?'1 registrado':`${clientes.length} registrados`;
   document.getElementById('cli-frecuentes').textContent = list.filter(c=>c._totalOrds>=3).length;
   document.getElementById('cli-con-anticipo').textContent = list.filter(c=>c._anticipo>0).length;
   document.getElementById('cli-mes').textContent = clientes.filter(c=>c.creado&&new Date(c.creado)>=mes).length;

@@ -706,12 +706,14 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
             <div style="padding:14px">
               <div id="caja-closed-ui">
                 <div class="ab i"><i class="bi bi-info-circle"></i> Ingresa el monto de apertura</div>
+                <div class="ab" style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);color:#F0B90B;font-size:11px"><i class="bi bi-clock"></i> Apertura automática 07:00 · Cierre automático 19:00</div>
                 <label class="tf-label">Monto de apertura ($)</label>
                 <input class="tf-input mono" id="caja-apertura-monto" type="number" placeholder="0.00" value="0">
                 <button class="btn-g" style="width:100%;margin-top:10px" onclick="abrirCaja()"><i class="bi bi-unlock"></i> Abrir Caja</button>
               </div>
               <div id="caja-open-ui" style="display:none">
                 <div class="ab s"><i class="bi bi-check-circle"></i> Abierta desde <span id="caja-hora-apertura"></span></div>
+                <div class="ab" style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);color:#F0B90B;font-size:11px"><i class="bi bi-clock-history"></i> Cierre automático a las 19:00</div>
                 <label class="tf-label">Tipo</label>
                 <select class="tf-select mb-2" id="mov-tipo"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select>
                 <input class="tf-input mono mb-2" type="number" id="mov-monto" placeholder="Monto $">
@@ -1495,6 +1497,8 @@ async function init() {
     await loadClientes();
     await loadProveedores();
     initReportes();
+    // Run auto-caja check immediately on load
+    setTimeout(checkAutoCaja, 1500);
   } catch(e){ console.error(e); setSyncStatus('error'); setLoadMsg('Error: '+e.message); setTimeout(hideLoader,3000); }
 }
 function setLoadMsg(m){const el=document.getElementById('load-msg');if(el)el.textContent=m;}
@@ -3386,7 +3390,57 @@ function updateClock(){
   dateEl.textContent=now.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
 }
 updateClock();
-setInterval(updateClock, 1000);
+
+// ─── AUTO CAJA: abre 07:00, cierra 19:00 ─────────────────────────────────────
+let _lastAutoDate = '';
+let _lastAutoHour = -1;
+
+async function checkAutoCaja() {
+  const now   = new Date();
+  const hour  = now.getHours();
+  const today = now.toISOString().slice(0,10);
+  const key   = `${today}_${hour}`;
+  if(key === _lastAutoDate) return;   // already handled this hour today
+  _lastAutoDate = key;
+
+  // ── Auto-ABRIR a las 07:00 ───────────────────────────────────────────────
+  if(hour === 7 && !cajaData.open) {
+    cajaData = {
+      open: true,
+      apertura: now.toISOString(),
+      balance: cajaData.balance || 0,   // keep existing balance
+      movimientos: [...(cajaData.movimientos||[]),
+        {fecha: now.toISOString(), tipo:'apertura', desc:'Apertura automática (07:00)', monto: cajaData.balance||0}
+      ]
+    };
+    setSyncStatus('syncing');
+    try {
+      await setDoc(doc(db,'tf_meta','caja'), cajaData);
+      renderCaja(); updateCajaIndicator(); renderDashboard();
+      toast('🔓 Caja abierta automáticamente (07:00)','success');
+    } catch(e){ console.error(e); }
+  }
+
+  // ── Auto-CERRAR a las 19:00 ──────────────────────────────────────────────
+  if(hour === 19 && cajaData.open) {
+    cajaData.movimientos.push({
+      fecha: now.toISOString(),
+      tipo: 'cierre',
+      desc: 'Cierre automático (19:00)',
+      monto: cajaData.balance
+    });
+    cajaData.open    = false;
+    cajaData.apertura = null;
+    setSyncStatus('syncing');
+    try {
+      await setDoc(doc(db,'tf_meta','caja'), cajaData);
+      renderCaja(); updateCajaIndicator(); renderDashboard();
+      toast('🔒 Caja cerrada automáticamente (19:00)','info');
+    } catch(e){ console.error(e); }
+  }
+}
+
+setInterval(() => { updateClock(); checkAutoCaja(); }, 1000);
 
 // burger shown via CSS media query
 const savedTheme=localStorage.getItem('nc_theme')||'dark';

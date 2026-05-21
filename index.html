@@ -396,6 +396,26 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 }
 
 
+
+/* ─── ORDER PHOTOS ──────────────────────────────────────────── */
+.photo-upload-zone{border:2px dashed var(--input-border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:var(--tr);margin-top:6px;}
+.photo-upload-zone:hover,.photo-upload-zone.drag{border-color:#F0B90B;background:rgba(240,185,11,.05);}
+.photo-thumb{position:relative;width:74px;height:74px;border-radius:9px;overflow:hidden;flex-shrink:0;border:1px solid var(--card-border);cursor:pointer;transition:var(--tr);}
+.photo-thumb:hover{transform:scale(1.04);border-color:#F0B90B;}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-thumb-del{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(246,70,93,.9);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;opacity:0;transition:var(--tr);}
+.photo-thumb:hover .photo-thumb-del{opacity:1;}
+.photo-thumb-loader{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;}
+
+/* Lightbox */
+#photo-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+#photo-lightbox.show{display:flex;}
+#photo-lightbox img{max-width:90vw;max-height:78vh;border-radius:12px;object-fit:contain;}
+#photo-lightbox-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 0;max-width:90vw;}
+#photo-lightbox-strip .lb-thumb{width:54px;height:54px;border-radius:7px;object-fit:cover;cursor:pointer;opacity:.55;transition:var(--tr);border:2px solid transparent;flex-shrink:0;}
+#photo-lightbox-strip .lb-thumb.active{opacity:1;border-color:#F0B90B;}
+#photo-lightbox-close{position:absolute;top:16px;right:18px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:20px;border-radius:50%;width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
 /* ─── ENCARGOS (PEDIDOS ESPECIALES) ──────────────────────────── */
 .encargo-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:13px;overflow:hidden;transition:var(--tr);}
 .encargo-card:hover{border-color:rgba(240,185,11,.35);transform:translateY(-1px);}
@@ -1231,6 +1251,33 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       </div>
       <div><label class="tf-label">Técnico Asignado</label><input class="tf-input" id="ord-tecnico" placeholder="Nombre del técnico"></div>
     </div>
+    <!-- PHOTOS SECTION -->
+    <div style="margin-top:4px">
+      <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span><i class="bi bi-camera" style="margin-right:5px;color:#F0B90B"></i>Fotos del Equipo</span>
+        <span style="font-size:9px;color:var(--text-muted);font-weight:400">Máx. 6 fotos · JPG/PNG/WEBP</span>
+      </label>
+      <!-- Upload zone -->
+      <div id="photo-upload-zone" class="photo-upload-zone" onclick="document.getElementById('photo-file-input').click()" ondragover="photoDragOver(event)" ondragleave="photoDragLeave(event)" ondrop="photoDrop(event)">
+        <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none" onchange="handlePhotoFiles(event)">
+        <i class="bi bi-camera-fill" style="font-size:22px;color:var(--text-muted);display:block;margin-bottom:5px"></i>
+        <div style="font-size:12px;color:var(--text-secondary);font-weight:600">Toca o arrastra fotos aquí</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Documenta el estado del equipo al recibirlo</div>
+      </div>
+      <!-- Upload progress -->
+      <div id="photo-upload-progress" style="display:none;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px">
+          <span id="photo-progress-label">Subiendo fotos...</span>
+          <span id="photo-progress-pct">0%</span>
+        </div>
+        <div style="height:4px;background:var(--card-border);border-radius:99px;overflow:hidden">
+          <div id="photo-progress-bar" style="height:100%;background:#F0B90B;border-radius:99px;transition:width .3s;width:0%"></div>
+        </div>
+      </div>
+      <!-- Preview grid -->
+      <div id="photo-preview-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+    </div>
+
     <input type="hidden" id="ord-edit-id">
     <div class="modal-footer">
       <button class="btn-s" onclick="closeModal('modal-order')">Cancelar</button>
@@ -1538,6 +1585,16 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   </div>
 </div>
 
+<!-- PHOTO LIGHTBOX -->
+<div id="photo-lightbox" onclick="closeLightbox(event)">
+  <button id="photo-lightbox-close" onclick="document.getElementById('photo-lightbox').classList.remove('show')"><i class="bi bi-x"></i></button>
+  <button id="lb-prev" onclick="lbNav(-1);event.stopPropagation()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color:#fff;font-size:22px;border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i class="bi bi-chevron-left"></i></button>
+  <img id="lb-main-img" src="" alt="">
+  <div id="photo-lightbox-strip"></div>
+  <button id="lb-next" onclick="lbNav(1);event.stopPropagation()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.12);border:none;color:#fff;font-size:22px;border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i class="bi bi-chevron-right"></i></button>
+  <div style="color:rgba(255,255,255,.5);font-size:11px;font-family:'JetBrains Mono',monospace" id="lb-counter"></div>
+</div>
+
 <div id="tc"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1545,6 +1602,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCPdvXiBKQxFmxNJdqov1CSbNe16WWIXm8",
@@ -1557,6 +1615,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // ─── CATALOG (abbreviated for brevity - full 100+ items) ──────────────────
 const CATALOG = [
@@ -2053,7 +2112,8 @@ window.openOrderModal=function(id=null){
   document.getElementById('ord-anticipo-metodo').value='efectivo';
   document.getElementById('anticipo-preview').style.display='none';
   renderFallas(); popRep();
-  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();}
+  // Photos reset handled after if(id) block
+  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();resetPhotoState(o.fotos||[]);}else{resetPhotoState([]);}
   setupClienteAutocomplete();
   showModal('modal-order');
 };
@@ -2065,7 +2125,10 @@ window.saveOrder=async function(){
   setSyncStatus('syncing');
   const editId=document.getElementById('ord-edit-id').value, repId=document.getElementById('ord-repuesto').value;
   try {
-    if(editId){await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value});toast('Orden actualizada','success');}
+    if(editId){// Upload any new photos
+      const newUploaded = await uploadPendingPhotos(editId);
+      const allPhotos = [...currentOrderPhotos, ...newUploaded];
+      await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value,fotos:allPhotos});toast('Orden actualizada','success');}
     else {
       let pp=false,rn=null;
       if(repId){const item=inventory.find(i=>i.id===repId);if(item){rn=item.nombre;if(item.stock>0)await updateDoc(doc(db,'tf_inventory',repId),{stock:item.stock-1});else pp=true;}}
@@ -2079,7 +2142,12 @@ window.saveOrder=async function(){
         cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'anticipo',desc:`Anticipo orden ${cod} — ${cliente} (${anticipoMetodo})`,monto:anticipo});
         await setDoc(doc(db,'tf_meta','caja'),cajaData);
       }
-      await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false});
+      const ordRef = await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false,fotos:[]});
+      // Upload photos after we have the order ID
+      if(pendingPhotos.length) {
+        const uploaded = await uploadPendingPhotos(ordRef.id);
+        if(uploaded.length) await updateDoc(doc(db,'tf_orders',ordRef.id),{fotos:uploaded});
+      }
       const toastMsg=`Orden ${cod} creada${anticipo>0?' — Anticipo '+mon()+anticipo.toFixed(2):''}${pp?' — Pieza Pendiente':''}`;
       toast(toastMsg,pp?'warning':'success');
       await autoSaveCliente(cliente, telefono);
@@ -2098,7 +2166,8 @@ function buildTicket(o){const days=o.garantiaDias||30,venc=o.fechaEntrega?new Da
       <div style="display:flex;justify-content:space-between"><span style="color:#F0B90B">Anticipo recibido</span><span class="mono" style="color:#F0B90B;font-weight:700">${mon()}${(o.anticipo||0).toFixed(2)}</span></div>
       <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text-secondary)">Saldo pendiente</span><span class="mono" style="color:#0ECB81;font-weight:700">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>
     </div>`:''}
-    ${o.garantiaActivada?`<div class="gcard mt-3"><div style="font-size:11px;font-weight:700;color:#0ECB81;margin-bottom:3px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>`:''}</div>`;}
+    ${o.garantiaActivada?`<div class="gcard mt-3"><div style="font-size:11px;font-weight:700;color:#0ECB81;margin-bottom:3px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>`:''}
+    ${renderOrderPhotos(o.fotos||[])}</div>`;}
 
 window.printCurrentOrder=function(){if(currentPrintOrder)printOrder(currentPrintOrder.id);};
 window.printOrder=function(id){const o=orders.find(x=>x.id===id);if(!o)return;const w=window.open('','_blank','width=420,height=650');w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${o.codigo}</title><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet"><style>body{font-family:'Space Grotesk',sans-serif;font-size:13px;color:#000;max-width:400px;margin:0 auto;padding:20px}.mono{font-family:'JetBrains Mono',monospace}.lbl{font-size:10px;text-transform:uppercase;color:#666;font-weight:700}.val{font-weight:600;margin-bottom:8px}hr{border:1px dashed #ccc;margin:10px 0}.total{font-size:18px;font-weight:800}.center{text-align:center}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}</style></head><body><div class="center"><h2 style="margin:0">${esc(configData.nombre)}</h2><div style="color:#666;font-size:11px">${esc(configData.direccion)} ${configData.telefono?'| '+configData.telefono:''}</div><h1 class="mono" style="color:#F0B90B;margin:6px 0">${o.codigo}</h1></div><hr><div class="g"><div><div class="lbl">Cliente</div><div class="val">${esc(o.cliente)}</div></div><div><div class="lbl">Teléfono</div><div class="val mono">${esc(o.telefono)}</div></div><div><div class="lbl">Equipo</div><div class="val">${esc(o.marca)} ${esc(o.modelo)}</div></div><div><div class="lbl">IMEI</div><div class="val mono">${esc(o.imei||'—')}</div></div><div><div class="lbl">Recibido</div><div class="val">${fmtDate(o.fechaRecibido)}</div></div><div><div class="lbl">Promesa</div><div class="val">${fmtDate(o.fechaPromesa)}</div></div></div><hr><div class="lbl">Fallas</div><div class="val">${(o.fallas||[]).join(', ')||'—'}</div>${o.descripcion?`<div class="lbl">Obs.</div><div class="val">${esc(o.descripcion)}</div>`:''}<hr><div style="display:flex;justify-content:space-between"><span>Estado:</span><strong>${o.estado}</strong></div><div style="display:flex;justify-content:space-between;margin-top:8px"><span class="total">TOTAL</span><span class="total mono">${mon()}${(o.total||0).toFixed(2)}</span></div>${o.anticipo>0?`<div style="margin-top:8px;padding:8px;background:#fff8e1;border-radius:6px;font-size:12px"><div style="display:flex;justify-content:space-between"><span>Anticipo:</span><span style="color:#e65100;font-family:'JetBrains Mono',monospace;font-weight:700">${mon()}${(o.anticipo||0).toFixed(2)}</span></div><div style="display:flex;justify-content:space-between"><span>Saldo:</span><span style="color:#2e7d32;font-family:'JetBrains Mono',monospace;font-weight:700">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div></div>`:''} ${o.garantiaActivada?`<hr><div style="color:green"><strong>✓ Garantía: ${o.garantiaDias||30} días</strong></div>`:''}<div class="center" style="margin-top:18px;color:#999;font-size:10px">¡Gracias por su preferencia! — ${configData.nombre}</div></body></html>`);w.document.close();w.focus();setTimeout(()=>w.print(),500);};
@@ -2929,6 +2998,168 @@ function updateBadgeClientes() {
   const b = document.getElementById('badge-clientes');
   if(b) { b.textContent=clientes.length; b.style.display=clientes.length>0?'inline-block':'none'; }
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── FOTOS DE ÓRDENES ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// pendingPhotos: files chosen but not yet uploaded (new order)
+// pendingDeletes: storage paths to delete if user saves
+let pendingPhotos   = [];   // [{file, previewUrl, path?, url?}]
+let currentOrderPhotos = []; // [{url, path}] — saved in Firestore
+let lbPhotos = [];
+let lbIndex  = 0;
+
+// ─── RESET on modal open ──────────────────────────────────────────────────────
+function resetPhotoState(existingPhotos=[]) {
+  pendingPhotos = [];
+  currentOrderPhotos = existingPhotos.map(p => typeof p==='string' ? {url:p,path:''} : p);
+  renderPhotoPreview();
+}
+
+// ─── DRAG & DROP ─────────────────────────────────────────────────────────────
+window.photoDragOver = function(e){ e.preventDefault(); document.getElementById('photo-upload-zone').classList.add('drag'); };
+window.photoDragLeave= function(){ document.getElementById('photo-upload-zone').classList.remove('drag'); };
+window.photoDrop     = function(e){ e.preventDefault(); document.getElementById('photo-upload-zone').classList.remove('drag'); processPhotoFiles([...e.dataTransfer.files]); };
+window.handlePhotoFiles = function(e){ processPhotoFiles([...e.target.files]); e.target.value=''; };
+
+function processPhotoFiles(files) {
+  const total = pendingPhotos.length + currentOrderPhotos.length;
+  if(total >= 6){ toast('Máximo 6 fotos por orden','warning'); return; }
+  const allowed = 6 - total;
+  files.slice(0, allowed).forEach(file => {
+    if(!file.type.startsWith('image/')){ toast(`${file.name} no es una imagen válida`,'error'); return; }
+    if(file.size > 10 * 1024 * 1024){ toast(`${file.name} supera 10MB`,'error'); return; }
+    const previewUrl = URL.createObjectURL(file);
+    pendingPhotos.push({file, previewUrl, uploaded:false});
+  });
+  renderPhotoPreview();
+  if(files.length > allowed) toast(`Solo se agregaron ${allowed} foto(s). Límite: 6`,'warning');
+}
+
+// ─── RENDER PREVIEW GRID ─────────────────────────────────────────────────────
+function renderPhotoPreview() {
+  const grid = document.getElementById('photo-preview-grid');
+  if(!grid) return;
+  const all = [
+    ...currentOrderPhotos.map((p,i) => ({url: p.url, path: p.path, saved: true, idx: i})),
+    ...pendingPhotos.map((p,i) => ({url: p.previewUrl, saved: false, idx: i}))
+  ];
+  if(!all.length){ grid.innerHTML=''; return; }
+  grid.innerHTML = all.map((p,i) => `
+    <div class="photo-thumb" onclick="openLightbox(${i})">
+      <img src="${p.url}" alt="Foto ${i+1}" loading="lazy">
+      <button class="photo-thumb-del" onclick="removePhoto(${i},${p.saved?1:0},event)" title="Eliminar"><i class="bi bi-x"></i></button>
+      ${!p.saved ? '<div class="photo-thumb-loader" id="ph-loader-'+i+'"><i class="bi bi-hourglass-split" style="color:#F0B90B;font-size:14px"></i></div>' : ''}
+    </div>
+  `).join('') + (all.length < 6 ? `<div class="photo-thumb" style="border:2px dashed var(--input-border);cursor:pointer;display:flex;align-items:center;justify-content:center;background:transparent" onclick="document.getElementById('photo-file-input').click()"><i class="bi bi-plus" style="font-size:22px;color:var(--text-muted)"></i></div>` : '');
+}
+
+window.removePhoto = function(globalIdx, saved, e) {
+  e.stopPropagation();
+  const savedCount = currentOrderPhotos.length;
+  if(saved) {
+    const idx = globalIdx;
+    currentOrderPhotos.splice(idx, 1);
+  } else {
+    const pendingIdx = globalIdx - savedCount;
+    URL.revokeObjectURL(pendingPhotos[pendingIdx].previewUrl);
+    pendingPhotos.splice(pendingIdx, 1);
+  }
+  renderPhotoPreview();
+};
+
+// ─── UPLOAD ALL PENDING to Firebase Storage ───────────────────────────────────
+async function uploadPendingPhotos(orderId) {
+  if(!pendingPhotos.length) return [];
+  const progressWrap = document.getElementById('photo-upload-progress');
+  const progBar      = document.getElementById('photo-progress-bar');
+  const progPct      = document.getElementById('photo-progress-pct');
+  const progLabel    = document.getElementById('photo-progress-label');
+  if(progressWrap) progressWrap.style.display='block';
+
+  const uploaded = [];
+  for(let i = 0; i < pendingPhotos.length; i++) {
+    const p = pendingPhotos[i];
+    const pct = Math.round((i / pendingPhotos.length) * 100);
+    if(progBar) progBar.style.width = pct+'%';
+    if(progPct) progPct.textContent = pct+'%';
+    if(progLabel) progLabel.textContent = `Subiendo foto ${i+1} de ${pendingPhotos.length}...`;
+    try {
+      const ext = p.file.name.split('.').pop() || 'jpg';
+      const path = `orders/${orderId}/foto_${Date.now()}_${i}.${ext}`;
+      const sRef = storageRef(storage, path);
+      const snap = await uploadBytes(sRef, p.file, {contentType: p.file.type});
+      const url  = await getDownloadURL(snap.ref);
+      uploaded.push({url, path});
+      URL.revokeObjectURL(p.previewUrl);
+    } catch(err) {
+      console.error('Error uploading photo:', err);
+      toast(`Error al subir foto ${i+1}: ${err.message}`,'error');
+    }
+  }
+  if(progBar) progBar.style.width = '100%';
+  if(progPct) progPct.textContent = '100%';
+  if(progLabel) progLabel.textContent = '¡Listo!';
+  setTimeout(() => { if(progressWrap) progressWrap.style.display='none'; }, 1200);
+  pendingPhotos = [];
+  return uploaded;
+}
+
+// ─── LIGHTBOX ─────────────────────────────────────────────────────────────────
+window.openLightbox = function(startIdx) {
+  const saved   = currentOrderPhotos.map(p => p.url);
+  const pending = pendingPhotos.map(p => p.previewUrl);
+  lbPhotos = [...saved, ...pending];
+  if(!lbPhotos.length) return;
+  lbIndex  = Math.min(startIdx, lbPhotos.length - 1);
+  renderLightbox();
+  document.getElementById('photo-lightbox').classList.add('show');
+};
+
+function renderLightbox() {
+  document.getElementById('lb-main-img').src   = lbPhotos[lbIndex];
+  document.getElementById('lb-counter').textContent = `${lbIndex+1} / ${lbPhotos.length}`;
+  document.getElementById('photo-lightbox-strip').innerHTML = lbPhotos.map((u,i) =>
+    `<img class="lb-thumb ${i===lbIndex?'active':''}" src="${u}" onclick="lbGoTo(${i});event.stopPropagation()">`
+  ).join('');
+}
+
+window.lbNav    = function(dir){ lbIndex = (lbIndex + dir + lbPhotos.length) % lbPhotos.length; renderLightbox(); };
+window.lbGoTo   = function(i){ lbIndex = i; renderLightbox(); };
+window.closeLightbox = function(e){ if(e.target===document.getElementById('photo-lightbox')) document.getElementById('photo-lightbox').classList.remove('show'); };
+
+// Keyboard navigation for lightbox
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('photo-lightbox');
+  if(!lb || !lb.classList.contains('show')) return;
+  if(e.key==='ArrowLeft') lbNav(-1);
+  if(e.key==='ArrowRight') lbNav(1);
+  if(e.key==='Escape') lb.classList.remove('show');
+});
+
+// ─── VIEW ORDER: render photos in detail modal ─────────────────────────────────
+function renderOrderPhotos(photos) {
+  if(!photos || !photos.length) return '';
+  const list = photos.map(p => typeof p==='string' ? {url:p} : p);
+  return `<div style="margin-top:10px">
+    <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700"><i class="bi bi-camera" style="margin-right:4px"></i>Fotos del Equipo (${list.length})</div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      ${list.map((p,i) => `<div class="photo-thumb" onclick="openLightboxFromView(${i},'${encodeURIComponent(JSON.stringify(list))}')"><img src="${p.url}" alt="Foto ${i+1}" loading="lazy"></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+window.openLightboxFromView = function(startIdx, encodedPhotos) {
+  try {
+    const photos = JSON.parse(decodeURIComponent(encodedPhotos));
+    lbPhotos = photos.map(p => typeof p==='string' ? p : p.url);
+    lbIndex = startIdx;
+    renderLightbox();
+    document.getElementById('photo-lightbox').classList.add('show');
+  } catch(e) {}
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── MÓDULO PEDIDOS A PROVEEDORES ────────────────────────────────────────────

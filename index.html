@@ -3024,87 +3024,128 @@ window.photoDragLeave= function(){ document.getElementById('photo-upload-zone').
 window.photoDrop     = function(e){ e.preventDefault(); document.getElementById('photo-upload-zone').classList.remove('drag'); processPhotoFiles([...e.dataTransfer.files]); };
 window.handlePhotoFiles = function(e){ processPhotoFiles([...e.target.files]); e.target.value=''; };
 
-function processPhotoFiles(files) {
-  const total = pendingPhotos.length + currentOrderPhotos.length;
-  if(total >= 6){ toast('Máximo 6 fotos por orden','warning'); return; }
-  const allowed = 6 - total;
-  files.slice(0, allowed).forEach(file => {
-    if(!file.type.startsWith('image/')){ toast(`${file.name} no es una imagen válida`,'error'); return; }
-    if(file.size > 10 * 1024 * 1024){ toast(`${file.name} supera 10MB`,'error'); return; }
-    const previewUrl = URL.createObjectURL(file);
-    pendingPhotos.push({file, previewUrl, uploaded:false});
+// ─── IMAGE COMPRESSION via Canvas ───────────────────────────────────────────
+// Resizes to max 800px and encodes as JPEG ~65% quality → ~60-120KB per photo
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const MAX = 800, QUALITY = 0.65;
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objUrl);
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+        else        { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+      const sizeKB = Math.round((dataUrl.length * 3/4) / 1024);
+      resolve({ dataUrl, sizeKB });
+    };
+    img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('No se pudo leer la imagen')); };
+    img.src = objUrl;
   });
-  renderPhotoPreview();
-  if(files.length > allowed) toast(`Solo se agregaron ${allowed} foto(s). Límite: 6`,'warning');
 }
 
-// ─── RENDER PREVIEW GRID ─────────────────────────────────────────────────────
+// ─── PROCESS PHOTOS ───────────────────────────────────────────────────────────
+function processPhotoFiles(files) {
+  const total = pendingPhotos.length + currentOrderPhotos.length;
+  if (total >= 6) { toast('Máximo 6 fotos por orden', 'warning'); return; }
+  const allowed = 6 - total;
+  const list = Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, allowed);
+  if (files.length > allowed) toast(`Solo se agregarán ${allowed} foto(s). Límite: 6`, 'warning');
+
+  list.forEach(async file => {
+    // Push placeholder immediately so user sees feedback
+    const slot = { previewUrl: null, dataUrl: null, compressing: true, sizeKB: 0 };
+    pendingPhotos.push(slot);
+    renderPhotoPreview();
+    try {
+      const { dataUrl, sizeKB } = await compressImage(file);
+      slot.previewUrl = dataUrl;
+      slot.dataUrl    = dataUrl;
+      slot.sizeKB     = sizeKB;
+      slot.compressing = false;
+      toast(`Foto lista: ${sizeKB}KB`, 'info');
+    } catch (err) {
+      const idx = pendingPhotos.indexOf(slot);
+      if (idx > -1) pendingPhotos.splice(idx, 1);
+      toast('Error al procesar imagen: ' + err.message, 'error');
+    }
+    renderPhotoPreview();
+  });
+}
+
+// ─── RENDER PREVIEW GRID ──────────────────────────────────────────────────────
 function renderPhotoPreview() {
   const grid = document.getElementById('photo-preview-grid');
-  if(!grid) return;
-  const all = [
-    ...currentOrderPhotos.map((p,i) => ({url: p.url, path: p.path, saved: true, idx: i})),
-    ...pendingPhotos.map((p,i) => ({url: p.previewUrl, saved: false, idx: i}))
-  ];
-  if(!all.length){ grid.innerHTML=''; return; }
-  grid.innerHTML = all.map((p,i) => `
-    <div class="photo-thumb" onclick="openLightbox(${i})">
-      <img src="${p.url}" alt="Foto ${i+1}" loading="lazy">
-      <button class="photo-thumb-del" onclick="removePhoto(${i},${p.saved?1:0},event)" title="Eliminar"><i class="bi bi-x"></i></button>
-      ${!p.saved ? '<div class="photo-thumb-loader" id="ph-loader-'+i+'"><i class="bi bi-hourglass-split" style="color:#F0B90B;font-size:14px"></i></div>' : ''}
-    </div>
-  `).join('') + (all.length < 6 ? `<div class="photo-thumb" style="border:2px dashed var(--input-border);cursor:pointer;display:flex;align-items:center;justify-content:center;background:transparent" onclick="document.getElementById('photo-file-input').click()"><i class="bi bi-plus" style="font-size:22px;color:var(--text-muted)"></i></div>` : '');
+  if (!grid) return;
+  const saved   = currentOrderPhotos.map((p, i) => ({ url: p.url || p, saved: true,  sizeKB: p.sizeKB || 0, gIdx: i }));
+  const pending = pendingPhotos.map((p, i)       => ({ url: p.previewUrl, saved: false, sizeKB: p.sizeKB || 0, compressing: !!p.compressing, gIdx: saved.length + i }));
+  const all = [...saved, ...pending];
+
+  if (!all.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = all.map(p => {
+    if (p.compressing) {
+      return `<div class="photo-thumb" style="display:flex;align-items:center;justify-content:center;background:var(--hover-bg)">
+        <i class="bi bi-hourglass-split" style="color:#F0B90B;font-size:18px;animation:lpulse 1s infinite"></i>
+      </div>`;
+    }
+    if (!p.url) return '';
+    return `<div class="photo-thumb" onclick="openLightbox(${p.gIdx})">
+      <img src="${p.url}" alt="Foto" loading="lazy">
+      ${p.sizeKB ? `<div style="position:absolute;bottom:2px;left:3px;font-size:8px;font-family:'JetBrains Mono',monospace;color:#fff;background:rgba(0,0,0,.6);border-radius:3px;padding:1px 4px">${p.sizeKB}KB</div>` : ''}
+      <button class="photo-thumb-del" onclick="removePhoto(${p.gIdx},${p.saved?1:0},event)" title="Eliminar"><i class="bi bi-x"></i></button>
+    </div>`;
+  }).join('') + (all.length < 6 && !all.some(p => p.compressing)
+    ? `<div class="photo-thumb" style="border:2px dashed var(--input-border);cursor:pointer;display:flex;align-items:center;justify-content:center;background:transparent" onclick="document.getElementById('photo-file-input').click()"><i class="bi bi-plus" style="font-size:22px;color:var(--text-muted)"></i></div>`
+    : '');
 }
 
 window.removePhoto = function(globalIdx, saved, e) {
   e.stopPropagation();
   const savedCount = currentOrderPhotos.length;
-  if(saved) {
-    const idx = globalIdx;
-    currentOrderPhotos.splice(idx, 1);
-  } else {
-    const pendingIdx = globalIdx - savedCount;
-    URL.revokeObjectURL(pendingPhotos[pendingIdx].previewUrl);
-    pendingPhotos.splice(pendingIdx, 1);
-  }
+  if (saved) { currentOrderPhotos.splice(globalIdx, 1); }
+  else { pendingPhotos.splice(globalIdx - savedCount, 1); }
   renderPhotoPreview();
 };
 
-// ─── UPLOAD ALL PENDING to Firebase Storage ───────────────────────────────────
+// ─── SAVE PHOTOS — base64 stored directly in Firestore ───────────────────────
+// With compression ~60-120KB each → 6 photos ≈ 400-700KB — fine for Firestore
 async function uploadPendingPhotos(orderId) {
-  if(!pendingPhotos.length) return [];
-  const progressWrap = document.getElementById('photo-upload-progress');
-  const progBar      = document.getElementById('photo-progress-bar');
-  const progPct      = document.getElementById('photo-progress-pct');
-  const progLabel    = document.getElementById('photo-progress-label');
-  if(progressWrap) progressWrap.style.display='block';
+  if (!pendingPhotos.length) return [];
+  const wrap  = document.getElementById('photo-upload-progress');
+  const bar   = document.getElementById('photo-progress-bar');
+  const pct   = document.getElementById('photo-progress-pct');
+  const label = document.getElementById('photo-progress-label');
+  if (wrap)  wrap.style.display = 'block';
 
-  const uploaded = [];
-  for(let i = 0; i < pendingPhotos.length; i++) {
-    const p = pendingPhotos[i];
-    const pct = Math.round((i / pendingPhotos.length) * 100);
-    if(progBar) progBar.style.width = pct+'%';
-    if(progPct) progPct.textContent = pct+'%';
-    if(progLabel) progLabel.textContent = `Subiendo foto ${i+1} de ${pendingPhotos.length}...`;
-    try {
-      const ext = p.file.name.split('.').pop() || 'jpg';
-      const path = `orders/${orderId}/foto_${Date.now()}_${i}.${ext}`;
-      const sRef = storageRef(storage, path);
-      const snap = await uploadBytes(sRef, p.file, {contentType: p.file.type});
-      const url  = await getDownloadURL(snap.ref);
-      uploaded.push({url, path});
-      URL.revokeObjectURL(p.previewUrl);
-    } catch(err) {
-      console.error('Error uploading photo:', err);
-      toast(`Error al subir foto ${i+1}: ${err.message}`,'error');
-    }
+  const result = [];
+  const ready  = pendingPhotos.filter(p => !p.compressing && p.dataUrl);
+  for (let i = 0; i < ready.length; i++) {
+    const p = ready[i];
+    const prog = Math.round(((i + 1) / ready.length) * 100);
+    if (bar)   bar.style.width     = prog + '%';
+    if (pct)   pct.textContent     = prog + '%';
+    if (label) label.textContent   = `Guardando foto ${i + 1} de ${ready.length}...`;
+    // Tiny async yield so UI stays responsive
+    await new Promise(r => setTimeout(r, 10));
+    result.push({ url: p.dataUrl, path: `inline/${orderId}/${i}`, sizeKB: p.sizeKB });
   }
-  if(progBar) progBar.style.width = '100%';
-  if(progPct) progPct.textContent = '100%';
-  if(progLabel) progLabel.textContent = '¡Listo!';
-  setTimeout(() => { if(progressWrap) progressWrap.style.display='none'; }, 1200);
+
+  if (bar)   bar.style.width   = '100%';
+  if (pct)   pct.textContent   = '100%';
+  if (label) label.textContent = `✓ ${result.length} foto${result.length !== 1 ? 's' : ''} guardada${result.length !== 1 ? 's' : ''}`;
+  setTimeout(() => { if (wrap) wrap.style.display = 'none'; }, 1400);
   pendingPhotos = [];
-  return uploaded;
+  return result;
 }
 
 // ─── LIGHTBOX ─────────────────────────────────────────────────────────────────

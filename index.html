@@ -395,6 +395,29 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   #orders-cards-wrap{display:none!important;}
 }
 
+
+/* ─── ENCARGOS (PEDIDOS ESPECIALES) ──────────────────────────── */
+.encargo-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:13px;overflow:hidden;transition:var(--tr);}
+.encargo-card:hover{border-color:rgba(240,185,11,.35);transform:translateY(-1px);}
+.encargo-card.urgente{border-color:rgba(246,70,93,.4);}
+.encargo-card.por-llegar{border-color:rgba(240,185,11,.5);box-shadow:0 0 0 2px rgba(240,185,11,.12);}
+.encargo-card.completado{opacity:.7;border-color:rgba(14,203,129,.3);}
+.enc-header{padding:13px 15px;display:flex;align-items:flex-start;gap:10px;}
+.enc-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.enc-body{padding:0 15px 13px;}
+.enc-progress-wrap{margin:8px 0 4px;}
+.enc-progress-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:5px;font-family:'JetBrains Mono',monospace;}
+.enc-progress-bar{height:7px;background:var(--card-border);border-radius:99px;overflow:hidden;}
+.enc-progress-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.enc-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.enc-tag.pendiente{background:rgba(240,185,11,.14);color:#8C6A00;}
+.enc-tag.en-camino{background:rgba(14,203,129,.12);color:#0A8A5A;}
+.enc-tag.por-llegar{background:rgba(246,70,93,.14);color:#C0001A;}
+.enc-tag.llegado{background:rgba(14,203,129,.2);color:#087A50;}
+.enc-tag.entregado{background:rgba(14,203,129,.12);color:#088C5A;}
+[data-theme="light"] .encargo-card{box-shadow:0 2px 10px rgba(0,0,0,.07);}
+[data-theme="light"] .enc-tag.pendiente{color:#7A5C00;}
+
 /* ─── REPORTES / CALENDAR ─── */
 .rep-calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;font-size:11px;}
 .rep-cal-head{text-align:center;font-size:9px;font-weight:700;color:var(--text-muted);padding:3px 0;font-family:'JetBrains Mono',monospace;text-transform:uppercase;}
@@ -599,6 +622,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   <div class="nav-item" onclick="navigate('inventory')"><i class="bi bi-boxes"></i> Inventario <span class="nav-badge" id="badge-inventory" style="display:none">!</span></div>
   <div class="nav-item" onclick="navigate('pos')"><i class="bi bi-lightning-charge"></i> Venta POS</div>
   <div class="nav-item" onclick="navigate('pedidos')"><i class="bi bi-bag-plus"></i> Pedidos <span class="nav-badge" id="badge-pedidos" style="display:none">!</span></div>
+  <div class="nav-item" onclick="navigate('encargos')"><i class="bi bi-box-arrow-in-down"></i> Encargos <span class="nav-badge" id="badge-encargos" style="display:none">0</span></div>
   <div class="nav-sec">Sistema</div>
   <div class="nav-item" onclick="navigate('garantias')"><i class="bi bi-shield-check"></i> Garantías</div>
   <div class="nav-item" onclick="navigate('reportes')"><i class="bi bi-bar-chart-line"></i> Reportes</div>
@@ -888,6 +912,41 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ══ ENCARGOS (PEDIDOS ESPECIALES) ══ -->
+    <div id="page-encargos" class="page-section">
+
+      <!-- Top bar -->
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-encargos" placeholder="Buscar encargo..." oninput="renderEncargos()"></div>
+          <select class="tf-select" style="width:140px;padding:6px 10px;font-size:12px" id="filter-encargo-status" onchange="renderEncargos()">
+            <option value="">Todos</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="En Camino">En Camino</option>
+            <option value="Por Llegar">Por Llegar</option>
+            <option value="Llegado">Llegado</option>
+            <option value="Entregado">Entregado</option>
+          </select>
+        </div>
+        <button class="btn-p no-print" onclick="openEncargoModal()"><i class="bi bi-plus-lg"></i> Nuevo Encargo</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><div class="card-stat orange" style="padding:12px 16px"><div class="stat-label">Activos</div><div class="stat-value mono" style="font-size:22px" id="enc-kpi-activos">0</div><div class="stat-sub">En seguimiento</div><i class="bi bi-box-arrow-in-down stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat red" style="padding:12px 16px"><div class="stat-label">Por Llegar</div><div class="stat-value mono" style="font-size:22px" id="enc-kpi-proximos">0</div><div class="stat-sub">≤3 días restantes</div><i class="bi bi-alarm stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat green" style="padding:12px 16px"><div class="stat-label">Llegados</div><div class="stat-value mono" style="font-size:22px" id="enc-kpi-llegados">0</div><div class="stat-sub">Listos para entregar</div><i class="bi bi-box-seam stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat blue" style="padding:12px 16px"><div class="stat-label">Entregados</div><div class="stat-value mono" style="font-size:22px" id="enc-kpi-entregados">0</div><div class="stat-sub">Completados</div><i class="bi bi-check-circle stat-icon"></i></div></div>
+      </div>
+
+      <!-- Alert banner for imminent arrivals -->
+      <div id="enc-alert-banner" style="display:none;margin-bottom:14px"></div>
+
+      <!-- Cards grid -->
+      <div id="encargos-grid" class="row g-3"></div>
+      <div class="pagination-bar section-card" id="enc-pagination" style="border-top:none;border-radius:0 0 14px 14px;display:none"></div>
     </div>
 
     <!-- ══ GARANTÍAS ══ -->
@@ -1395,6 +1454,90 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   </div>
 </div>
 
+<!-- ══ MODAL ENCARGO ══ -->
+<div class="modal-overlay" id="modal-encargo">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-encargo-title"><i class="bi bi-box-arrow-in-down" style="color:#F0B90B"></i> Nuevo Encargo</div>
+      <button class="modal-close" onclick="closeModal('modal-encargo')"><i class="bi bi-x"></i></button>
+    </div>
+    <!-- Cliente -->
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label">Cliente *</label><input class="tf-input" id="enc-cliente" placeholder="Nombre del cliente"></div>
+      <div><label class="tf-label">Teléfono *</label><input class="tf-input mono" id="enc-telefono" placeholder="+503 0000-0000"></div>
+    </div>
+    <!-- Producto -->
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Producto / Repuesto Encargado *</label><input class="tf-input" id="enc-producto" placeholder="Ej: Bandeja SIM iPhone 14 Pro — Negro"></div>
+    </div>
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label">Fuente / Proveedor</label><input class="tf-input" id="enc-fuente" placeholder="Ej: AliExpress, MercadoLibre..."></div>
+      <div><label class="tf-label">Precio acordado ($)</label><input class="tf-input mono" id="enc-precio" type="number" placeholder="0.00" min="0"></div>
+    </div>
+    <!-- Anticipo -->
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label" style="color:#F0B90B">Anticipo recibido ($)</label><input class="tf-input mono" id="enc-anticipo" type="number" placeholder="0.00" min="0" oninput="previewEncargoAnticipo()"></div>
+      <div><label class="tf-label">Fecha de orden</label><input class="tf-input" id="enc-fecha-orden" type="date"></div>
+    </div>
+    <!-- Fechas -->
+    <div class="form-row c2 mb-3">
+      <div>
+        <label class="tf-label">Fecha estimada de llegada *</label>
+        <input class="tf-input" id="enc-fecha-llegada" type="date" oninput="previewEncargoDays()">
+        <div id="enc-days-preview" style="margin-top:5px;font-size:11px;color:var(--text-muted)"></div>
+      </div>
+      <div>
+        <label class="tf-label">Estado inicial</label>
+        <select class="tf-select" id="enc-estado-init">
+          <option value="Pendiente">Pendiente (aún no ordenado)</option>
+          <option value="En Camino" selected>En Camino (ya ordenado)</option>
+        </select>
+      </div>
+    </div>
+    <div id="enc-anticipo-preview-wrap" style="display:none;margin-bottom:10px"></div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Notas adicionales</label><textarea class="tf-textarea" id="enc-notas" rows="2" placeholder="Link del producto, número de tracking, observaciones..."></textarea></div>
+    </div>
+    <input type="hidden" id="enc-edit-id">
+    <div class="modal-footer">
+      <button class="btn-s" onclick="closeModal('modal-encargo')">Cancelar</button>
+      <button class="btn-p" id="btn-save-encargo" onclick="saveEncargo()"><i class="bi bi-save"></i> Guardar Encargo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ESTADO ENCARGO ══ -->
+<div class="modal-overlay" id="modal-enc-status">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-arrow-repeat" style="color:#F0B90B"></i> Actualizar Estado</div>
+      <button class="modal-close" onclick="closeModal('modal-enc-status')"><i class="bi bi-x"></i></button>
+    </div>
+    <div id="enc-status-info" style="margin-bottom:14px"></div>
+    <label class="tf-label">Nuevo Estado</label>
+    <select class="tf-select mb-3" id="enc-status-select" onchange="toggleEncargoEntregado()">
+      <option value="Pendiente">Pendiente</option>
+      <option value="En Camino">En Camino</option>
+      <option value="Por Llegar">Por Llegar (≤3 días)</option>
+      <option value="Llegado">Llegado al taller</option>
+      <option value="Entregado">Entregado al cliente</option>
+    </select>
+    <div id="enc-status-llegado-info" style="display:none">
+      <div class="ab s mb-2"><i class="bi bi-box-seam"></i> Marca la fecha real de llegada para registrar el historial.</div>
+      <label class="tf-label">Fecha real de llegada</label>
+      <input class="tf-input" id="enc-fecha-real-llegada" type="date">
+    </div>
+    <div id="enc-status-entregado-info" style="display:none">
+      <div class="ab s mb-2"><i class="bi bi-check-circle"></i> Al marcar como Entregado se notifica al cliente y se registra la entrega.</div>
+    </div>
+    <input type="hidden" id="enc-status-id">
+    <div class="modal-footer">
+      <button class="btn-s" onclick="closeModal('modal-enc-status')">Cancelar</button>
+      <button class="btn-p" id="btn-apply-enc-status" onclick="applyEncargoStatus()"><i class="bi bi-check2"></i> Aplicar</button>
+    </div>
+  </div>
+</div>
+
 <div id="tc"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -1593,6 +1736,7 @@ async function init() {
     renderAll(); loadConfigUI(); updateCajaIndicator(); updateBadges();
     await loadClientes();
     await loadProveedores();
+    await loadEncargos();
     initReportes();
     // Run auto-caja check immediately on load
     setTimeout(checkAutoCaja, 1500);
@@ -2404,6 +2548,11 @@ window.renderDashboard=function(){
   if(pv.length)alerts.push(`<div class="ab w"><i class="bi bi-shield-exclamation"></i> ${pv.length} garantía(s) por vencer en 7 días</div>`);
   const venc=orders.filter(o=>o.estado!=='Entregado'&&o.fechaPromesa&&new Date(o.fechaPromesa+'T23:59:00')<new Date());
   if(venc.length)alerts.push(`<div class="ab d"><i class="bi bi-clock-history"></i> ${venc.length} orden(es) fuera de fecha promesa</div>`);
+  // Encargos alerts on dashboard
+  const encProx=encargos.filter(e=>e.estado!=='Entregado'&&getDaysLeft(e.fechaLlegadaEstimada)<=3&&getDaysLeft(e.fechaLlegadaEstimada)>=0);
+  if(encProx.length)alerts.push(`<div class="ab w"><i class="bi bi-box-arrow-in-down"></i> ${encProx.length} encargo${encProx.length>1?'s':''} por llegar (≤3 días)</div>`);
+  const encLleg=encargos.filter(e=>e.estado==='Llegado');
+  if(encLleg.length)alerts.push(`<div class="ab s"><i class="bi bi-box-seam"></i> ${encLleg.length} encargo${encLleg.length>1?'s':''} llegado${encLleg.length>1?'s':''} — listo${encLleg.length>1?'s':''} para entregar</div>`);
   document.getElementById('ds-alerts').innerHTML=alerts.length?alerts.join(''):`<div class="empty-state" style="padding:16px"><i class="bi bi-check2-circle"></i><p>Sin alertas</p></div>`;
 };
 
@@ -3497,6 +3646,435 @@ window.exportReporte = function() {
   toast('Reporte exportado','success');
 };
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── MÓDULO ENCARGOS (PEDIDOS ESPECIALES / IMPORTACIONES) ────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let encargos = [];
+let encPage = 1, encPP = 12;
+const COL_ENC = 'tf_encargos';
+
+// ─── LOAD ─────────────────────────────────────────────────────────────────────
+async function loadEncargos() {
+  try {
+    const snap = await getDocs(collection(db, COL_ENC));
+    encargos = [];
+    snap.forEach(d => encargos.push({id: d.id, ...d.data()}));
+    // Sort: active first, then by days remaining ascending
+    encargos.sort((a,b) => {
+      if(a.estado==='Entregado' && b.estado!=='Entregado') return 1;
+      if(b.estado==='Entregado' && a.estado!=='Entregado') return -1;
+      return getDaysLeft(a.fechaLlegadaEstimada) - getDaysLeft(b.fechaLlegadaEstimada);
+    });
+    renderEncargos();
+    updateBadgeEncargos();
+  } catch(e) { console.error('Error cargando encargos:', e); }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function getDaysLeft(dateStr) {
+  if(!dateStr) return 9999;
+  const diff = new Date(dateStr + 'T23:59:59') - new Date();
+  return Math.ceil(diff / 86400000);
+}
+function getDaysTotal(orderDate, arrivalDate) {
+  if(!orderDate || !arrivalDate) return 1;
+  const diff = new Date(arrivalDate + 'T12:00:00') - new Date(orderDate + 'T12:00:00');
+  return Math.max(1, Math.ceil(diff / 86400000));
+}
+function getDaysElapsed(orderDate) {
+  if(!orderDate) return 0;
+  const diff = new Date() - new Date(orderDate + 'T12:00:00');
+  return Math.max(0, Math.ceil(diff / 86400000));
+}
+
+function encStatusConfig(estado) {
+  const map = {
+    'Pendiente':  { cls:'pendiente',  icon:'bi-clock',          color:'#8C6A00', bar:'#F0B90B' },
+    'En Camino':  { cls:'en-camino',  icon:'bi-airplane',       color:'#0A8A5A', bar:'#0ECB81' },
+    'Por Llegar': { cls:'por-llegar', icon:'bi-alarm',           color:'#C0001A', bar:'#F6465D' },
+    'Llegado':    { cls:'llegado',    icon:'bi-box-seam',        color:'#087A50', bar:'#0ECB81' },
+    'Entregado':  { cls:'entregado',  icon:'bi-check-circle',    color:'#088C5A', bar:'#0ECB81' },
+  };
+  return map[estado] || map['Pendiente'];
+}
+
+// Auto-update status: if days ≤ 3 and status is "En Camino" → auto-upgrade to "Por Llegar"
+async function autoUpdateEncargoStatuses() {
+  let changed = false;
+  for(const enc of encargos) {
+    if(enc.estado === 'En Camino') {
+      const left = getDaysLeft(enc.fechaLlegadaEstimada);
+      if(left <= 3 && left >= 0) {
+        enc.estado = 'Por Llegar';
+        try {
+          await updateDoc(doc(db, COL_ENC, enc.id), {estado: 'Por Llegar'});
+          changed = true;
+        } catch(e) {}
+      }
+    }
+  }
+  if(changed) { renderEncargos(); updateBadgeEncargos(); }
+}
+
+// ─── RENDER GRID ─────────────────────────────────────────────────────────────
+window.setEncPage = function(p){ encPage=p; renderEncargos(); };
+window.setEncPP   = function(v){ encPP=parseInt(v); encPage=1; renderEncargos(); };
+
+window.renderEncargos = function() {
+  const q = (document.getElementById('search-encargos')||{}).value?.toLowerCase()||'';
+  const fs = (document.getElementById('filter-encargo-status')||{}).value||'';
+
+  // Auto-sort: active by days asc, completed at end
+  const sorted = [...encargos].sort((a,b) => {
+    if(a.estado==='Entregado' && b.estado!=='Entregado') return 1;
+    if(b.estado==='Entregado' && a.estado!=='Entregado') return -1;
+    return getDaysLeft(a.fechaLlegadaEstimada) - getDaysLeft(b.fechaLlegadaEstimada);
+  });
+
+  let filtered = sorted.filter(e => {
+    const m = !q || (e.cliente||'').toLowerCase().includes(q) || (e.producto||'').toLowerCase().includes(q) || (e.fuente||'').toLowerCase().includes(q);
+    const s = !fs || e.estado === fs;
+    return m && s;
+  });
+
+  // KPIs
+  const activos   = encargos.filter(e => e.estado !== 'Entregado').length;
+  const proximos  = encargos.filter(e => e.estado !== 'Entregado' && getDaysLeft(e.fechaLlegadaEstimada) <= 3 && getDaysLeft(e.fechaLlegadaEstimada) >= 0).length;
+  const llegados  = encargos.filter(e => e.estado === 'Llegado').length;
+  const entregados= encargos.filter(e => e.estado === 'Entregado').length;
+
+  const setKPI = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  setKPI('enc-kpi-activos', activos);
+  setKPI('enc-kpi-proximos', proximos);
+  setKPI('enc-kpi-llegados', llegados);
+  setKPI('enc-kpi-entregados', entregados);
+
+  // Alert banner for imminent
+  const alertBanner = document.getElementById('enc-alert-banner');
+  if(alertBanner) {
+    const imminent = encargos.filter(e => e.estado !== 'Entregado' && getDaysLeft(e.fechaLlegadaEstimada) <= 3 && getDaysLeft(e.fechaLlegadaEstimada) >= 0);
+    const overdue  = encargos.filter(e => e.estado !== 'Llegado' && e.estado !== 'Entregado' && getDaysLeft(e.fechaLlegadaEstimada) < 0);
+    let bannerHTML = '';
+    if(imminent.length) bannerHTML += `<div class="ab w mb-2" style="border-radius:10px"><i class="bi bi-alarm"></i> <b>${imminent.length}</b> encargo${imminent.length>1?'s':''} llegará${imminent.length>1?'n':''} en los próximos 3 días: ${imminent.map(e=>`<b>${esc(e.producto)}</b> (${esc(e.cliente)})`).join(', ')}</div>`;
+    if(overdue.length) bannerHTML += `<div class="ab d" style="border-radius:10px"><i class="bi bi-exclamation-triangle"></i> <b>${overdue.length}</b> encargo${overdue.length>1?'s':''} con fecha de llegada vencida: ${overdue.map(e=>`<b>${esc(e.producto)}</b>`).join(', ')}</div>`;
+    alertBanner.innerHTML = bannerHTML;
+    alertBanner.style.display = bannerHTML ? 'block' : 'none';
+  }
+
+  updateBadgeEncargos();
+
+  // Paginate
+  const total = filtered.length;
+  const page  = filtered.slice((encPage-1)*encPP, encPage*encPP);
+  const grid  = document.getElementById('encargos-grid');
+  const pagEl = document.getElementById('enc-pagination');
+
+  if(!total) {
+    grid.innerHTML = `<div class="col-12"><div class="empty-state"><i class="bi bi-box-arrow-in-down"></i><p>Sin encargos encontrados. Crea uno con el botón superior.</p></div></div>`;
+    if(pagEl) pagEl.style.display='none';
+    return;
+  }
+
+  grid.innerHTML = page.map(e => buildEncargoCard(e)).join('');
+  if(pagEl) {
+    pagEl.style.display = total > encPP ? 'flex' : 'none';
+    if(total > encPP) buildPagination('enc-pagination', total, encPage, encPP, 'setEncPage', 'setEncPP');
+  }
+};
+
+function buildEncargoCard(e) {
+  const daysLeft  = getDaysLeft(e.fechaLlegadaEstimada);
+  const daysTotal = getDaysTotal(e.fechaOrden, e.fechaLlegadaEstimada);
+  const daysElaps = getDaysElapsed(e.fechaOrden);
+  const cfg = encStatusConfig(e.estado);
+  const isActive = e.estado !== 'Entregado' && e.estado !== 'Llegado';
+  const isOverdue = daysLeft < 0 && e.estado !== 'Llegado' && e.estado !== 'Entregado';
+
+  // Progress: how much of the wait time has elapsed
+  let pct = 0, barColor = cfg.bar, barLabel = '';
+  if(e.estado === 'Llegado' || e.estado === 'Entregado') {
+    pct = 100; barColor = '#0ECB81';
+    barLabel = e.estado === 'Entregado' ? 'Entregado ✓' : '¡Llegó al taller!';
+  } else if(daysLeft <= 0) {
+    pct = 100; barColor = '#F6465D';
+    barLabel = `Venció hace ${Math.abs(daysLeft)} día${Math.abs(daysLeft)!==1?'s':''}`;
+  } else {
+    pct = Math.min(99, Math.round(daysElaps / daysTotal * 100));
+    barColor = daysLeft <= 3 ? '#F6465D' : daysLeft <= 7 ? '#F0B90B' : '#0ECB81';
+    barLabel = `${daysLeft} día${daysLeft!==1?'s':''} restante${daysLeft!==1?'s':''}`;
+  }
+
+  const anticipo = e.anticipo||0;
+  const precio   = e.precio||0;
+  const saldo    = Math.max(0, precio - anticipo);
+  const initials = (e.cliente||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+
+  return `<div class="col-12 col-sm-6 col-lg-4">
+    <div class="encargo-card ${e.estado==='Por Llegar'||isOverdue?'por-llegar':e.estado==='Entregado'?'completado':e.estado==='Llegado'?'enc-llegado':''}">
+      <div class="enc-header">
+        <div class="enc-icon" style="background:${barColor}22;color:${barColor}"><i class="bi ${cfg.icon}"></i></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+            <span class="enc-tag ${cfg.cls}">${e.estado}</span>
+            ${isOverdue?'<span class="enc-tag" style="background:rgba(246,70,93,.15);color:#C0001A"><i class="bi bi-exclamation-triangle"></i> Vencido</span>':''}
+            ${daysLeft<=3&&daysLeft>=0&&e.estado!=='Llegado'&&e.estado!=='Entregado'?'<span class="enc-tag por-llegar"><i class="bi bi-alarm"></i> ¡Próximo!</span>':''}
+          </div>
+          <div style="font-size:13px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(e.producto)}">${esc(e.producto)}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${e.fuente?'<i class="bi bi-shop" style="margin-right:3px"></i>'+esc(e.fuente):''}</div>
+        </div>
+      </div>
+
+      <div class="enc-body">
+        <!-- Client row -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:7px 10px;background:var(--hover-bg);border-radius:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#F0B90B,#d4a000);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#1E2026;flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.cliente)}</div>
+            <div class="mono" style="font-size:10px;color:var(--text-muted)">${esc(e.telefono)}</div>
+          </div>
+          <button class="btn-action wa" onclick="waEncargo('${e.id}')" title="WhatsApp" style="flex-shrink:0"><i class="bi bi-whatsapp"></i></button>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="enc-progress-wrap">
+          <div class="enc-progress-label">
+            <span><i class="bi bi-calendar3" style="margin-right:3px"></i>${fmtDate(e.fechaOrden)} → ${fmtDate(e.fechaLlegadaEstimada)}</span>
+            <span style="color:${barColor};font-weight:700">${barLabel}</span>
+          </div>
+          <div class="enc-progress-bar">
+            <div class="enc-progress-fill" style="width:${pct}%;background:${barColor}"></div>
+          </div>
+          <div style="font-size:9px;color:var(--text-muted);margin-top:3px;text-align:right">${daysTotal} días de espera total · ${pct}% transcurrido</div>
+        </div>
+
+        <!-- Financials -->
+        ${precio>0?`<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <div style="flex:1;background:var(--hover-bg);border-radius:7px;padding:6px 9px;text-align:center">
+            <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px">Precio</div>
+            <div class="mono" style="font-size:13px;font-weight:700">${mon()}${precio.toFixed(2)}</div>
+          </div>
+          ${anticipo>0?`<div style="flex:1;background:rgba(240,185,11,.1);border-radius:7px;padding:6px 9px;text-align:center;border:1px solid rgba(240,185,11,.2)">
+            <div style="font-size:9px;color:#8C6A00;text-transform:uppercase;letter-spacing:.8px">Anticipo</div>
+            <div class="mono" style="font-size:13px;font-weight:700;color:#F0B90B">${mon()}${anticipo.toFixed(2)}</div>
+          </div>
+          <div style="flex:1;background:rgba(14,203,129,.08);border-radius:7px;padding:6px 9px;text-align:center;border:1px solid rgba(14,203,129,.2)">
+            <div style="font-size:9px;color:#0A8A5A;text-transform:uppercase;letter-spacing:.8px">Saldo</div>
+            <div class="mono" style="font-size:13px;font-weight:700;color:#0ECB81">${mon()}${saldo.toFixed(2)}</div>
+          </div>`:''}
+        </div>`:''}
+
+        <!-- Notes -->
+        ${e.notas?`<div style="font-size:11px;color:var(--text-secondary);background:var(--hover-bg);border-radius:7px;padding:7px 9px;margin-bottom:8px"><i class="bi bi-sticky" style="margin-right:4px;color:var(--text-muted)"></i>${esc(e.notas)}</div>`:''}
+
+        <!-- Actions -->
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn-s" style="flex:1;font-size:11px;padding:6px 10px" onclick="openEncargoStatusModal('${e.id}')"><i class="bi bi-arrow-repeat"></i> Estado</button>
+          <button class="btn-s" style="font-size:11px;padding:6px 10px" onclick="openEncargoModal('${e.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn-s" style="font-size:11px;padding:6px 10px;border-color:#25d366;color:#25d366" onclick="waEncargo('${e.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+          <button class="btn-action del" onclick="deleteEncargo('${e.id}')" title="Eliminar" style="width:32px;height:32px"><i class="bi bi-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────────────────────────────
+window.waEncargo = function(id) {
+  const e = encargos.find(x=>x.id===id); if(!e) return;
+  const daysLeft = getDaysLeft(e.fechaLlegadaEstimada);
+  let msg;
+  if(e.estado === 'Llegado') {
+    msg = `Hola ${e.cliente}! 🎉\nSu encargo *${e.producto}* llegó al taller.\nPuede pasar a recogerlo cuando guste.${e.precio>0?`\nSaldo pendiente: *${mon()}${Math.max(0,(e.precio||0)-(e.anticipo||0)).toFixed(2)}*`:''}\n\nGracias por su espera — ${configData.nombre||'Nextcom'}`;
+  } else if(daysLeft <= 3 && daysLeft >= 0) {
+    msg = `Hola ${e.cliente}! 📦\nSu encargo *${e.producto}* está muy cerca, se espera en aproximadamente *${daysLeft} día${daysLeft!==1?'s':''}*.\nLe avisaremos en cuanto llegue.\n\n${configData.nombre||'Nextcom'}`;
+  } else {
+    msg = `Hola ${e.cliente}! 👋\nLe informamos que su encargo *${e.producto}* está en camino.\nFecha estimada de llegada: *${fmtDate(e.fechaLlegadaEstimada)}* (${daysLeft > 0 ? daysLeft+' días restantes' : 'próximamente'}).\n\n${configData.nombre||'Nextcom'}`;
+  }
+  window.open(`https://wa.me/${fmtWA(e.telefono)}?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+window.openEncargoModal = function(id=null) {
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('enc-edit-id').value = '';
+  document.getElementById('modal-encargo-title').innerHTML = '<i class="bi bi-box-arrow-in-down" style="color:#F0B90B"></i> Nuevo Encargo';
+  ['enc-cliente','enc-telefono','enc-producto','enc-fuente','enc-notas'].forEach(x=>document.getElementById(x).value='');
+  ['enc-precio','enc-anticipo'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('enc-fecha-orden').value = today;
+  document.getElementById('enc-fecha-llegada').value = '';
+  document.getElementById('enc-estado-init').value = 'En Camino';
+  document.getElementById('enc-days-preview').textContent = '';
+  document.getElementById('enc-anticipo-preview-wrap').style.display = 'none';
+
+  if(id) {
+    const e = encargos.find(x=>x.id===id); if(!e) return;
+    document.getElementById('enc-edit-id').value = id;
+    document.getElementById('modal-encargo-title').innerHTML = `<i class="bi bi-pencil" style="color:#F0B90B"></i> Editar Encargo`;
+    document.getElementById('enc-cliente').value = e.cliente||'';
+    document.getElementById('enc-telefono').value = e.telefono||'';
+    document.getElementById('enc-producto').value = e.producto||'';
+    document.getElementById('enc-fuente').value = e.fuente||'';
+    document.getElementById('enc-notas').value = e.notas||'';
+    document.getElementById('enc-precio').value = e.precio||'';
+    document.getElementById('enc-anticipo').value = e.anticipo||'';
+    document.getElementById('enc-fecha-orden').value = e.fechaOrden||today;
+    document.getElementById('enc-fecha-llegada').value = e.fechaLlegadaEstimada||'';
+    previewEncargoDays();
+    previewEncargoAnticipo();
+  }
+  showModal('modal-encargo');
+};
+
+window.previewEncargoDays = function() {
+  const llegada = document.getElementById('enc-fecha-llegada').value;
+  const orden   = document.getElementById('enc-fecha-orden').value;
+  const el      = document.getElementById('enc-days-preview');
+  if(!llegada || !el) return;
+  const days = getDaysTotal(orden, llegada);
+  const left = getDaysLeft(llegada);
+  if(left < 0) el.innerHTML = `<span style="color:#F6465D"><i class="bi bi-exclamation-triangle"></i> Fecha ya pasada (${Math.abs(left)} días atrás)</span>`;
+  else if(left === 0) el.innerHTML = `<span style="color:#F0B90B"><i class="bi bi-alarm"></i> Llega hoy</span>`;
+  else el.innerHTML = `<span style="color:#0ECB81"><i class="bi bi-calendar-check"></i> <b>${left}</b> días restantes · ${days} días de espera total</span>`;
+};
+
+window.previewEncargoAnticipo = function() {
+  const anticipo = parseFloat(document.getElementById('enc-anticipo').value)||0;
+  const precio   = parseFloat(document.getElementById('enc-precio').value)||0;
+  const wrap     = document.getElementById('enc-anticipo-preview-wrap');
+  if(!wrap) return;
+  if(anticipo <= 0) { wrap.style.display='none'; return; }
+  const saldo = Math.max(0, precio - anticipo);
+  const pct   = precio > 0 ? Math.min(100, Math.round(anticipo/precio*100)) : 0;
+  wrap.style.display='block';
+  wrap.innerHTML = `<div style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);border-radius:8px;padding:9px 12px;font-size:12px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+      <span style="color:#F0B90B;font-weight:700"><i class="bi bi-hourglass-split"></i> Anticipo (${pct}%)</span>
+      <span class="mono" style="color:#F0B90B;font-weight:700">${mon()}${anticipo.toFixed(2)}</span>
+    </div>
+    <div style="height:4px;background:var(--card-border);border-radius:99px;margin-bottom:5px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:#F0B90B;border-radius:99px"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span style="color:var(--text-secondary)">Saldo al entregar</span>
+      <span class="mono" style="color:#0ECB81;font-weight:700">${mon()}${saldo.toFixed(2)}</span>
+    </div>
+  </div>`;
+};
+
+window.saveEncargo = async function() {
+  const cliente   = document.getElementById('enc-cliente').value.trim();
+  const telefono  = document.getElementById('enc-telefono').value.trim();
+  const producto  = document.getElementById('enc-producto').value.trim();
+  const llegada   = document.getElementById('enc-fecha-llegada').value;
+  if(!cliente||!telefono||!producto||!llegada) {
+    toast('Completa cliente, teléfono, producto y fecha de llegada','error'); return;
+  }
+  const btn = document.getElementById('btn-save-encargo'); btn.disabled=true;
+  const data = {
+    cliente, telefono, producto,
+    fuente:   document.getElementById('enc-fuente').value.trim(),
+    precio:   parseFloat(document.getElementById('enc-precio').value)||0,
+    anticipo: parseFloat(document.getElementById('enc-anticipo').value)||0,
+    fechaOrden:            document.getElementById('enc-fecha-orden').value,
+    fechaLlegadaEstimada:  llegada,
+    notas:    document.getElementById('enc-notas').value.trim(),
+    estado:   document.getElementById('enc-estado-init').value,
+  };
+  setSyncStatus('syncing');
+  try {
+    const editId = document.getElementById('enc-edit-id').value;
+    if(editId) {
+      await updateDoc(doc(db, COL_ENC, editId), data);
+      const idx = encargos.findIndex(e=>e.id===editId);
+      if(idx>-1) encargos[idx] = {...encargos[idx], ...data};
+      toast('Encargo actualizado','success');
+    } else {
+      data.creadoEn = serverTimestamp();
+      const ref = await addDoc(collection(db, COL_ENC), data);
+      encargos.unshift({id: ref.id, ...data});
+      toast('Encargo creado','success');
+    }
+    setSyncStatus('ok');
+    closeModal('modal-encargo');
+    renderEncargos();
+  } catch(e){ toast('Error: '+e.message,'error'); setSyncStatus('error'); }
+  btn.disabled=false;
+};
+
+window.deleteEncargo = async function(id) {
+  if(!confirm('¿Eliminar este encargo?')) return;
+  setSyncStatus('syncing');
+  try {
+    await deleteDoc(doc(db, COL_ENC, id));
+    encargos = encargos.filter(e=>e.id!==id);
+    renderEncargos(); updateBadgeEncargos();
+    toast('Encargo eliminado','info');
+  } catch(e){ toast('Error: '+e.message,'error'); }
+};
+
+// ─── STATUS MODAL ─────────────────────────────────────────────────────────────
+window.openEncargoStatusModal = function(id) {
+  const e = encargos.find(x=>x.id===id); if(!e) return;
+  document.getElementById('enc-status-id').value = id;
+  document.getElementById('enc-status-select').value = e.estado;
+  const cfg = encStatusConfig(e.estado);
+  document.getElementById('enc-status-info').innerHTML = `
+    <div style="background:var(--hover-bg);border-radius:8px;padding:10px 12px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:3px">${esc(e.producto)}</div>
+      <div style="color:var(--text-muted)">${esc(e.cliente)} · ${esc(e.telefono)}</div>
+      <div style="margin-top:5px;display:flex;align-items:center;gap:6px">
+        <span class="enc-tag ${cfg.cls}">${e.estado}</span>
+        ${getDaysLeft(e.fechaLlegadaEstimada)>=0?`<span style="font-size:11px;color:var(--text-secondary)">${getDaysLeft(e.fechaLlegadaEstimada)} días restantes</span>`:'<span style="font-size:11px;color:#F6465D">Fecha vencida</span>'}
+      </div>
+    </div>`;
+  toggleEncargoEntregado();
+  showModal('modal-enc-status');
+};
+
+window.toggleEncargoEntregado = function() {
+  const val = document.getElementById('enc-status-select').value;
+  document.getElementById('enc-status-llegado-info').style.display    = val==='Llegado'?'block':'none';
+  document.getElementById('enc-status-entregado-info').style.display  = val==='Entregado'?'block':'none';
+  if(val==='Llegado') document.getElementById('enc-fecha-real-llegada').value = new Date().toISOString().slice(0,10);
+};
+
+window.applyEncargoStatus = async function() {
+  const id     = document.getElementById('enc-status-id').value;
+  const status = document.getElementById('enc-status-select').value;
+  const e      = encargos.find(x=>x.id===id); if(!e) return;
+  const btn    = document.getElementById('btn-apply-enc-status'); btn.disabled=true;
+  const updates = {estado: status};
+  if(status==='Llegado') {
+    updates.fechaLlegadaReal = document.getElementById('enc-fecha-real-llegada').value || new Date().toISOString().slice(0,10);
+  }
+  setSyncStatus('syncing');
+  try {
+    await updateDoc(doc(db, COL_ENC, id), updates);
+    const idx = encargos.findIndex(x=>x.id===id);
+    if(idx>-1) encargos[idx] = {...encargos[idx], ...updates};
+    closeModal('modal-enc-status');
+    renderEncargos(); updateBadgeEncargos();
+    toast(`Estado → ${status}`,'success');
+    // Auto-WA notify on Llegado
+    if(status==='Llegado') {
+      setTimeout(()=>{ if(confirm(`¿Notificar a ${e.cliente} por WhatsApp que su encargo llegó?`)) waEncargo(id); }, 400);
+    }
+  } catch(e){ toast('Error: '+e.message,'error'); }
+  btn.disabled=false;
+};
+
+// ─── BADGE ────────────────────────────────────────────────────────────────────
+function updateBadgeEncargos() {
+  const pending = encargos.filter(e => e.estado !== 'Entregado').length;
+  const badge   = document.getElementById('badge-encargos');
+  if(badge) { badge.textContent=pending; badge.style.display=pending>0?'inline-block':'none'; }
+}
+
+// ─── PERIODIC CHECK (every 30min while app is open) ──────────────────────────
+setInterval(autoUpdateEncargoStatuses, 30 * 60 * 1000);
+
 // ─── PHONE HELPER (+503 assumed) ─────────────────────────────────────────────
 function fmtWA(tel){
   // Strip spaces, dashes, parens — keep digits and leading +
@@ -3509,7 +4087,7 @@ function fmtWA(tel){
 }
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
-const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',reportes:'Reportes',config:'Configuración',pedidos:'Pedidos a Proveedores',clientes:'Clientes'};
+const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',reportes:'Reportes',config:'Configuración',pedidos:'Pedidos a Proveedores',clientes:'Clientes',encargos:'Encargos Especiales'};
 window.closeMobileNav=function(activeId){
   // Update bottom nav active state
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -3518,7 +4096,7 @@ window.closeMobileNav=function(activeId){
   // Close sidebar on mobile
   if(window.innerWidth<=640) closeSidebar();
 };
-window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;if(window.innerWidth<=640)closeSidebar();const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,reportes:()=>{initReportes();renderReportes();},pedidos:renderPedidos,clientes:renderClientes};if(fns[page])fns[page]();};
+window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;if(window.innerWidth<=640)closeSidebar();const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,reportes:()=>{initReportes();renderReportes();},pedidos:renderPedidos,clientes:renderClientes,encargos:renderEncargos};if(fns[page])fns[page]();};
 window.showModal=function(id){document.getElementById(id).classList.add('show');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
 window.toggleSidebar=function(){

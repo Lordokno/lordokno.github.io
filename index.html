@@ -99,9 +99,9 @@
 [data-theme="light"] #bottom-nav{background:#FFFFFF;border-top:1px solid #D8DCE3;box-shadow:0 -2px 12px rgba(0,0,0,.06);}
 [data-theme="light"] .bnav-item{color:#9AA3AF;}
 [data-theme="light"] .bnav-item.active{color:#F0B90B;}
-[data-theme="light"] #topbar-clock{background:rgba(240,185,11,.1);border-color:rgba(240,185,11,.25);}
-[data-theme="light"] #clock-time{color:#8C6A00;}
-[data-theme="light"] #clock-date{color:#9AA3AF;}
+
+
+
 [data-theme="light"] #loading-screen{background:#F0F2F5;}
 [data-theme="light"] ::-webkit-scrollbar-thumb{background:#C8CDD6;}
 [data-theme="light"] .btn-s{background:#F0F2F5;border-color:#C8CDD6;color:#3A3F4B;}
@@ -341,9 +341,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 .gcard{background:linear-gradient(135deg,rgba(14,203,129,.07),rgba(240,185,11,.05));border:1px solid rgba(14,203,129,.2);border-radius:9px;padding:11px 14px;margin-top:8px;}
 
 /* ─── CLOCK ─── */
-#topbar-clock{background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);border-radius:8px;padding:4px 12px;}
-#clock-time{color:#F0B90B;font-size:16px;font-weight:800;letter-spacing:2px;}
-#clock-date{color:var(--text-muted);font-size:9px;text-transform:uppercase;letter-spacing:1px;}
+
+
+
 
 .cliente-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:13px;padding:16px;transition:var(--tr);display:flex;flex-direction:column;gap:10px;}
 .cliente-card:hover{border-color:rgba(79,110,247,.4);transform:translateY(-2px);}
@@ -493,7 +493,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   .pos-layout{grid-template-columns:1fr;}
   .pos-list-item{padding:8px 10px;}
   .form-row.c3{grid-template-columns:1fr 1fr;}
-  #topbar-clock #clock-date{display:none;}
+
 }
 
 /* ── MOBILE (≤640px) ── */
@@ -503,7 +503,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   .topbar{padding:0 12px;height:50px;}
   .topbar-title{font-size:13px;}
   #caja-indicator{font-size:9px;padding:2px 7px;}
-  #topbar-clock{display:none;}
+
 
   /* Sidebar */
   #sidebar{width:82vw;max-width:280px;}
@@ -661,10 +661,6 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <div class="topbar-title" id="topbar-title">Dashboard</div>
     </div>
     <div class="topbar-right">
-      <div id="topbar-clock" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#F0B90B;letter-spacing:1px;display:flex;align-items:center;gap:6px">
-        <span id="clock-time" style="font-weight:700;font-size:15px">--:--:--</span>
-        <span id="clock-date" style="font-size:10px;color:var(--text-muted)"></span>
-      </div>
       <div id="caja-indicator" class="caja-status closed">CAJA CERRADA</div>
     </div>
   </div>
@@ -847,7 +843,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
             <div style="padding:14px">
               <div id="caja-closed-ui">
                 <div class="ab i"><i class="bi bi-info-circle"></i> Ingresa el monto de apertura</div>
-                <div class="ab" style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);color:#F0B90B;font-size:11px"><i class="bi bi-clock"></i> Apertura automática 07:00 · Cierre automático 19:00</div>
+                <div class="ab" style="background:rgba(240,185,11,.08);border:1px solid rgba(240,185,11,.2);color:#F0B90B;font-size:11px"><i class="bi bi-clock"></i> Cierre automático a las 19:00</div>
                 <label class="tf-label">Monto de apertura ($)</label>
                 <input class="tf-input mono" id="caja-apertura-monto" type="number" placeholder="0.00" value="0">
                 <button class="btn-g" style="width:100%;margin-top:10px" onclick="abrirCaja()"><i class="bi bi-unlock"></i> Abrir Caja</button>
@@ -1797,8 +1793,7 @@ async function init() {
     await loadProveedores();
     await loadEncargos();
     initReportes();
-    // Run auto-caja check immediately on load
-    setTimeout(checkAutoCaja, 1500);
+
   } catch(e){ console.error(e); setSyncStatus('error'); setLoadMsg('Error: '+e.message); setTimeout(hideLoader,3000); }
 }
 function setLoadMsg(m){const el=document.getElementById('load-msg');if(el)el.textContent=m;}
@@ -3247,12 +3242,12 @@ async function seedDefaultProveedores() {
 
 // ─── LOAD PEDIDOS DEL DÍA ────────────────────────────────────────────────────
 async function loadPedidosHoy() {
-  const today = new Date().toISOString().slice(0,10);
   pedidosDia = {};
   for(const prov of proveedores) {
     pedidosDia[prov.id] = [];
     try {
-      const snap = await getDoc(doc(db, COL_PED, `${prov.id}_${today}`));
+      // One persistent doc per provider (no date key)
+      const snap = await getDoc(doc(db, COL_PED, prov.id));
       if(snap.exists() && snap.data().items) {
         pedidosDia[prov.id] = snap.data().items;
       }
@@ -3265,11 +3260,10 @@ async function loadPedidosHoy() {
 
 // ─── SAVE PEDIDOS ─────────────────────────────────────────────────────────────
 async function savePedidosProv(provId) {
-  const today = new Date().toISOString().slice(0,10);
   try {
-    await setDoc(doc(db, COL_PED, `${provId}_${today}`), {
+    await setDoc(doc(db, COL_PED, provId), {
       provId,
-      fecha: today,
+      updatedAt: new Date().toISOString(),
       items: pedidosDia[provId] || []
     });
   } catch(e) {
@@ -3610,8 +3604,14 @@ function getRepRange() {
   if(repSelDay) {
     return { start: repSelDay, end: repSelDay, label: fmtDate(repSelDay) };
   }
-  const m = parseInt((document.getElementById('rep-month')||{}).value ?? new Date().getMonth());
-  const y = parseInt((document.getElementById('rep-year')||{}).value  ?? new Date().getFullYear());
+  const now = new Date();
+  const mEl = document.getElementById('rep-month');
+  const yEl = document.getElementById('rep-year');
+  // Use || to fall back when value is empty string or NaN
+  const m = (mEl && mEl.value !== '' && !isNaN(parseInt(mEl.value)))
+    ? parseInt(mEl.value) : now.getMonth();
+  const y = (yEl && yEl.value !== '' && !isNaN(parseInt(yEl.value)))
+    ? parseInt(yEl.value) : now.getFullYear();
   const start = `${y}-${String(m+1).padStart(2,'0')}-01`;
   const lastDay = new Date(y, m+1, 0).getDate();
   const end   = `${y}-${String(m+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
@@ -3621,7 +3621,8 @@ function getRepRange() {
 
 function inRange(dateStr, start, end) {
   if(!dateStr) return false;
-  const d = dateStr.slice(0,10);
+  // Handle both ISO timestamp '2025-01-15T...' and plain date '2025-01-15'
+  const d = String(dateStr).slice(0,10);
   return d >= start && d <= end;
 }
 
@@ -4384,48 +4385,17 @@ window.closeSidebar=function(){
 };
 document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('show');}));
 // ─── CLOCK ────────────────────────────────────────────────────────────────────
-function updateClock(){
-  const now=new Date();
-  const timeEl=document.getElementById('clock-time');
-  const dateEl=document.getElementById('clock-date');
-  if(!timeEl||!dateEl) return;
-  timeEl.textContent=now.toLocaleTimeString('es-SV',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
-  dateEl.textContent=now.toLocaleDateString('es-SV',{weekday:'short',day:'numeric',month:'short'}).toUpperCase();
-}
-updateClock();
+// ─── AUTO CIERRE DE CAJA a las 19:00 ─────────────────────────────────────────
+let _lastAutoClose = '';
 
-// ─── AUTO CAJA: abre 07:00, cierra 19:00 ─────────────────────────────────────
-let _lastAutoDate = '';
-let _lastAutoHour = -1;
+async function checkAutoCierreCaja() {
+  const now  = new Date();
+  const hour = now.getHours();
+  const key  = now.toISOString().slice(0,10);   // once per calendar day
+  if(_lastAutoClose === key) return;
 
-async function checkAutoCaja() {
-  const now   = new Date();
-  const hour  = now.getHours();
-  const today = now.toISOString().slice(0,10);
-  const key   = `${today}_${hour}`;
-  if(key === _lastAutoDate) return;   // already handled this hour today
-  _lastAutoDate = key;
-
-  // ── Auto-ABRIR a las 07:00 ───────────────────────────────────────────────
-  if(hour === 7 && !cajaData.open) {
-    cajaData = {
-      open: true,
-      apertura: now.toISOString(),
-      balance: cajaData.balance || 0,   // keep existing balance
-      movimientos: [...(cajaData.movimientos||[]),
-        {fecha: now.toISOString(), tipo:'apertura', desc:'Apertura automática (07:00)', monto: cajaData.balance||0}
-      ]
-    };
-    setSyncStatus('syncing');
-    try {
-      await setDoc(doc(db,'tf_meta','caja'), cajaData);
-      renderCaja(); updateCajaIndicator(); renderDashboard();
-      toast('🔓 Caja abierta automáticamente (07:00)','success');
-    } catch(e){ console.error(e); }
-  }
-
-  // ── Auto-CERRAR a las 19:00 ──────────────────────────────────────────────
   if(hour === 19 && cajaData.open) {
+    _lastAutoClose = key;
     cajaData.movimientos.push({
       fecha: now.toISOString(),
       tipo: 'cierre',
@@ -4443,7 +4413,8 @@ async function checkAutoCaja() {
   }
 }
 
-setInterval(() => { updateClock(); checkAutoCaja(); }, 1000);
+setInterval(checkAutoCierreCaja, 30000);   // check every 30s
+checkAutoCierreCaja();                     // also check on load
 
 // burger shown via CSS media query
 const savedTheme=localStorage.getItem('nc_theme')||'dark';

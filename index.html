@@ -400,6 +400,19 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* ─── ORDER PHOTOS ──────────────────────────────────────────── */
 .photo-upload-zone{border:2px dashed var(--input-border);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:var(--tr);margin-top:6px;}
 .photo-upload-zone:hover,.photo-upload-zone.drag{border-color:#F0B90B;background:rgba(240,185,11,.05);}
+
+/* IMEI SCANNER */
+#imei-scan-video{background:#000;}
+.scan-frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.scan-frame-box{width:82%;height:36%;border:2px solid #F0B90B;border-radius:8px;box-shadow:0 0 0 999px rgba(0,0,0,.4);}
+.scan-line{position:absolute;left:9%;right:9%;height:2px;background:linear-gradient(90deg,transparent,#F0B90B,transparent);animation:scanmove 1.8s ease-in-out infinite;}
+@keyframes scanmove{0%,100%{top:32%;}50%{top:68%;}}
+
+/* PATTERN LOCK */
+#pattern-svg{touch-action:none;user-select:none;display:block;}
+.pattern-dot{fill:var(--input-bg);stroke:var(--input-border);stroke-width:2.5;cursor:pointer;transition:fill .12s,stroke .12s;}
+.pattern-dot.active{fill:#F0B90B;stroke:#F0B90B;}
+.pattern-line{stroke:#F0B90B;stroke-width:3.5;stroke-linecap:round;fill:none;opacity:.9;}
 .photo-thumb{position:relative;width:74px;height:74px;border-radius:9px;overflow:hidden;flex-shrink:0;border:1px solid var(--card-border);cursor:pointer;transition:var(--tr);}
 .photo-thumb:hover{transform:scale(1.04);border-color:#F0B90B;}
 .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
@@ -1190,7 +1203,12 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <div class="form-row c3 mb-3">
       <div><label class="tf-label">Marca *</label><select class="tf-select" id="ord-marca"><option value="">Seleccionar...</option><option>Apple</option><option>Samsung</option><option>Huawei</option><option>Xiaomi</option><option>Motorola</option><option>LG</option><option>Sony</option><option>OnePlus</option><option>Realme</option><option>Nokia</option><option>Oppo</option><option>Honor</option><option>Otra</option></select></div>
       <div><label class="tf-label">Modelo *</label><input class="tf-input" id="ord-modelo" placeholder="Ej: iPhone 14, Galaxy S23"></div>
-      <div><label class="tf-label">IMEI / Serie</label><input class="tf-input mono" id="ord-imei" placeholder="Opcional"></div>
+      <div><label class="tf-label">IMEI / Serie</label>
+        <div style="display:flex;gap:6px">
+          <input class="tf-input mono" id="ord-imei" placeholder="Escribe o escanea..." style="flex:1;min-width:0">
+          <button type="button" class="btn-s" style="padding:0 12px;flex-shrink:0" title="Escanear IMEI con la cámara" onclick="openImeiScanner()"><i class="bi bi-upc-scan"></i></button>
+        </div>
+      </div>
     </div>
     <div class="form-row mb-3"><div><label class="tf-label">Fallas Reportadas</label><div id="fallas-grid" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px"></div></div></div>
     <div class="form-row c2 mb-3">
@@ -1247,6 +1265,24 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       </div>
       <div><label class="tf-label">Técnico Asignado</label><input class="tf-input" id="ord-tecnico" placeholder="Nombre del técnico"></div>
     </div>
+    <!-- PATTERN LOCK SECTION -->
+    <div style="margin-top:4px;margin-bottom:16px">
+      <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span><i class="bi bi-grid-3x2-gap-fill" style="margin-right:5px;color:#F0B90B"></i>Patrón de Desbloqueo del Cliente</span>
+        <span style="font-size:9px;color:var(--text-muted);font-weight:400">Opcional · 6 puntos</span>
+      </label>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px">
+        <div style="background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:14px;flex-shrink:0">
+          <svg id="pattern-svg" viewBox="0 0 220 150" width="220" height="150"></svg>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div id="pattern-status" style="font-size:11px;color:var(--text-muted)">Sin patrón registrado</div>
+          <button type="button" class="btn-s" style="padding:5px 10px;font-size:11px;width:fit-content" onclick="clearPattern()"><i class="bi bi-x-lg"></i> Borrar patrón</button>
+        </div>
+      </div>
+      <input type="hidden" id="ord-patron">
+    </div>
+
     <!-- PHOTOS SECTION -->
     <div style="margin-top:4px">
       <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -1278,6 +1314,29 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <div class="modal-footer">
       <button class="btn-s" onclick="closeModal('modal-order')">Cancelar</button>
       <button class="btn-p" id="btn-save-order" onclick="saveOrder()"><i class="bi bi-save"></i> Guardar Orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ESCANEAR IMEI ══ -->
+<div class="modal-overlay" id="modal-imei-scan">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title"><i class="bi bi-upc-scan" style="color:#F0B90B"></i> Escanear IMEI</div>
+      <button class="modal-close" onclick="closeImeiScanner()"><i class="bi bi-x"></i></button>
+    </div>
+    <div style="position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:4/3">
+      <video id="imei-scan-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover"></video>
+      <div class="scan-frame"><div class="scan-frame-box"></div></div>
+      <div class="scan-line" id="imei-scan-line" style="display:none"></div>
+    </div>
+    <div id="imei-scan-status" style="margin-top:10px;font-size:12px;color:var(--text-secondary);text-align:center">Solicitando acceso a la cámara...</div>
+    <div style="margin-top:12px">
+      <label class="tf-label">¿No detecta el código? Escribe el IMEI manualmente</label>
+      <div style="display:flex;gap:6px">
+        <input class="tf-input mono" id="imei-scan-manual" placeholder="IMEI / Serie" style="flex:1" onkeydown="if(event.key==='Enter')confirmImeiManual()">
+        <button class="btn-p" style="padding:0 14px" onclick="confirmImeiManual()"><i class="bi bi-check-lg"></i></button>
+      </div>
     </div>
   </div>
 </div>
@@ -2093,6 +2152,138 @@ window.checkRepuesto = function() {
     : `<div class="ab w"><i class="bi bi-exclamation-triangle"></i> Sin stock — la orden quedará <b>Pieza Pendiente</b></div>`;
 };
 
+// ─── ESCÁNER DE IMEI (CÁMARA) ──────────────────────────────────────────────────
+let imeiScanStream=null, imeiScanTimer=null, imeiBarcodeDetector=null;
+
+window.openImeiScanner=async function(){
+  document.getElementById('imei-scan-manual').value='';
+  document.getElementById('imei-scan-status').textContent='Solicitando acceso a la cámara...';
+  document.getElementById('imei-scan-line').style.display='none';
+  showModal('modal-imei-scan');
+  try{
+    imeiScanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+    const video=document.getElementById('imei-scan-video');
+    video.srcObject=imeiScanStream;
+    await video.play();
+    document.getElementById('imei-scan-line').style.display='block';
+    if('BarcodeDetector' in window){
+      try{
+        const formats=await window.BarcodeDetector.getSupportedFormats();
+        imeiBarcodeDetector=new window.BarcodeDetector({formats:formats.filter(f=>['code_128','code_39','ean_13','ean_8','codabar','itf'].includes(f))});
+        document.getElementById('imei-scan-status').textContent='Apunta al código de barras del IMEI (caja o etiqueta del equipo)';
+        imeiScanTimer=setInterval(scanImeiFrame,350);
+      }catch(err){
+        document.getElementById('imei-scan-status').textContent='Detección automática no disponible en este navegador. Escribe el IMEI abajo.';
+      }
+    } else {
+      document.getElementById('imei-scan-status').textContent='Tu navegador no soporta lectura automática de códigos. Escribe el IMEI abajo (puedes ver el encuadre como referencia).';
+    }
+  }catch(err){
+    document.getElementById('imei-scan-status').textContent='No se pudo acceder a la cámara. Verifica permisos o escribe el IMEI manualmente.';
+  }
+  setTimeout(()=>document.getElementById('imei-scan-manual').focus(),300);
+};
+
+async function scanImeiFrame(){
+  const video=document.getElementById('imei-scan-video');
+  if(!imeiBarcodeDetector || !video || video.readyState<2) return;
+  try{
+    const codes=await imeiBarcodeDetector.detect(video);
+    if(codes && codes.length){
+      const val=(codes[0].rawValue||'').trim();
+      if(val){
+        document.getElementById('ord-imei').value=val;
+        toast('IMEI escaneado: '+val,'success');
+        closeImeiScanner();
+      }
+    }
+  }catch(err){/* frame de video no listo aún, se reintenta */}
+}
+
+window.confirmImeiManual=function(){
+  const val=document.getElementById('imei-scan-manual').value.trim();
+  if(!val){toast('Escribe un IMEI o serie','error');return;}
+  document.getElementById('ord-imei').value=val;
+  closeImeiScanner();
+};
+
+window.closeImeiScanner=function(){
+  if(imeiScanTimer){clearInterval(imeiScanTimer);imeiScanTimer=null;}
+  imeiBarcodeDetector=null;
+  if(imeiScanStream){imeiScanStream.getTracks().forEach(t=>t.stop());imeiScanStream=null;}
+  const video=document.getElementById('imei-scan-video');
+  if(video) video.srcObject=null;
+  closeModal('modal-imei-scan');
+};
+
+// ─── PATRÓN DE DESBLOQUEO (6 PUNTOS) ───────────────────────────────────────────
+const PATTERN_PTS=[{x:35,y:35},{x:110,y:35},{x:185,y:35},{x:35,y:115},{x:110,y:115},{x:185,y:115}];
+const PATTERN_HIT=22;
+let patternSel=[], patternDrawing=false;
+
+function initPatternGrid(){
+  const svg=document.getElementById('pattern-svg');
+  if(!svg || svg.dataset.init) return;
+  svg.dataset.init='1';
+  svg.innerHTML = `<g id="pattern-lines"></g>` + PATTERN_PTS.map((p,i)=>
+    `<circle class="pattern-dot" id="pd-${i}" cx="${p.x}" cy="${p.y}" r="14" data-idx="${i}"></circle>`).join('');
+
+  const svgPoint=(evt)=>{
+    const rect=svg.getBoundingClientRect();
+    return {x:(evt.clientX-rect.left)*(220/rect.width), y:(evt.clientY-rect.top)*(150/rect.height)};
+  };
+  const nearestDot=(pt)=>{
+    let best=-1, bd=PATTERN_HIT;
+    PATTERN_PTS.forEach((p,i)=>{const d=Math.hypot(p.x-pt.x,p.y-pt.y); if(d<bd){bd=d;best=i;}});
+    return best;
+  };
+  const redrawPattern=()=>{
+    PATTERN_PTS.forEach((p,i)=>document.getElementById('pd-'+i).classList.toggle('active',patternSel.includes(i)));
+    let path='';
+    patternSel.forEach((idx,k)=>{const p=PATTERN_PTS[idx]; path+=(k===0?'M':'L')+p.x+','+p.y+' ';});
+    document.getElementById('pattern-lines').innerHTML = patternSel.length>1 ? `<path class="pattern-line" d="${path}"></path>` : '';
+    document.getElementById('ord-patron').value = patternSel.length ? JSON.stringify(patternSel) : '';
+    const st=document.getElementById('pattern-status');
+    if(st) st.textContent = patternSel.length ? `Patrón registrado (${patternSel.length} puntos)` : 'Sin patrón registrado';
+  };
+  svg.addEventListener('pointerdown', e=>{
+    const idx=nearestDot(svgPoint(e));
+    if(idx>-1){ patternSel=[idx]; patternDrawing=true; redrawPattern(); try{svg.setPointerCapture(e.pointerId);}catch(err){} }
+  });
+  svg.addEventListener('pointermove', e=>{
+    if(!patternDrawing) return;
+    const idx=nearestDot(svgPoint(e));
+    if(idx>-1 && !patternSel.includes(idx)){ patternSel.push(idx); redrawPattern(); }
+  });
+  const finishPattern=()=>{patternDrawing=false;};
+  svg.addEventListener('pointerup', finishPattern);
+  svg.addEventListener('pointerleave', finishPattern);
+  svg.addEventListener('pointercancel', finishPattern);
+  svg._redrawPattern=redrawPattern;
+}
+
+window.clearPattern=function(){
+  patternSel=[];
+  const svg=document.getElementById('pattern-svg');
+  if(svg && svg._redrawPattern) svg._redrawPattern();
+};
+
+window.setPatternFromValue=function(raw){
+  try{ patternSel = raw ? JSON.parse(raw) : []; }catch(err){ patternSel=[]; }
+  if(!Array.isArray(patternSel)) patternSel=[];
+  const svg=document.getElementById('pattern-svg');
+  if(svg && svg._redrawPattern) svg._redrawPattern();
+};
+
+function patternMiniSvg(raw){
+  let arr=[]; try{arr=raw?JSON.parse(raw):[];}catch(err){arr=[];}
+  if(!Array.isArray(arr) || !arr.length) return '';
+  const dots=PATTERN_PTS.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="10" fill="${arr.includes(i)?'#F0B90B':'#474D57'}"></circle>`).join('');
+  let path=''; arr.forEach((idx,k)=>{const p=PATTERN_PTS[idx]; path+=(k===0?'M':'L')+p.x+','+p.y+' ';});
+  const line=arr.length>1?`<path d="${path}" stroke="#F0B90B" stroke-width="3" stroke-linecap="round" fill="none"></path>`:'';
+  return `<svg viewBox="0 0 220 150" width="140" height="95" style="display:block">${dots}${line}</svg>`;
+}
+
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 window.openOrderModal=function(id=null){
   const today=new Date().toISOString().slice(0,10);
@@ -2107,8 +2298,9 @@ window.openOrderModal=function(id=null){
   document.getElementById('ord-anticipo-metodo').value='efectivo';
   document.getElementById('anticipo-preview').style.display='none';
   renderFallas(); popRep();
+  setPatternFromValue('');
   // Photos reset handled after if(id) block
-  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();resetPhotoState(o.fotos||[]);}else{resetPhotoState([]);}
+  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();resetPhotoState(o.fotos||[]);setPatternFromValue(o.patron||'');}else{resetPhotoState([]);}
   setupClienteAutocomplete();
   showModal('modal-order');
 };
@@ -2123,7 +2315,7 @@ window.saveOrder=async function(){
     if(editId){// Upload any new photos
       const newUploaded = await uploadPendingPhotos(editId);
       const allPhotos = [...currentOrderPhotos, ...newUploaded];
-      await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value,fotos:allPhotos});toast('Orden actualizada','success');}
+      await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value,fotos:allPhotos,patron:document.getElementById('ord-patron').value||''});toast('Orden actualizada','success');}
     else {
       let pp=false,rn=null;
       if(repId){const item=inventory.find(i=>i.id===repId);if(item){rn=item.nombre;if(item.stock>0)await updateDoc(doc(db,'tf_inventory',repId),{stock:item.stock-1});else pp=true;}}
@@ -2137,7 +2329,7 @@ window.saveOrder=async function(){
         cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'anticipo',desc:`Anticipo orden ${cod} — ${cliente} (${anticipoMetodo})`,monto:anticipo});
         await setDoc(doc(db,'tf_meta','caja'),cajaData);
       }
-      const ordRef = await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false,fotos:[]});
+      const ordRef = await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false,fotos:[],patron:document.getElementById('ord-patron').value||''});
       // Upload photos after we have the order ID
       if(pendingPhotos.length) {
         const uploaded = await uploadPendingPhotos(ordRef.id);
@@ -2162,6 +2354,7 @@ function buildTicket(o){const days=o.garantiaDias||30,venc=o.fechaEntrega?new Da
       <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--text-secondary)">Saldo pendiente</span><span class="mono" style="color:#0ECB81;font-weight:700">${mon()}${Math.max(0,(o.total||0)-(o.anticipo||0)).toFixed(2)}</span></div>
     </div>`:''}
     ${o.garantiaActivada?`<div class="gcard mt-3"><div style="font-size:11px;font-weight:700;color:#0ECB81;margin-bottom:3px"><i class="bi bi-shield-check"></i> Garantía Activa</div><div style="font-size:12px">Desde: ${fmtDate(o.fechaEntrega)} → Vence: ${venc} (${days} días)</div></div>`:''}
+    ${o.patron?`<div style="margin-top:12px"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:5px">Patrón de Desbloqueo</div>${patternMiniSvg(o.patron)}</div>`:''}
     ${renderOrderPhotos(o.fotos||[])}</div>`;}
 
 window.printCurrentOrder=function(){if(currentPrintOrder)printOrder(currentPrintOrder.id);};
@@ -4383,7 +4576,7 @@ window.closeSidebar=function(){
   const ov=document.getElementById('sidebar-overlay');
   if(ov) ov.classList.remove('show');
 };
-document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo)mo.classList.remove('show');}));
+document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo){ if(mo.id==='modal-imei-scan'){closeImeiScanner();} else {mo.classList.remove('show');} }}));
 // ─── CLOCK ────────────────────────────────────────────────────────────────────
 // ─── AUTO CIERRE DE CAJA a las 19:00 ─────────────────────────────────────────
 let _lastAutoClose = '';
@@ -4421,6 +4614,7 @@ const savedTheme=localStorage.getItem('nc_theme')||'dark';
 document.documentElement.setAttribute('data-theme',savedTheme);
 document.getElementById('toggle-theme').checked=savedTheme==='dark';
 
+initPatternGrid();
 init();
 </script>
 </body>

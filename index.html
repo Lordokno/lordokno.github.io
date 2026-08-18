@@ -1268,8 +1268,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <!-- PATTERN LOCK SECTION -->
     <div style="margin-top:4px;margin-bottom:16px">
       <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
-        <span><i class="bi bi-grid-3x2-gap-fill" style="margin-right:5px;color:#F0B90B"></i>Patrón de Desbloqueo del Cliente</span>
-        <span style="font-size:9px;color:var(--text-muted);font-weight:400">Opcional · 6 puntos</span>
+        <span><i class="bi bi-grid-3x3-gap-fill" style="margin-right:5px;color:#F0B90B"></i>Patrón de Desbloqueo del Cliente</span>
+        <span style="font-size:9px;color:var(--text-muted);font-weight:400">Opcional · 9 puntos</span>
       </label>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px">
         <div style="background:var(--input-bg);border:1px solid var(--input-border);border-radius:10px;padding:14px;flex-shrink:0">
@@ -2216,8 +2216,8 @@ window.closeImeiScanner=function(){
   closeModal('modal-imei-scan');
 };
 
-// ─── PATRÓN DE DESBLOQUEO (6 PUNTOS) ───────────────────────────────────────────
-const PATTERN_PTS=[{x:35,y:35},{x:110,y:35},{x:185,y:35},{x:35,y:115},{x:110,y:115},{x:185,y:115}];
+// ─── PATRÓN DE DESBLOQUEO (9 PUNTOS) ───────────────────────────────────────────
+const PATTERN_PTS=[{x:35,y:30},{x:110,y:30},{x:185,y:30},{x:35,y:75},{x:110,y:75},{x:185,y:75},{x:35,y:120},{x:110,y:120},{x:185,y:120}];
 const PATTERN_HIT=22;
 let patternSel=[], patternDrawing=false;
 
@@ -2226,7 +2226,7 @@ function initPatternGrid(){
   if(!svg || svg.dataset.init) return;
   svg.dataset.init='1';
   svg.innerHTML = `<g id="pattern-lines"></g>` + PATTERN_PTS.map((p,i)=>
-    `<circle class="pattern-dot" id="pd-${i}" cx="${p.x}" cy="${p.y}" r="14" data-idx="${i}"></circle>`).join('');
+    `<circle class="pattern-dot" id="pd-${i}" cx="${p.x}" cy="${p.y}" r="14" data-idx="${i}"></circle>`).join('') + `<g id="pattern-numbers"></g>`;
 
   const svgPoint=(evt)=>{
     const rect=svg.getBoundingClientRect();
@@ -2242,9 +2242,10 @@ function initPatternGrid(){
     let path='';
     patternSel.forEach((idx,k)=>{const p=PATTERN_PTS[idx]; path+=(k===0?'M':'L')+p.x+','+p.y+' ';});
     document.getElementById('pattern-lines').innerHTML = patternSel.length>1 ? `<path class="pattern-line" d="${path}"></path>` : '';
+    document.getElementById('pattern-numbers').innerHTML = patternSel.map((idx,k)=>{const p=PATTERN_PTS[idx]; return `<text x="${p.x}" y="${p.y+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#0B0E11" style="pointer-events:none">${k+1}</text>`;}).join('');
     document.getElementById('ord-patron').value = patternSel.length ? JSON.stringify(patternSel) : '';
     const st=document.getElementById('pattern-status');
-    if(st) st.textContent = patternSel.length ? `Patrón registrado (${patternSel.length} puntos)` : 'Sin patrón registrado';
+    if(st) st.textContent = patternSel.length ? `Patrón registrado (${patternSel.length} puntos) · Inicio: ${patternSel[0]+1} · Fin: ${patternSel[patternSel.length-1]+1}` : 'Sin patrón registrado';
   };
   svg.addEventListener('pointerdown', e=>{
     const idx=nearestDot(svgPoint(e));
@@ -2281,7 +2282,8 @@ function patternMiniSvg(raw){
   const dots=PATTERN_PTS.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="10" fill="${arr.includes(i)?'#F0B90B':'#474D57'}"></circle>`).join('');
   let path=''; arr.forEach((idx,k)=>{const p=PATTERN_PTS[idx]; path+=(k===0?'M':'L')+p.x+','+p.y+' ';});
   const line=arr.length>1?`<path d="${path}" stroke="#F0B90B" stroke-width="3" stroke-linecap="round" fill="none"></path>`:'';
-  return `<svg viewBox="0 0 220 150" width="140" height="95" style="display:block">${dots}${line}</svg>`;
+  const numbers=arr.map((idx,k)=>{const p=PATTERN_PTS[idx]; return `<text x="${p.x}" y="${p.y+3.5}" text-anchor="middle" font-size="9" font-weight="700" fill="#0B0E11" style="pointer-events:none">${k+1}</text>`;}).join('');
+  return `<svg viewBox="0 0 220 150" width="140" height="95" style="display:block">${dots}${line}${numbers}</svg>`;
 }
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────

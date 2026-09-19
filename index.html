@@ -2468,9 +2468,8 @@ function ticketShellHTML(title, bodyHtml){
   .firma-box{margin-top:22px;}
   .firma-line{border-top:1px solid #000;margin-top:26px;padding-top:3px;font-size:10px;text-align:center;}
   .foot{margin-top:14px;color:#888;font-size:9px;text-align:center;}
-  .noimprimible-web{display:none;}
+  .print-toolbar{display:flex;gap:8px;justify-content:center;margin:0 0 12px;width:100%;}
   @media screen{
-    .print-toolbar{display:flex;gap:8px;justify-content:center;margin:0 0 12px;width:100%;}
     .print-toolbar button{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;}
     .print-toolbar button.p{background:#F0B90B;border-color:#F0B90B;color:#1a1a1a;}
   }
@@ -2483,13 +2482,12 @@ function ticketShellHTML(title, bodyHtml){
   }
 </style></head><body>
 <div style="display:flex;flex-direction:column;align-items:center;width:100%">
-  <div class="print-toolbar noimprimible-web" style="display:flex">
-    <button class="p" onclick="window.print()"><i></i>🖨️ Imprimir</button>
+  <div class="print-toolbar">
+    <button class="p" onclick="window.print()">🖨️ Imprimir</button>
     <button onclick="window.close()">Cerrar</button>
   </div>
   <div class="ticket">${bodyHtml}</div>
 </div>
-<script>document.querySelector('.print-toolbar').style.display='flex';</script>
 </body></html>`;
 }
 function openTicketPrintWindow(title, bodyHtml){

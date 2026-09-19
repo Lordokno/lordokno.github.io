@@ -2468,6 +2468,13 @@ function ticketShellHTML(title, bodyHtml){
   .firma-box{margin-top:22px;}
   .firma-line{border-top:1px solid #000;margin-top:26px;padding-top:3px;font-size:10px;text-align:center;}
   .foot{margin-top:14px;color:#888;font-size:9px;text-align:center;}
+  .cutline{margin:16px 0 8px;text-align:center;font-size:11px;color:#888;letter-spacing:.5px;white-space:nowrap;overflow:hidden;}
+  .tag-label{border:1.5px dashed #444;border-radius:6px;padding:8px 9px 7px;}
+  .tag-title{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:#888;text-align:center;margin-bottom:6px;font-weight:700;}
+  .tag-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;padding:3px 0;border-bottom:1px dotted #ccc;}
+  .tag-row:last-child{border-bottom:none;}
+  .tag-k{color:#666;font-weight:600;white-space:nowrap;}
+  .tag-v{font-weight:700;text-align:right;}
   .print-toolbar{display:flex;gap:8px;justify-content:center;margin:0 0 12px;width:100%;}
   @media screen{
     .print-toolbar button{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;}
@@ -2531,6 +2538,14 @@ window.printOrder=function(id){
     </div>`:''}
     ${o.garantiaActivada?`<div class="hr"></div><div class="center" style="font-size:11px;font-weight:700">✓ Garantía: ${o.garantiaDias||configData.garantia||30} días</div>`:''}
     <div class="foot">Conserve este comprobante para reclamar su equipo.<br>¡Gracias por su preferencia! — ${esc(configData.nombre)}</div>
+    <div class="cutline">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
+    <div class="tag-label">
+      <div class="tag-title">Etiqueta · pegar al equipo</div>
+      <div class="tag-row"><span class="tag-k">Orden</span><span class="tag-v mono">${o.codigo}</span></div>
+      <div class="tag-row"><span class="tag-k">Cliente</span><span class="tag-v">${esc(o.cliente)}</span></div>
+      <div class="tag-row"><span class="tag-k">Falla</span><span class="tag-v">${esc((o.fallas||[]).join(', ')||'—')}</span></div>
+      <div class="tag-row"><span class="tag-k">Tel</span><span class="tag-v mono">${esc(o.telefono)}</span></div>
+    </div>
   `;
   openTicketPrintWindow(o.codigo, body);
 };

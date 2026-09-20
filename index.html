@@ -115,7 +115,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* LOADING */
 #loading-screen{position:fixed;inset:0;background:#0B0E11;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s ease;}
 #loading-screen.hidden{opacity:0;pointer-events:none;}
-.loader-logo{width:60px;height:60px;background:linear-gradient(135deg,var(--accent-orange),var(--accent-cyan));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;letter-spacing:-1px;animation:lpulse 1.6s infinite;}
+.loader-logo{width:60px;height:60px;background:linear-gradient(135deg,var(--accent-orange),var(--accent-cyan));border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;letter-spacing:-1px;animation:lpulse 1.6s infinite;overflow:hidden;}
 @keyframes lpulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
 .loader-bar{width:220px;height:3px;background:#2B2F36;border-radius:99px;overflow:hidden;}
 .loader-fill{height:100%;background:linear-gradient(90deg,var(--accent-orange),var(--accent-cyan));animation:lfill 1.8s ease-in-out infinite;}
@@ -125,7 +125,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 /* SIDEBAR */
 #sidebar{width:var(--sidebar-width);min-height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;left:0;top:0;z-index:100;border-right:1px solid rgba(255,255,255,0.05);transition:transform .25s ease;}
 .sidebar-logo{padding:18px 18px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,0.06);}
-.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent-orange),var(--accent-grad-end));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;letter-spacing:-1px;flex-shrink:0;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent-orange),var(--accent-grad-end));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;letter-spacing:-1px;flex-shrink:0;overflow:hidden;}
 .logo-text{font-size:16px;font-weight:800;color:#fff;letter-spacing:.5px;}
 .logo-sub{font-size:8px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;letter-spacing:1.5px;text-transform:uppercase;}
 .nav-sec{padding:14px 10px 3px;font-size:8px;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);font-weight:700;font-family:'JetBrains Mono',monospace;}
@@ -635,7 +635,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 
 <!-- LOADING -->
 <div id="loading-screen">
-  <div class="loader-logo">NC</div>
+  <div class="loader-logo" id="app-loader-logo">NC</div>
   <div class="loader-bar"><div class="loader-fill"></div></div>
   <div class="loader-text" id="load-msg">Conectando con Firebase...</div>
 </div>
@@ -643,8 +643,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 <!-- SIDEBAR -->
 <nav id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">NC</div>
-    <div><div class="logo-text">Nextcom</div><div class="logo-sub">Workshop OS v2</div></div>
+    <div class="logo-icon" id="app-logo-icon">NC</div>
+    <div><div class="logo-text">Nextcom</div></div>
   </div>
   <div class="nav-sec">Principal</div>
   <div class="nav-item active" onclick="navigate('dashboard')"><i class="bi bi-grid-1x2"></i> Dashboard</div>
@@ -3130,6 +3130,11 @@ function applyFavicon(dataUrl){
   let link=document.getElementById('app-favicon');
   if(!link){link=document.createElement('link');link.id='app-favicon';link.rel='icon';document.head.appendChild(link);}
   link.href=dataUrl||'data:,';
+  const imgHtml=`<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+  const loaderLogo=document.getElementById('app-loader-logo');
+  const logoIcon=document.getElementById('app-logo-icon');
+  if(loaderLogo) loaderLogo.innerHTML = dataUrl ? imgHtml : 'NC';
+  if(logoIcon) logoIcon.innerHTML = dataUrl ? imgHtml : 'NC';
 }
 function updateFaviconPreview(){
   const img=document.getElementById('cfg-favicon-preview'); if(!img)return;

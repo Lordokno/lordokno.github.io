@@ -1089,9 +1089,16 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <div class="col-6 col-md-3"><div class="card-stat purple" style="padding:12px 16px"><div class="stat-label">Este Mes</div><div class="stat-value mono" style="font-size:22px" id="cli-mes">0</div><div class="stat-sub">Nuevos clientes</div><i class="bi bi-person-plus stat-icon"></i></div></div>
       </div>
 
-      <!-- Clientes grid -->
-      <div id="clientes-grid" class="row g-3"></div>
-      <div class="pagination-bar section-card" id="clientes-pagination" style="border-top:none;border-radius:0 0 14px 14px;display:none"></div>
+      <!-- Clientes lista -->
+      <div class="section-card" style="padding:0">
+        <div style="overflow-x:auto">
+          <table class="tf-table">
+            <thead><tr><th>Cliente</th><th>Email</th><th>Reparac.</th><th>Anticipo</th><th>Última Visita</th><th>Último Equipo</th><th class="no-print">Acciones</th></tr></thead>
+            <tbody id="clientes-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination-bar" id="clientes-pagination" style="display:none"></div>
+      </div>
     </div>
 
     <!-- ══ REPORTES ══ -->
@@ -1118,6 +1125,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <div class="col-12 col-md-auto" style="margin-top:auto">
           <button class="btn-s" style="font-size:12px;padding:7px 12px" onclick="clearDayPick()"><i class="bi bi-calendar3"></i> Ver mes completo</button>
           <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReporte()"><i class="bi bi-download"></i> Exportar CSV</button>
+          <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="printReporteTicket('semana')"><i class="bi bi-printer"></i> Ticket Semanal</button>
+          <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="printReporteTicket('mes')"><i class="bi bi-printer"></i> Ticket Mensual</button>
           <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReportePDF('semana')"><i class="bi bi-file-earmark-pdf"></i> PDF Semanal</button>
           <button class="btn-p" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReportePDF('mes')"><i class="bi bi-file-earmark-pdf"></i> PDF Mensual</button>
         </div>
@@ -3335,47 +3344,40 @@ window.renderClientes = function() {
   // Pagination
   const total = list.length;
   const page  = list.slice((cliPage-1)*cliPP, cliPage*cliPP);
-  const grid  = document.getElementById('clientes-grid');
+  const tb    = document.getElementById('clientes-body');
   const pagEl = document.getElementById('clientes-pagination');
 
   if(!list.length) {
-    grid.innerHTML = `<div class="col-12"><div class="empty-state"><i class="bi bi-people"></i><p>Sin clientes encontrados. Las órdenes generan clientes automáticamente.</p></div></div>`;
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="bi bi-people"></i><p>Sin clientes encontrados. Las órdenes generan clientes automáticamente.</p></div></td></tr>`;
     pagEl.style.display='none'; return;
   }
 
-  grid.innerHTML = page.map(c => {
+  tb.innerHTML = page.map(c => {
     const freq = c._totalOrds >= 3;
     const lastOrd = c._orders.sort((a,b)=>new Date(b.fechaRecibido||0)-new Date(a.fechaRecibido||0))[0];
     const initials = (c.nombre||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    return `<div class="col-12 col-sm-6 col-lg-4">
-      <div class="cliente-card ${freq?'cli-frecuente':''}">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="cli-avatar">${initials}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.nombre)}</div>
+    return `<tr${freq?' style="background:rgba(var(--accent-rgb),.05)"':''}>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="cli-avatar" style="flex-shrink:0;width:34px;height:34px;font-size:13px">${initials}</div>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${esc(c.nombre)}${freq?' <i class="bi bi-star-fill" style="color:var(--accent-orange);font-size:10px" title="Cliente frecuente"></i>':''}</div>
             <div class="mono" style="font-size:11px;color:var(--text-muted)">${esc(c.telefono)}</div>
-            ${freq?'<span class="chip g" style="font-size:9px;margin-top:2px"><i class="bi bi-star-fill"></i> Cliente frecuente</span>':''}
           </div>
         </div>
-
-        ${c.email?`<div style="font-size:11px;color:var(--text-secondary)"><i class="bi bi-envelope" style="margin-right:4px;color:var(--text-muted)"></i>${esc(c.email)}</div>`:''}
-
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <div class="cli-stat"><div class="cli-stat-val">${c._totalOrds}</div><div class="cli-stat-lbl">Reparac.</div></div>
-          <div class="cli-stat"><div class="cli-stat-val" style="color:${c._anticipo>0?'var(--accent-orange)':'var(--text-primary)'}">${c._anticipo>0?mon()+c._anticipo.toFixed(0):'—'}</div><div class="cli-stat-lbl">Anticipo</div></div>
-          <div class="cli-stat" style="flex:1"><div class="cli-stat-val" style="font-size:10px;color:var(--text-secondary)">${lastOrd?fmtDate(lastOrd.fechaRecibido):'—'}</div><div class="cli-stat-lbl">Última visita</div></div>
-        </div>
-
-        ${lastOrd?`<div style="background:var(--hover-bg);border-radius:7px;padding:7px 10px;font-size:11px;color:var(--text-secondary)"><span style="color:var(--text-muted)">Último:</span> ${esc(lastOrd.marca)} ${esc(lastOrd.modelo)} — ${statusBadge(lastOrd.estado)}</div>`:''}
-
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="btn-g" style="flex:1;font-size:11px;padding:6px 8px" onclick="openHistorial('${c.id}')"><i class="bi bi-clock-history"></i> Historial</button>
-          <button class="btn-s" style="font-size:11px;padding:6px 10px" onclick="openClienteModal('${c.id}')"><i class="bi bi-pencil"></i></button>
-          <button class="btn-s" style="font-size:11px;padding:6px 10px;border-color:#25d366;color:#25d366" onclick="waCliente('${c.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
-          <button class="btn-s" style="font-size:11px;padding:6px 10px" onclick="newOrderFromClient('${c.id}')"><i class="bi bi-plus"></i> Orden</button>
-        </div>
-      </div>
-    </div>`;
+      </td>
+      <td style="font-size:11.5px;color:var(--text-secondary)">${c.email?esc(c.email):'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td class="mono" style="text-align:center;font-weight:700">${c._totalOrds}</td>
+      <td class="mono" style="color:${c._anticipo>0?'var(--accent-orange)':'var(--text-muted)'};font-weight:700">${c._anticipo>0?mon()+c._anticipo.toFixed(2):'—'}</td>
+      <td style="font-size:11.5px;color:var(--text-secondary)">${lastOrd?fmtDate(lastOrd.fechaRecibido):'—'}</td>
+      <td style="font-size:11.5px">${lastOrd?`${esc(lastOrd.marca)} ${esc(lastOrd.modelo)} ${statusBadge(lastOrd.estado)}`:'<span style="color:var(--text-muted)">—</span>'}</td>
+      <td class="no-print" style="white-space:nowrap;text-align:right">
+        <button class="btn-action" onclick="openHistorial('${c.id}')" title="Historial"><i class="bi bi-clock-history"></i></button>
+        <button class="btn-action" onclick="openClienteModal('${c.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+        <button class="btn-action wa" onclick="waCliente('${c.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
+        <button class="btn-action" onclick="newOrderFromClient('${c.id}')" title="Nueva Orden"><i class="bi bi-plus-lg"></i></button>
+      </td>
+    </tr>`;
   }).join('');
 
   pagEl.style.display = total > cliPP ? 'flex' : 'none';
@@ -4561,6 +4563,51 @@ window.exportReportePDF = function(kind){
   }catch(e){ toast('Error generando PDF: '+e.message,'error'); }
 };
 
+// ─── IMPRIMIR TICKET DE REPORTE (estilo recibo, igual que Órdenes) ───────────
+window.printReporteTicket=function(kind){
+  const range = kind==='semana' ? getWeekRange() : getRepRange();
+  const {start,end,label} = range;
+  const titulo = kind==='semana' ? 'REPORTE SEMANAL' : 'REPORTE MENSUAL';
+  const movs = (cajaData.movimientos||[]).filter(m=>inRange(m.fecha,start,end)).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  const ventas = orders.filter(o=>o.estado==='Entregado' && o.fechaEntrega && inRange(o.fechaEntrega,start,end));
+  const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  const anticipos= movs.filter(m=>m.tipo==='anticipo').reduce((a,m)=>a+m.monto,0);
+  const neto = ingresos-egresos;
+  const row=(m)=>`<div style="display:flex;justify-content:space-between;gap:6px;font-size:9.5px;padding:3px 0;border-bottom:1px dotted #ddd">
+    <span>${esc(new Date(m.fecha).toLocaleDateString('es-SV',{day:'2-digit',month:'short'}))} · ${esc(m.desc||m.tipo)}</span>
+    <span class="mono" style="font-weight:700;white-space:nowrap">${mon()}${m.monto.toFixed(2)}</span></div>`;
+  const vrow=(o)=>`<div style="display:flex;justify-content:space-between;gap:6px;font-size:9.5px;padding:3px 0;border-bottom:1px dotted #ddd">
+    <span>${esc(o.codigo)} · ${esc(o.cliente)}</span>
+    <span class="mono" style="font-weight:700;white-space:nowrap">${mon()}${(o.cobrado||o.total||0).toFixed(2)}</span></div>`;
+  const body=`
+    <div class="center">
+      ${ticketLogoHtml()}
+      <div class="shopname">${esc(configData.nombre)}</div>
+      ${(configData.direccion||configData.telefono)?`<div class="addr">${esc(configData.direccion||'')}${configData.telefono?' · '+esc(configData.telefono):''}</div>`:''}
+      <div style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.5px;border:1px solid #000;border-radius:4px;padding:4px 0">${titulo}</div>
+      <div style="font-size:11px;font-weight:700;margin-top:7px">${esc(label)}</div>
+    </div>
+    <div class="hr"></div>
+    <div class="row2">
+      <div><div class="lbl">Ingresos</div><div class="val mono" style="color:#0a7a3a">${mon()}${ingresos.toFixed(2)}</div></div>
+      <div><div class="lbl">Egresos</div><div class="val mono" style="color:#b3261e">${mon()}${egresos.toFixed(2)}</div></div>
+    </div>
+    <div class="row2">
+      <div><div class="lbl">Anticipos</div><div class="val mono">${mon()}${anticipos.toFixed(2)}</div></div>
+      <div><div class="lbl">Saldo Neto</div><div class="val mono" style="font-weight:800">${mon()}${neto.toFixed(2)}</div></div>
+    </div>
+    <div class="hr"></div>
+    <div class="lbl" style="margin-bottom:2px">Movimientos de Caja (${movs.length})</div>
+    ${movs.length?movs.map(row).join(''):'<div style="font-size:10px;color:#888;padding:3px 0">Sin movimientos en este período.</div>'}
+    <div class="hr"></div>
+    <div class="lbl" style="margin-bottom:2px">Órdenes Entregadas (${ventas.length})</div>
+    ${ventas.length?ventas.map(vrow).join(''):'<div style="font-size:10px;color:#888;padding:3px 0">Sin órdenes entregadas.</div>'}
+    <div class="foot">Generado el ${esc(new Date().toLocaleDateString('es-SV',{day:'2-digit',month:'short',year:'numeric'}))}<br>${esc(configData.nombre)}</div>
+  `;
+  openTicketPrintWindow(titulo+' — '+label, body);
+};
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── MÓDULO ENCARGOS (PEDIDOS ESPECIALES / IMPORTACIONES) ────────────────────
@@ -5029,6 +5076,7 @@ window.renderCotizaciones = function(){
       <td class="mono" style="color:#0ECB81">${mon()}${(c.total||0).toFixed(2)}</td>
       <td style="text-align:right;white-space:nowrap">
         <button class="btn-action" onclick="openCotizacionModal('${c.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+        <button class="btn-action" onclick="printCotizacionTicket('${c.id}')" title="Imprimir Ticket"><i class="bi bi-printer"></i></button>
         <button class="btn-action" onclick="downloadCotizacionPDF('${c.id}')" title="Descargar PDF"><i class="bi bi-file-earmark-pdf"></i></button>
         <button class="btn-action wa" onclick="sendCotizacionWA('${c.id}')" title="Enviar por WhatsApp"><i class="bi bi-whatsapp"></i></button>
         <button class="btn-action del" onclick="deleteCotizacion('${c.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
@@ -5149,72 +5197,125 @@ window.deleteCotizacion = async function(id){
   } catch(e){ toast('Error: '+e.message,'error'); }
 };
 
-// ─── PDF ─────────────────────────────────────────────────────────────────────
+// ─── IMPRIMIR TICKET (estilo recibo, igual que Órdenes) ──────────────────────
+window.printCotizacionTicket=function(id){
+  const c=cotizaciones.find(x=>x.id===id); if(!c)return;
+  const items=c.items||[];
+  const body=`
+    <div class="center">
+      ${ticketLogoHtml()}
+      <div class="shopname">${esc(configData.nombre)}</div>
+      ${(configData.direccion||configData.telefono)?`<div class="addr">${esc(configData.direccion||'')}${configData.telefono?' · '+esc(configData.telefono):''}</div>`:''}
+      <div style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.5px;border:1px solid #000;border-radius:4px;padding:4px 0">COTIZACIÓN</div>
+      <div class="biggen mono" style="margin-top:8px">${esc(c.codigo)}</div>
+    </div>
+    <div class="hr"></div>
+    <div class="lbl">Cliente</div><div class="val">${esc(c.cliente)}</div>
+    <div class="lbl">Teléfono</div><div class="val mono">${esc(c.telefono||'—')}</div>
+    ${c.equipo?`<div class="lbl">Equipo</div><div class="val">${esc(c.equipo)}</div>`:''}
+    <div class="lbl">Fecha</div><div class="val">${fmtDate((c.fecha||'').slice(0,10))}</div>
+    <div class="hr"></div>
+    <div class="lbl" style="margin-bottom:2px">Detalle</div>
+    ${items.map(it=>`
+      <div style="font-size:11px;font-weight:600;margin-top:5px">${esc(it.nombre)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#555">
+        <span>${it.cantidad} x ${mon()}${Number(it.precio).toFixed(2)}</span>
+        <span class="mono" style="font-weight:700;color:#000">${mon()}${(it.cantidad*it.precio).toFixed(2)}</span>
+      </div>`).join('')}
+    <div class="hr"></div>
+    <div style="display:flex;justify-content:space-between"><span class="total">TOTAL</span><span class="total mono">${mon()}${Number(c.total||0).toFixed(2)}</span></div>
+    ${c.notas?`<div class="hr"></div><div class="lbl" style="margin-bottom:4px">Condiciones</div><div style="font-size:9.5px;line-height:1.5;color:#222">${esc(c.notas).replace(/\n/g,'<br>')}</div>`:''}
+    <div class="foot">Válida por ${c.vigenciaDias||7} días a partir de la emisión.<br>¡Gracias por su preferencia! — ${esc(configData.nombre)}</div>
+  `;
+  openTicketPrintWindow(c.codigo, body);
+};
+
+// ─── PDF (formato ticket angosto, igual ancho configurado en Órdenes) ────────
 function buildCotizacionPDF(c){
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({unit:'mm', format:'letter'});
-  const pageW = pdf.internal.pageSize.getWidth();
-  const marginX = 14;
-  let y = 18;
+  const w = configData.ticketAncho || 70;
+  const marginX = 4.5, innerW = w - marginX*2;
+  const items = c.items||[];
 
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(20,20,20);
-  pdf.text(configData.nombre || 'Nextcom Multiservicos', marginX, y);
-  pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(90,90,90);
-  y += 6;
-  if(configData.direccion){ pdf.text(configData.direccion, marginX, y); y += 5; }
-  if(configData.telefono){ pdf.text('Tel: '+configData.telefono, marginX, y); y += 5; }
+  // Paso 1: medir con una instancia temporal para calcular la altura exacta
+  const scratch = new jsPDF({unit:'mm', format:[w, 1000]});
+  scratch.setFont('helvetica','normal'); scratch.setFontSize(8.3);
+  let itemsH = 0;
+  const itemNameLines = items.map(it=>{
+    const lines = scratch.splitTextToSize(it.nombre||'', innerW);
+    itemsH += lines.length*3.6 + 4.6;
+    return lines;
+  });
+  let notasLines = [];
+  if(c.notas){ scratch.setFontSize(7.3); notasLines = scratch.splitTextToSize(c.notas, innerW); }
+  const logoH = configData.favicon ? 13 : 0;
+  const headerH = 14 + logoH + (configData.direccion?4:0) + (configData.telefono?4:0) + 10 + 8;
+  const clienteH = 5 + (c.telefono?5:0) + (c.equipo?5:0) + 5 + 6;
+  const totalH = 12;
+  const notasH = notasLines.length ? (notasLines.length*3.3 + 11) : 0;
+  const footerH = 16;
+  const estH = headerH + clienteH + itemsH + totalH + notasH + footerH + 14;
 
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(...accentRgbArr());
-  pdf.text('COTIZACIÓN', pageW-marginX, 18, {align:'right'});
-  pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(60,60,60);
-  pdf.text(c.codigo||'', pageW-marginX, 25, {align:'right'});
-  const fechaStr = new Date(c.fecha||Date.now()).toLocaleDateString('es-SV',{day:'2-digit',month:'short',year:'numeric'});
-  pdf.text('Fecha: '+fechaStr, pageW-marginX, 31, {align:'right'});
+  const pdf = new jsPDF({unit:'mm', format:[w, Math.max(estH,90)]});
+  let y = 8;
+  const cx = w/2;
 
-  y = Math.max(y, 34) + 6;
-  pdf.setDrawColor(220,220,220); pdf.line(marginX, y, pageW-marginX, y); y += 8;
-
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(20,20,20);
-  pdf.text('Cliente:', marginX, y); pdf.setFont('helvetica','normal'); pdf.text(c.cliente||'', marginX+22, y); y += 6;
-  pdf.setFont('helvetica','bold'); pdf.text('Teléfono:', marginX, y); pdf.setFont('helvetica','normal'); pdf.text(c.telefono||'', marginX+22, y); y += 6;
-  if(c.equipo){
-    pdf.setFont('helvetica','bold'); pdf.text('Equipo:', marginX, y); pdf.setFont('helvetica','normal'); pdf.text(c.equipo, marginX+22, y); y += 6;
+  if(configData.favicon){
+    try{ pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), cx-6, y, 12, 12, undefined, 'FAST'); y+=15; }catch(e){}
   }
-  y += 4;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(20,20,20);
+  pdf.text(configData.nombre||'Nextcom Multiservicos', cx, y, {align:'center'}); y+=4.6;
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(100,100,100);
+  if(configData.direccion){ pdf.text(configData.direccion, cx, y, {align:'center'}); y+=3.8; }
+  if(configData.telefono){ pdf.text(configData.telefono, cx, y, {align:'center'}); y+=3.8; }
+  y+=2;
+  pdf.setDrawColor(30,30,30); pdf.roundedRect(cx-18, y, 36, 6.5, 1, 1, 'S');
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(20,20,20);
+  pdf.text('COTIZACIÓN', cx, y+4.4, {align:'center'}); y+=11;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(...accentRgbArr());
+  pdf.text(c.codigo||'', cx, y, {align:'center'}); y+=6;
 
-  const body = (c.items||[]).map(it=>[it.nombre, String(it.cantidad), mon()+Number(it.precio).toFixed(2), mon()+(it.cantidad*it.precio).toFixed(2)]);
-  pdf.autoTable({
-    startY: y,
-    head: [['Descripción','Cant.','Precio Unit.','Subtotal']],
-    body,
-    theme: 'grid',
-    styles:{ font:'helvetica', fontSize:10, cellPadding:3 },
-    headStyles:{ fillColor:accentRgbArr(), textColor:[20,20,20], fontStyle:'bold' },
-    columnStyles:{ 1:{halign:'center', cellWidth:20}, 2:{halign:'right', cellWidth:32}, 3:{halign:'right', cellWidth:32} },
-    margin:{left:marginX, right:marginX}
+  pdf.setDrawColor(200,200,200); pdf.setLineDashPattern([0.8,0.8],0); pdf.line(marginX, y, w-marginX, y); pdf.setLineDashPattern([],0); y+=4.5;
+
+  pdf.setFontSize(6.4); pdf.setTextColor(110,110,110); pdf.setFont('helvetica','bold');
+  const kv=(label,val)=>{ pdf.setFont('helvetica','bold'); pdf.setFontSize(6.4); pdf.setTextColor(110,110,110); pdf.text(label.toUpperCase(), marginX, y); y+=3.1; pdf.setFont('helvetica','bold'); pdf.setFontSize(8.3); pdf.setTextColor(20,20,20); pdf.text(String(val||'—'), marginX, y); y+=4.4; };
+  kv('Cliente', c.cliente);
+  kv('Teléfono', c.telefono);
+  if(c.equipo) kv('Equipo', c.equipo);
+  kv('Fecha', new Date(c.fecha||Date.now()).toLocaleDateString('es-SV',{day:'2-digit',month:'short',year:'numeric'}));
+
+  pdf.setDrawColor(200,200,200); pdf.setLineDashPattern([0.8,0.8],0); pdf.line(marginX, y, w-marginX, y); pdf.setLineDashPattern([],0); y+=4;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(6.4); pdf.setTextColor(110,110,110); pdf.text('DETALLE', marginX, y); y+=4;
+
+  items.forEach((it,i)=>{
+    const lines = itemNameLines[i];
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(8.3); pdf.setTextColor(20,20,20);
+    pdf.text(lines, marginX, y); y += lines.length*3.6 + 0.8;
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7.6); pdf.setTextColor(90,90,90);
+    pdf.text(`${it.cantidad} x ${mon()}${Number(it.precio).toFixed(2)}`, marginX, y);
+    pdf.setFont('helvetica','bold'); pdf.setTextColor(20,20,20);
+    pdf.text(mon()+(it.cantidad*it.precio).toFixed(2), w-marginX, y, {align:'right'});
+    y += 4.6;
   });
 
-  let finalY = pdf.lastAutoTable.finalY + 8;
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(20,20,20);
-  pdf.text('TOTAL:', pageW-marginX-42, finalY);
-  pdf.setTextColor(14,203,129);
-  pdf.text(mon()+Number(c.total||0).toFixed(2), pageW-marginX, finalY, {align:'right'});
-  pdf.setTextColor(20,20,20);
-  finalY += 10;
+  pdf.setDrawColor(200,200,200); pdf.setLineDashPattern([0.8,0.8],0); pdf.line(marginX, y, w-marginX, y); pdf.setLineDashPattern([],0); y+=5.5;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(20,20,20);
+  pdf.text('TOTAL', marginX, y);
+  pdf.setFontSize(11);
+  pdf.text(mon()+Number(c.total||0).toFixed(2), w-marginX, y, {align:'right'});
+  y += 7;
 
-  if(c.notas){
-    pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.text('Condiciones:', marginX, finalY);
-    pdf.setFont('helvetica','normal');
-    const lines = pdf.splitTextToSize(c.notas, pageW-marginX*2);
-    pdf.text(lines, marginX, finalY+5);
-    finalY += 5 + lines.length*4.5;
+  if(notasLines.length){
+    pdf.setDrawColor(200,200,200); pdf.setLineDashPattern([0.8,0.8],0); pdf.line(marginX, y, w-marginX, y); pdf.setLineDashPattern([],0); y+=4;
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(6.4); pdf.setTextColor(110,110,110); pdf.text('CONDICIONES', marginX, y); y+=3.4;
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7.3); pdf.setTextColor(50,50,50);
+    pdf.text(notasLines, marginX, y); y += notasLines.length*3.3 + 4;
   }
 
-  finalY += 6;
-  pdf.setFont('helvetica','italic'); pdf.setFontSize(8.5); pdf.setTextColor(120,120,120);
-  pdf.text(`Esta cotización tiene una vigencia de ${c.vigenciaDias||7} días a partir de la fecha de emisión.`, marginX, finalY);
-  finalY += 5;
-  pdf.text('¡Gracias por su preferencia!', marginX, finalY);
+  y += 3;
+  pdf.setFont('helvetica','italic'); pdf.setFontSize(6.6); pdf.setTextColor(140,140,140);
+  pdf.text(`Válida por ${c.vigenciaDias||7} días desde la emisión.`, cx, y, {align:'center'}); y+=3.4;
+  pdf.text(`¡Gracias por su preferencia! — ${configData.nombre||''}`, cx, y, {align:'center'});
 
   return pdf;
 }

@@ -1118,6 +1118,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
         <div class="col-12 col-md-auto" style="margin-top:auto">
           <button class="btn-s" style="font-size:12px;padding:7px 12px" onclick="clearDayPick()"><i class="bi bi-calendar3"></i> Ver mes completo</button>
           <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReporte()"><i class="bi bi-download"></i> Exportar CSV</button>
+          <button class="btn-s" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReportePDF('semana')"><i class="bi bi-file-earmark-pdf"></i> PDF Semanal</button>
+          <button class="btn-p" style="font-size:12px;padding:7px 12px;margin-left:6px" onclick="exportReportePDF('mes')"><i class="bi bi-file-earmark-pdf"></i> PDF Mensual</button>
         </div>
       </div>
 
@@ -1890,6 +1892,7 @@ function statusBadge(s){const m={'Recibido':'recibido','En Proceso':'proceso','L
 function mon(){return configData.moneda||'$';}
 function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 function accentRgbArr(){const s=cssVar('--accent-rgb')||'240,185,11';return s.split(',').map(n=>parseInt(n.trim(),10)||0);}
+function ticketLogoHtml(){return configData.favicon?`<img src="${configData.favicon}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;margin-bottom:5px" alt="logo">`:'';}
 window.toast=function(msg,type='info'){const icons={success:'bi-check-circle-fill',error:'bi-exclamation-circle-fill',info:'bi-info-circle-fill',warning:'bi-exclamation-triangle-fill'};const t=document.createElement('div');t.className=`toast-msg ${type}`;t.innerHTML=`<i class="bi ${icons[type]||icons.info}"></i> ${msg}`;document.getElementById('tc').appendChild(t);setTimeout(()=>t.style.opacity='0',3200);setTimeout(()=>t.remove(),3600);};
 
 function setSyncStatus(s){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text'),cd=document.getElementById('cfg-sync-dot'),ct=document.getElementById('firebase-status-text');const map={ok:['sync-dot','Sincronizado','Conectado a Firestore'],syncing:['sync-dot syncing','Sincronizando...','Sincronizando...'],error:['sync-dot error','Sin conexión','Error de conexión']};const[cls,tx,ctx]=map[s]||map.ok;if(d)d.className=cls;if(t)t.textContent=tx;if(cd)cd.className=cls;if(ct)ct.textContent=ctx;}
@@ -2531,6 +2534,7 @@ window.printOrder=function(id){
   const saldo=Math.max(0,(o.total||0)-(o.anticipo||0));
   const body=`
     <div class="center">
+      ${ticketLogoHtml()}
       <div class="shopname">${esc(configData.nombre)}</div>
       ${(configData.direccion||configData.telefono)?`<div class="addr">${esc(configData.direccion||'')}${configData.telefono?' · '+esc(configData.telefono):''}</div>`:''}
       <div class="biggen mono">${o.codigo}</div>
@@ -2580,6 +2584,7 @@ window.printGarantiaTicket=function(id, overrides){
   const condiciones=(configData.garantiaCondiciones||DEFAULT_GARANTIA_COND).split('\n').filter(l=>l.trim()!=='');
   const body=`
     <div class="center">
+      ${ticketLogoHtml()}
       <div class="shopname">${esc(configData.nombre)}</div>
       ${(configData.direccion||configData.telefono)?`<div class="addr">${esc(configData.direccion||'')}${configData.telefono?' · '+esc(configData.telefono):''}</div>`:''}
       <div style="margin-top:8px;font-size:12px;font-weight:800;letter-spacing:.5px;border:1px solid #000;border-radius:4px;padding:4px 0">COMPROBANTE DE GARANTÍA</div>
@@ -4427,6 +4432,130 @@ window.exportReporte = function() {
   toast('Reporte exportado','success');
 };
 
+// ─── EXPORTAR REPORTE (PDF) — SEMANAL Y MENSUAL ──────────────────────────────
+function getWeekRange(refDate){
+  const d = refDate ? new Date(refDate+'T12:00:00') : new Date();
+  const day = d.getDay(); // 0=Dom..6=Sáb
+  const diffToMonday = (day===0 ? -6 : 1-day);
+  const monday = new Date(d); monday.setDate(d.getDate()+diffToMonday);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const iso = x=>x.toISOString().slice(0,10);
+  const fmtShort = x=>x.toLocaleDateString('es-SV',{day:'2-digit',month:'short'});
+  return { start: iso(monday), end: iso(sunday), label: `Semana del ${fmtShort(monday)} al ${fmtShort(sunday)} de ${sunday.getFullYear()}` };
+}
+function imgFormatFromDataUrl(du){
+  const m=String(du||'').match(/^data:image\/(\w+);/);
+  if(!m) return 'PNG';
+  const t=m[1].toUpperCase();
+  return t==='JPG'?'JPEG':t;
+}
+function buildReportePDF(range, titulo){
+  const {start,end,label} = range;
+  const movs = (cajaData.movimientos||[]).filter(m=>inRange(m.fecha,start,end)).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  const ventas = orders.filter(o=>o.estado==='Entregado' && o.fechaEntrega && inRange(o.fechaEntrega,start,end));
+  const ingresos = movs.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+  const egresos  = movs.filter(m=>m.tipo==='egreso').reduce((a,m)=>a+m.monto,0);
+  const anticipos= movs.filter(m=>m.tipo==='anticipo').reduce((a,m)=>a+m.monto,0);
+  const neto = ingresos-egresos;
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({unit:'mm', format:'letter'});
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const marginX = 14;
+  let y = 18;
+
+  let logoOk=false;
+  if(configData.favicon){
+    try{ pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), marginX, y-10, 14, 14, undefined, 'FAST'); logoOk=true; }catch(e){}
+  }
+  const textX = logoOk ? marginX+18 : marginX;
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(20,20,20);
+  pdf.text(configData.nombre || 'Nextcom Multiservicos', textX, y);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(90,90,90);
+  y += 6;
+  if(configData.direccion){ pdf.text(configData.direccion, textX, y); y += 5; }
+  if(configData.telefono){ pdf.text('Tel: '+configData.telefono, textX, y); y += 5; }
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(14); pdf.setTextColor(...accentRgbArr());
+  pdf.text(titulo, pageW-marginX, 18, {align:'right'});
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(60,60,60);
+  pdf.text(label, pageW-marginX, 25, {align:'right'});
+  pdf.text('Generado: '+new Date().toLocaleDateString('es-SV',{day:'2-digit',month:'short',year:'numeric'}), pageW-marginX, 31, {align:'right'});
+
+  y = Math.max(y, 34) + 6;
+  pdf.setDrawColor(220,220,220); pdf.line(marginX, y, pageW-marginX, y); y += 9;
+
+  const kpis = [
+    {l:'Ingresos', v:ingresos, c:[14,203,129]},
+    {l:'Egresos', v:egresos, c:[246,70,93]},
+    {l:'Anticipos', v:anticipos, c:accentRgbArr()},
+    {l:'Saldo Neto', v:neto, c: neto>=0?[14,203,129]:[246,70,93]},
+  ];
+  const gap=9, boxW=(pageW-marginX*2-gap*3)/4;
+  kpis.forEach((k,i)=>{
+    const bx = marginX + i*(boxW+gap);
+    pdf.setDrawColor(225,225,225); pdf.setFillColor(248,248,248);
+    pdf.roundedRect(bx, y, boxW, 20, 2, 2, 'FD');
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(120,120,120);
+    pdf.text(k.l, bx+4, y+7);
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(...k.c);
+    pdf.text(mon()+Math.abs(k.v).toFixed(2), bx+4, y+16);
+  });
+  y += 20 + 10;
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(20,20,20);
+  pdf.text('Movimientos de Caja', marginX, y); y += 4;
+  if(movs.length){
+    const bodyMov = movs.map(m=>[new Date(m.fecha).toLocaleString('es-SV',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}), m.tipo, m.desc||'', mon()+m.monto.toFixed(2)]);
+    pdf.autoTable({
+      startY:y, head:[['Fecha','Tipo','Descripción','Monto']], body: bodyMov, theme:'grid',
+      styles:{font:'helvetica',fontSize:8.5,cellPadding:2.5},
+      headStyles:{fillColor:accentRgbArr(),textColor:[20,20,20],fontStyle:'bold'},
+      columnStyles:{3:{halign:'right'}},
+      margin:{left:marginX,right:marginX}
+    });
+    y = pdf.lastAutoTable.finalY + 10;
+  } else {
+    pdf.setFont('helvetica','italic'); pdf.setFontSize(9); pdf.setTextColor(140,140,140);
+    pdf.text('Sin movimientos de caja en este período.', marginX, y); y += 10;
+  }
+
+  if(y > pageH-55){ pdf.addPage(); y = 18; }
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(20,20,20);
+  pdf.text('Órdenes Entregadas / Cobradas', marginX, y); y += 4;
+  if(ventas.length){
+    const bodyVen = ventas.map(o=>[o.codigo, o.cliente, `${o.marca||''} ${o.modelo||''}`.trim(), fmtDate(o.fechaEntrega), mon()+(o.total||0).toFixed(2), mon()+(o.cobrado||o.total||0).toFixed(2)]);
+    pdf.autoTable({
+      startY:y, head:[['Orden','Cliente','Equipo','Entrega','Total','Cobrado']], body: bodyVen, theme:'grid',
+      styles:{font:'helvetica',fontSize:8.5,cellPadding:2.5},
+      headStyles:{fillColor:[30,32,38],textColor:[255,255,255],fontStyle:'bold'},
+      columnStyles:{4:{halign:'right'},5:{halign:'right'}},
+      margin:{left:marginX,right:marginX}
+    });
+    y = pdf.lastAutoTable.finalY + 8;
+  } else {
+    pdf.setFont('helvetica','italic'); pdf.setFontSize(9); pdf.setTextColor(140,140,140);
+    pdf.text('Sin órdenes entregadas en este período.', marginX, y); y += 10;
+  }
+
+  pdf.setFont('helvetica','italic'); pdf.setFontSize(8); pdf.setTextColor(150,150,150);
+  pdf.text(`${configData.nombre||'Nextcom'} — Reporte generado automáticamente`, marginX, pageH-10);
+
+  return pdf;
+}
+window.exportReportePDF = function(kind){
+  try{
+    const range = kind==='semana' ? getWeekRange() : getRepRange();
+    const titulo = kind==='semana' ? 'REPORTE SEMANAL' : 'REPORTE MENSUAL';
+    const pdf = buildReportePDF(range, titulo);
+    pdf.save(`nextcom_reporte_${kind}_${range.label.replace(/[^\w]+/g,'_')}.pdf`);
+    toast('PDF generado','success');
+  }catch(e){ toast('Error generando PDF: '+e.message,'error'); }
+};
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── MÓDULO ENCARGOS (PEDIDOS ESPECIALES / IMPORTACIONES) ────────────────────
@@ -5055,7 +5184,7 @@ function buildCotizacionPDF(c){
     body,
     theme: 'grid',
     styles:{ font:'helvetica', fontSize:10, cellPadding:3 },
-    headStyles:{ fillColor:[240,185,11], textColor:[20,20,20], fontStyle:'bold' },
+    headStyles:{ fillColor:accentRgbArr(), textColor:[20,20,20], fontStyle:'bold' },
     columnStyles:{ 1:{halign:'center', cellWidth:20}, 2:{halign:'right', cellWidth:32}, 3:{halign:'right', cellWidth:32} },
     margin:{left:marginX, right:marginX}
   });

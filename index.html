@@ -2616,12 +2616,6 @@ window.printGarantiaTicket=function(id, overrides){
     <div style="font-size:9.5px;line-height:1.55;color:#222">
       ${condiciones.map(l=>`<div style="margin-bottom:2px">${esc(l)}</div>`).join('')}
     </div>
-    <div class="firma-box">
-      <div class="firma-line">Firma y sello del taller</div>
-    </div>
-    <div class="firma-box" style="margin-top:18px">
-      <div class="firma-line">Firma del cliente — acepta las condiciones</div>
-    </div>
     <div class="foot">Presente este comprobante para hacer válida su garantía.<br>${esc(configData.nombre)}</div>
   `;
   openTicketPrintWindow('Garantía '+o.codigo, body);

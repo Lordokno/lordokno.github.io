@@ -675,7 +675,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <div class="topbar-title" id="topbar-title">Dashboard</div>
     </div>
     <div class="topbar-right">
-      <div id="caja-indicator" class="caja-status closed">CAJA CERRADA</div>
+      <div id="caja-indicator" class="caja-status open"><i class="bi bi-cash-coin"></i> CAJA: $0.00</div>
     </div>
   </div>
   <div class="page-content">
@@ -846,32 +846,21 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <!-- ══ CAJA ══ -->
     <div id="page-caja" class="page-section">
       <div class="row g-3 mb-3">
-        <div class="col-md-4"><div class="card-stat green"><div class="stat-label">Balance Actual</div><div class="stat-value mono" id="caja-balance">$0.00</div><div class="stat-sub" id="caja-sub">Caja cerrada</div><i class="bi bi-safe stat-icon"></i></div></div>
-        <div class="col-md-4"><div class="card-stat blue"><div class="stat-label">Ingresos</div><div class="stat-value mono" id="caja-ingresos">$0.00</div><div class="stat-sub">Sesión actual</div><i class="bi bi-arrow-down-circle stat-icon"></i></div></div>
-        <div class="col-md-4"><div class="card-stat red"><div class="stat-label">Egresos</div><div class="stat-value mono" id="caja-egresos">$0.00</div><div class="stat-sub">Sesión actual</div><i class="bi bi-arrow-up-circle stat-icon"></i></div></div>
+        <div class="col-md-4"><div class="card-stat green"><div class="stat-label">Balance Actual</div><div class="stat-value mono" id="caja-balance">$0.00</div><div class="stat-sub" id="caja-sub">Historial acumulado</div><i class="bi bi-safe stat-icon"></i></div></div>
+        <div class="col-md-4"><div class="card-stat blue"><div class="stat-label">Ingresos</div><div class="stat-value mono" id="caja-ingresos">$0.00</div><div class="stat-sub">Total registrado</div><i class="bi bi-arrow-down-circle stat-icon"></i></div></div>
+        <div class="col-md-4"><div class="card-stat red"><div class="stat-label">Egresos</div><div class="stat-value mono" id="caja-egresos">$0.00</div><div class="stat-sub">Total registrado</div><i class="bi bi-arrow-up-circle stat-icon"></i></div></div>
       </div>
       <div class="row g-3">
         <div class="col-lg-4">
           <div class="section-card">
-            <div class="section-header"><div class="section-title"><i class="bi bi-cash" style="color:#0ECB81"></i> Control de Caja</div></div>
+            <div class="section-header"><div class="section-title"><i class="bi bi-cash" style="color:#0ECB81"></i> Registrar Movimiento</div></div>
             <div style="padding:14px">
-              <div id="caja-closed-ui">
-                <div class="ab i"><i class="bi bi-info-circle"></i> Ingresa el monto de apertura</div>
-                <div class="ab" style="background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);color:var(--accent-orange);font-size:11px"><i class="bi bi-clock"></i> Cierre automático a las 19:00</div>
-                <label class="tf-label">Monto de apertura ($)</label>
-                <input class="tf-input mono" id="caja-apertura-monto" type="number" placeholder="0.00" value="0">
-                <button class="btn-g" style="width:100%;margin-top:10px" onclick="abrirCaja()"><i class="bi bi-unlock"></i> Abrir Caja</button>
-              </div>
-              <div id="caja-open-ui" style="display:none">
-                <div class="ab s"><i class="bi bi-check-circle"></i> Abierta desde <span id="caja-hora-apertura"></span></div>
-                <div class="ab" style="background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.2);color:var(--accent-orange);font-size:11px"><i class="bi bi-clock-history"></i> Cierre automático a las 19:00</div>
-                <label class="tf-label">Tipo</label>
-                <select class="tf-select mb-2" id="mov-tipo"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select>
-                <input class="tf-input mono mb-2" type="number" id="mov-monto" placeholder="Monto $">
-                <input class="tf-input mb-2" type="text" id="mov-desc" placeholder="Descripción">
-                <button class="btn-p" style="width:100%;margin-bottom:7px" onclick="registrarMovimiento()"><i class="bi bi-plus"></i> Registrar</button>
-                <button class="btn-d" style="width:100%" onclick="cerrarCaja()"><i class="bi bi-lock"></i> Cerrar Caja</button>
-              </div>
+              <div class="ab i"><i class="bi bi-info-circle"></i> Anticipos, cobros y ventas del POS se registran solos. Usa este formulario solo para otros ingresos o egresos manuales (compras, pagos, retiros, etc).</div>
+              <label class="tf-label">Tipo</label>
+              <select class="tf-select mb-2" id="mov-tipo"><option value="ingreso">Ingreso</option><option value="egreso">Egreso</option></select>
+              <input class="tf-input mono mb-2" type="number" id="mov-monto" placeholder="Monto $">
+              <input class="tf-input mb-2" type="text" id="mov-desc" placeholder="Descripción">
+              <button class="btn-p" style="width:100%" onclick="registrarMovimiento()"><i class="bi bi-plus"></i> Registrar</button>
             </div>
           </div>
         </div>
@@ -1882,7 +1871,7 @@ const CATALOG = [
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const DEFAULT_GARANTIA_COND='1. La garantía cubre únicamente la falla reportada y reparada, indicada en este comprobante.\n2. No cubre daños posteriores por golpes, caídas, líquidos, humedad u oxidación.\n3. No cubre software, mal uso, virus, contraseñas olvidadas ni manipulación por terceros.\n4. Pérdida de datos: el taller no se hace responsable por información almacenada en el equipo.\n5. Es indispensable presentar este comprobante físico o digital para hacer válida la garantía.\n6. Fuera del plazo indicado, la garantía pierde validez automáticamente.';
-let orders=[], inventory=[], cajaData={open:false,apertura:null,balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};
+let orders=[], inventory=[], cajaData={balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};
 let nextOrderNum=1, cart=[], currentPrintOrder=null, brandFilter='';
 
 // ─── PAGINATION STATE ─────────────────────────────────────────────────────────
@@ -2438,8 +2427,8 @@ window.saveOrder=async function(){
       await setDoc(doc(db,'tf_meta','counters'),{orderNum:nextOrderNum});
       const anticipo=parseFloat(document.getElementById('ord-anticipo').value)||0;
       const anticipoMetodo=document.getElementById('ord-anticipo-metodo').value;
-      // Register anticipo in caja immediately if caja is open
-      if(anticipo>0 && cajaData.open){
+      // Registrar anticipo en caja siempre (ledger continuo, sin apertura manual)
+      if(anticipo>0){
         cajaData.balance+=anticipo;
         cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'anticipo',desc:`Anticipo orden ${cod} — ${cliente} (${anticipoMetodo})`,monto:anticipo});
         await setDoc(doc(db,'tf_meta','caja'),cajaData);
@@ -2764,19 +2753,17 @@ window.applyStatus=async function(){
       const saldo=cobInput;
       up.cobrado=cobInput+anticipo; // total efectivamente cobrado
       up.anticipoLiberado=true;
-      if(cajaData.open){
-        // Register the remaining balance collected at delivery
-        if(saldo>0){
-          cajaData.balance+=saldo;
-          cajaData.movimientos.push({fecha:now.toISOString(),tipo:'ingreso',desc:`Saldo orden ${o.codigo} — ${esc(o.cliente)} (${document.getElementById('status-payment').value})${anticipo>0?' [Anticipo: '+mon()+anticipo.toFixed(2)+']':''}`,monto:saldo});
-        }
-        // If anticipo was already registered when order was created, just mark liberation
-        if(anticipo>0 && !o.anticipoLiberado){
-          cajaData.movimientos.push({fecha:now.toISOString(),tipo:'anticipo-liberado',desc:`Anticipo liberado orden ${o.codigo} — ${esc(o.cliente)}`,monto:anticipo});
-        }
-        await setDoc(doc(db,'tf_meta','caja'),cajaData);
-        toast(anticipo>0?`Saldo ${mon()}${saldo.toFixed(2)} cobrado + anticipo ${mon()}${anticipo.toFixed(2)} liberado`:'Cobro registrado en caja','success');
-      } else toast('Caja cerrada — cobro NO registrado','warning');
+      // Registrar el cobro en caja siempre (ledger continuo, sin apertura manual)
+      if(saldo>0){
+        cajaData.balance+=saldo;
+        cajaData.movimientos.push({fecha:now.toISOString(),tipo:'ingreso',desc:`Saldo orden ${o.codigo} — ${esc(o.cliente)} (${document.getElementById('status-payment').value})${anticipo>0?' [Anticipo: '+mon()+anticipo.toFixed(2)+']':''}`,monto:saldo});
+      }
+      // Si el anticipo ya se había registrado al crear la orden, solo marcamos la liberación
+      if(anticipo>0 && !o.anticipoLiberado){
+        cajaData.movimientos.push({fecha:now.toISOString(),tipo:'anticipo-liberado',desc:`Anticipo liberado orden ${o.codigo} — ${esc(o.cliente)}`,monto:anticipo});
+      }
+      await setDoc(doc(db,'tf_meta','caja'),cajaData);
+      toast(anticipo>0?`Saldo ${mon()}${saldo.toFixed(2)} cobrado + anticipo ${mon()}${anticipo.toFixed(2)} liberado`:'Cobro registrado en caja','success');
     }
     if(ns!=='Entregado')up.garantiaActivada=false;
     await updateDoc(doc(db,'tf_orders',id),up);closeModal('modal-status');toast(`Estado → ${ns}`,'success');
@@ -2840,10 +2827,8 @@ window.renderInventory=function(){
 };
 
 // ─── CAJA ─────────────────────────────────────────────────────────────────────
-window.abrirCaja=async function(){const monto=parseFloat(document.getElementById('caja-apertura-monto').value)||0;cajaData={open:true,apertura:new Date().toISOString(),balance:monto,movimientos:[{fecha:new Date().toISOString(),tipo:'apertura',desc:'Apertura de caja',monto}]};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();updateCajaIndicator();toast('Caja abierta','success');}catch(e){toast('Error: '+e.message,'error');}};
-window.cerrarCaja=async function(){if(!confirm('¿Cerrar la caja?'))return;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'cierre',desc:'Cierre de caja',monto:cajaData.balance});cajaData.open=false;cajaData.apertura=null;setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();updateCajaIndicator();toast('Caja cerrada','info');}catch(e){toast('Error: '+e.message,'error');}};
-window.registrarMovimiento=async function(){const tipo=document.getElementById('mov-tipo').value,monto=parseFloat(document.getElementById('mov-monto').value)||0,desc=document.getElementById('mov-desc').value.trim();if(!monto){toast('Ingresa un monto','error');return;}if(tipo==='egreso'&&cajaData.balance<monto){toast('Saldo insuficiente','error');return;}if(tipo==='ingreso')cajaData.balance+=monto;else cajaData.balance-=monto;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo,desc:desc||tipo,monto});document.getElementById('mov-monto').value='';document.getElementById('mov-desc').value='';setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();toast(`${tipo} registrado`,'success');}catch(e){toast('Error: '+e.message,'error');}};
-window.renderCaja=function(){const c=cajaData,m=mon();document.getElementById('caja-balance').textContent=`${m}${(c.balance||0).toFixed(2)}`;const ing=(c.movimientos||[]).filter(x=>x.tipo==='ingreso'||x.tipo==='apertura').reduce((a,x)=>a+x.monto,0),egr=(c.movimientos||[]).filter(x=>x.tipo==='egreso').reduce((a,x)=>a+x.monto,0);document.getElementById('caja-ingresos').textContent=`${m}${ing.toFixed(2)}`;document.getElementById('caja-egresos').textContent=`${m}${egr.toFixed(2)}`;document.getElementById('caja-sub').textContent=c.open?'Caja abierta':'Caja cerrada';document.getElementById('caja-closed-ui').style.display=c.open?'none':'block';document.getElementById('caja-open-ui').style.display=c.open?'block':'none';if(c.open&&c.apertura)document.getElementById('caja-hora-apertura').textContent=new Date(c.apertura).toLocaleTimeString('es-SV');const tb=document.getElementById('caja-movimientos-body');if(!(c.movimientos||[]).length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-state"><i class="bi bi-receipt"></i><p>Sin movimientos</p></div></td></tr>`;return;}tb.innerHTML=[...c.movimientos].reverse().map(mv=>`<tr><td class="mono" style="font-size:10px">${new Date(mv.fecha).toLocaleString('es-SV')}</td><td><span class="chip ${mv.tipo==='egreso'?'r':mv.tipo==='cierre'?'o':mv.tipo==='anticipo'?'o':mv.tipo==='anticipo-liberado'?'g':'g'}" style="font-size:9px">${mv.tipo}</span></td><td style="font-size:12px">${esc(mv.desc)}</td><td class="mono" style="color:${mv.tipo==='ingreso'||mv.tipo==='apertura'?'#0ECB81':'#F6465D'};font-weight:700">${mv.tipo==='ingreso'||mv.tipo==='apertura'?'+':'-'}${m}${mv.monto.toFixed(2)}</td></tr>`).join('');};
+window.registrarMovimiento=async function(){const tipo=document.getElementById('mov-tipo').value,monto=parseFloat(document.getElementById('mov-monto').value)||0,desc=document.getElementById('mov-desc').value.trim();if(!monto){toast('Ingresa un monto','error');return;}if(tipo==='egreso'&&cajaData.balance<monto){toast('Saldo insuficiente','error');return;}if(tipo==='ingreso')cajaData.balance+=monto;else cajaData.balance-=monto;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo,desc:desc||tipo,monto});document.getElementById('mov-monto').value='';document.getElementById('mov-desc').value='';setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','caja'),cajaData);renderCaja();updateCajaIndicator();toast(`${tipo} registrado`,'success');}catch(e){toast('Error: '+e.message,'error');}};
+window.renderCaja=function(){const c=cajaData,m=mon();document.getElementById('caja-balance').textContent=`${m}${(c.balance||0).toFixed(2)}`;const ing=(c.movimientos||[]).filter(x=>x.tipo==='ingreso'||x.tipo==='apertura').reduce((a,x)=>a+x.monto,0),egr=(c.movimientos||[]).filter(x=>x.tipo==='egreso').reduce((a,x)=>a+x.monto,0);document.getElementById('caja-ingresos').textContent=`${m}${ing.toFixed(2)}`;document.getElementById('caja-egresos').textContent=`${m}${egr.toFixed(2)}`;const tb=document.getElementById('caja-movimientos-body');if(!(c.movimientos||[]).length){tb.innerHTML=`<tr><td colspan="4"><div class="empty-state"><i class="bi bi-receipt"></i><p>Sin movimientos</p></div></td></tr>`;return;}tb.innerHTML=[...c.movimientos].reverse().map(mv=>`<tr><td class="mono" style="font-size:10px">${new Date(mv.fecha).toLocaleString('es-SV')}</td><td><span class="chip ${mv.tipo==='egreso'?'r':mv.tipo==='cierre'?'o':mv.tipo==='anticipo'?'o':mv.tipo==='anticipo-liberado'?'g':'g'}" style="font-size:9px">${mv.tipo}</span></td><td style="font-size:12px">${esc(mv.desc)}</td><td class="mono" style="color:${mv.tipo==='ingreso'||mv.tipo==='apertura'?'#0ECB81':'#F6465D'};font-weight:700">${mv.tipo==='ingreso'||mv.tipo==='apertura'?'+':'-'}${m}${mv.monto.toFixed(2)}</td></tr>`).join('');};
 
 // ─── POS ──────────────────────────────────────────────────────────────────────
 window.setPosPage=function(p){const f=getFilteredPOS();const tp=Math.max(1,Math.ceil(f.length/posPP));posPage=Math.max(1,Math.min(p,tp));renderPOS();};
@@ -2885,7 +2870,7 @@ window.addToCart=function(id){const item=inventory.find(i=>i.id===id);if(!item||
 window.removeFromCart=function(id){cart=cart.filter(c=>c.id!==id);renderCart();};
 window.renderCart=function(){const el=document.getElementById('cart-items');if(!cart.length){el.innerHTML=`<div class="empty-state" style="padding:24px 0"><i class="bi bi-cart"></i><p>Carrito vacío</p></div>`;document.getElementById('pos-total').textContent=`${mon()}0.00`;return;}el.innerHTML=cart.map(c=>`<div class="cart-item"><div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.nombre)}</div><div class="mono" style="font-size:10px;color:var(--text-muted)">${mon()}${c.precio.toFixed(2)} × ${c.qty}</div></div><span class="mono" style="color:#0ECB81;font-size:13px">${mon()}${(c.precio*c.qty).toFixed(2)}</span><button class="btn-action del" onclick="removeFromCart('${c.id}')" style="width:22px;height:22px;font-size:10px;border-radius:6px"><i class="bi bi-x"></i></button></div>`).join('');document.getElementById('pos-total').textContent=`${mon()}${cart.reduce((a,c)=>a+c.precio*c.qty,0).toFixed(2)}`;};
 window.clearCart=function(){cart=[];renderCart();};
-window.processPOSSale=async function(){if(!cart.length){toast('Carrito vacío','error');return;}const total=cart.reduce((a,c)=>a+c.precio*c.qty,0),metodo=document.getElementById('pos-payment').value;setSyncStatus('syncing');try{const batch=writeBatch(db);cart.forEach(c=>{const item=inventory.find(i=>i.id===c.id);if(item)batch.update(doc(db,'tf_inventory',c.id),{stock:Math.max(0,item.stock-c.qty)});});await batch.commit();if(cajaData.open){cajaData.balance+=total;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'ingreso',desc:`Venta POS (${metodo}) — ${cart.length} item(s)`,monto:total});await setDoc(doc(db,'tf_meta','caja'),cajaData);}clearCart();renderPOS();renderDashboard();toast(`Venta: ${mon()}${total.toFixed(2)}`,'success');}catch(e){toast('Error: '+e.message,'error');}};
+window.processPOSSale=async function(){if(!cart.length){toast('Carrito vacío','error');return;}const total=cart.reduce((a,c)=>a+c.precio*c.qty,0),metodo=document.getElementById('pos-payment').value;setSyncStatus('syncing');try{const batch=writeBatch(db);cart.forEach(c=>{const item=inventory.find(i=>i.id===c.id);if(item)batch.update(doc(db,'tf_inventory',c.id),{stock:Math.max(0,item.stock-c.qty)});});await batch.commit();cajaData.balance+=total;cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'ingreso',desc:`Venta POS (${metodo}) — ${cart.length} item(s)`,monto:total});await setDoc(doc(db,'tf_meta','caja'),cajaData);clearCart();renderPOS();renderDashboard();toast(`Venta: ${mon()}${total.toFixed(2)}`,'success');}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── GARANTÍAS ────────────────────────────────────────────────────────────────
 window.renderGarantias=function(){const g=orders.filter(o=>o.garantiaActivada&&o.garantiaVence),tb=document.getElementById('garantias-body');if(!g.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty-state"><i class="bi bi-shield-slash"></i><p>Sin garantías activas</p></div></td></tr>`;return;}const today=new Date();tb.innerHTML=g.map(o=>{const venc=new Date(o.garantiaVence),diff=Math.ceil((venc-today)/86400000),sg=diff<0?'Vencida':diff<=7?'Por vencer':'Vigente',sc=diff<0?'r':diff<=7?'o':'g';return`<tr><td class="mono" style="color:var(--accent-orange)">${o.codigo}</td><td><div style="font-weight:600">${esc(o.cliente)}</div><div class="mono" style="font-size:10px;color:var(--text-muted)">${esc(o.telefono)}</div></td><td>${esc(o.marca)} ${esc(o.modelo)}</td><td>${fmtDate(o.fechaEntrega)}</td><td>${fmtDate(o.garantiaVence)}</td><td class="mono" style="color:${sc==='r'?'#F6465D':sc==='o'?'var(--accent-orange)':'#0ECB81'}">${diff<0?'Vencida':diff+'d'}</td><td><span class="chip ${sc}">${sg}</span></td><td class="no-print"><button class="btn-action" onclick="printGarantiaTicket('${o.id}')" title="Reimprimir ticket de garantía"><i class="bi bi-printer"></i></button></td></tr>`;}).join('');};
@@ -3014,10 +2999,10 @@ window.renderDashboard=function(){
   document.getElementById('ds-active').textContent=active;
   document.getElementById('ds-active-sub').textContent=`${orders.filter(o=>o.estado==='En Proceso').length} en proceso`;
   document.getElementById('ds-pending').textContent=pending;
-  const cajaLbl=cajaData.open?'Caja abierta':'Caja cerrada';
   document.getElementById('ds-caja').textContent=`${m}${(cajaData.balance||0).toFixed(2)}`;
-  document.getElementById('ds-caja-sub').textContent=cajaLbl;
+  document.getElementById('ds-caja-sub').textContent='Balance acumulado';
   document.getElementById('ds-garantias').textContent=gVig;
+  updateCajaIndicator();
 
   // KPI row 2
   const hoy=new Date().toISOString().slice(0,10);
@@ -3159,7 +3144,7 @@ window.toggleTheme=function(){
   }, 80);
 };
 window.exportData=function(){const blob=new Blob([JSON.stringify({orders,inventory,caja:cajaData,config:configData},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nextcom_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Exportado','success');};
-window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={open:false,apertura:null,balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
+window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 window.updateBadges=function(){
@@ -3171,7 +3156,7 @@ window.updateBadges=function(){
   const ls=inventory.filter(i=>i.stock===0),bi=document.getElementById('badge-inventory');
   bi.style.display=ls.length?'inline-block':'none';
 };
-window.updateCajaIndicator=function(){const el=document.getElementById('caja-indicator');if(cajaData.open){el.className='caja-status open';el.textContent='CAJA ABIERTA';}else{el.className='caja-status closed';el.textContent='CAJA CERRADA';}};
+window.updateCajaIndicator=function(){const el=document.getElementById('caja-indicator');if(!el)return;el.className='caja-status open';el.innerHTML=`<i class="bi bi-cash-coin"></i> CAJA: ${mon()}${(cajaData.balance||0).toFixed(2)}`;};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── MÓDULO CLIENTES ─────────────────────────────────────────────────────────
@@ -5386,36 +5371,6 @@ window.closeSidebar=function(){
 };
 document.querySelectorAll('.modal-overlay').forEach(mo=>mo.addEventListener('click',e=>{if(e.target===mo){ if(mo.id==='modal-imei-scan'){closeImeiScanner();} else {mo.classList.remove('show');} }}));
 // ─── CLOCK ────────────────────────────────────────────────────────────────────
-// ─── AUTO CIERRE DE CAJA a las 19:00 ─────────────────────────────────────────
-let _lastAutoClose = '';
-
-async function checkAutoCierreCaja() {
-  const now  = new Date();
-  const hour = now.getHours();
-  const key  = now.toISOString().slice(0,10);   // once per calendar day
-  if(_lastAutoClose === key) return;
-
-  if(hour === 19 && cajaData.open) {
-    _lastAutoClose = key;
-    cajaData.movimientos.push({
-      fecha: now.toISOString(),
-      tipo: 'cierre',
-      desc: 'Cierre automático (19:00)',
-      monto: cajaData.balance
-    });
-    cajaData.open    = false;
-    cajaData.apertura = null;
-    setSyncStatus('syncing');
-    try {
-      await setDoc(doc(db,'tf_meta','caja'), cajaData);
-      renderCaja(); updateCajaIndicator(); renderDashboard();
-      toast('🔒 Caja cerrada automáticamente (19:00)','info');
-    } catch(e){ console.error(e); }
-  }
-}
-
-setInterval(checkAutoCierreCaja, 30000);   // check every 30s
-checkAutoCierreCaja();                     // also check on load
 
 // burger shown via CSS media query
 const savedTheme=localStorage.getItem('nc_theme')||'dark';

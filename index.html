@@ -1036,6 +1036,17 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
             <div class="form-row mb-3"><div><label class="tf-label">Condiciones de la Garantía</label><textarea class="tf-input" id="cfg-garantia-condiciones" rows="5" placeholder="1. La garantía cubre únicamente la falla reparada.&#10;2. No cubre daños por golpes, líquidos u oxidación.&#10;3. No cubre software mal utilizado por el usuario.&#10;4. Debe presentar este comprobante para hacerla válida."></textarea></div></div>
             <button class="btn-p" onclick="saveConfig()"><i class="bi bi-save"></i> Guardar</button>
           </div>
+
+          <div class="section-card" style="padding:16px;margin-top:16px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:7px"><i class="bi bi-gem" style="color:var(--accent-orange)"></i> Programa de Fidelidad</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Se imprime automáticamente en el ticket de cada reparación.</div>
+            <div class="config-item"><div><div style="font-size:13px;font-weight:600">Activar fidelidad</div><div style="font-size:11px;color:var(--text-muted)">Muestra el progreso del cliente en el ticket</div></div><label class="tf-toggle"><input type="checkbox" id="cfg-fidelidad-activa" checked><span class="toggle-slider"></span></label></div>
+            <div class="form-row c2 mt-2">
+              <div><label class="tf-label">Cada cuántas reparaciones</label><input class="tf-input mono" id="cfg-fidelidad-cada" type="number" min="2" placeholder="7"></div>
+              <div><label class="tf-label">% de descuento</label><input class="tf-input mono" id="cfg-fidelidad-descuento" type="number" min="1" max="100" placeholder="50"></div>
+            </div>
+            <button class="btn-p" style="margin-top:10px" onclick="saveConfig()"><i class="bi bi-save"></i> Guardar</button>
+          </div>
         </div>
         <div class="col-lg-6">
           <div class="config-card">
@@ -1871,7 +1882,7 @@ const CATALOG = [
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const DEFAULT_GARANTIA_COND='1. La garantía cubre únicamente la falla reportada y reparada, indicada en este comprobante.\n2. No cubre daños posteriores por golpes, caídas, líquidos, humedad u oxidación.\n3. No cubre software, mal uso, virus, contraseñas olvidadas ni manipulación por terceros.\n4. Pérdida de datos: el taller no se hace responsable por información almacenada en el equipo.\n5. Es indispensable presentar este comprobante físico o digital para hacer válida la garantía.\n6. Fuera del plazo indicado, la garantía pierde validez automáticamente.';
-let orders=[], inventory=[], cajaData={balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};
+let orders=[], inventory=[], cajaData={balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};
 let nextOrderNum=1, cart=[], currentPrintOrder=null, brandFilter='';
 
 // ─── PAGINATION STATE ─────────────────────────────────────────────────────────
@@ -1891,6 +1902,29 @@ function mon(){return configData.moneda||'$';}
 function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 function accentRgbArr(){const s=cssVar('--accent-rgb')||'240,185,11';return s.split(',').map(n=>parseInt(n.trim(),10)||0);}
 function ticketLogoHtml(){return configData.favicon?`<img src="${configData.favicon}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;margin-bottom:5px" alt="logo">`:'';}
+
+// ─── PROGRAMA DE FIDELIDAD ─────────────────────────────────────────────────
+function getClientRepairCount(telefono){
+  if(!telefono) return 0;
+  const t=String(telefono).trim();
+  if(!t) return 0;
+  return orders.filter(o=>String(o.telefono||'').trim()===t).length;
+}
+function loyaltyTicketHtml(telefono){
+  if(configData.fidelidadActiva===false) return '';
+  const cada=configData.fidelidadCada||7;
+  const desc=configData.fidelidadDescuento||50;
+  const count=getClientRepairCount(telefono);
+  if(!count) return '';
+  const rem=count%cada;
+  const isReward=rem===0;
+  const filled=isReward?cada:rem;
+  const dots=Array.from({length:cada},(_,i)=>`<span class="loy-dot${i<filled?' on':''}"></span>`).join('');
+  const msg=isReward
+    ? `<div class="loy-reward">🎉 ¡Esta reparación #${count} tiene ${desc}% de descuento!</div>`
+    : `<div class="loy-msg">Reparación <b>#${count}</b> de este cliente — te faltan <b>${cada-rem}</b> para tu <b>${desc}% de descuento</b></div>`;
+  return `<div class="hr"></div><div class="loy-box"><div class="loy-title">💎 Programa de Fidelidad</div><div class="loy-dots">${dots}</div>${msg}</div>`;
+}
 window.toast=function(msg,type='info'){const icons={success:'bi-check-circle-fill',error:'bi-exclamation-circle-fill',info:'bi-info-circle-fill',warning:'bi-exclamation-triangle-fill'};const t=document.createElement('div');t.className=`toast-msg ${type}`;t.innerHTML=`<i class="bi ${icons[type]||icons.info}"></i> ${msg}`;document.getElementById('tc').appendChild(t);setTimeout(()=>t.style.opacity='0',3200);setTimeout(()=>t.remove(),3600);};
 
 function setSyncStatus(s){const d=document.getElementById('sync-dot'),t=document.getElementById('sync-text'),cd=document.getElementById('cfg-sync-dot'),ct=document.getElementById('firebase-status-text');const map={ok:['sync-dot','Sincronizado','Conectado a Firestore'],syncing:['sync-dot syncing','Sincronizando...','Sincronizando...'],error:['sync-dot error','Sin conexión','Error de conexión']};const[cls,tx,ctx]=map[s]||map.ok;if(d)d.className=cls;if(t)t.textContent=tx;if(cd)cd.className=cls;if(ct)ct.textContent=ctx;}
@@ -2472,6 +2506,7 @@ function ticketShellHTML(title, bodyHtml){
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  :root{--accent-orange:${cssVar('--accent-orange')||'#F0B90B'};--accent-text-dark:${cssVar('--accent-text-dark')||'#8C6A00'};--accent-rgb:${cssVar('--accent-rgb')||'240,185,11'};}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   html,body{background:#e9e9e9;}
   body{font-family:'Space Grotesk',sans-serif;color:#000;display:flex;justify-content:center;padding:16px 0 40px;}
@@ -2496,6 +2531,13 @@ function ticketShellHTML(title, bodyHtml){
   .tag-row:last-child{border-bottom:none;}
   .tag-k{color:#666;font-weight:600;white-space:nowrap;}
   .tag-v{font-weight:700;text-align:right;}
+  .loy-box{border:1.5px dashed var(--accent-orange);border-radius:7px;padding:8px 9px;text-align:center;}
+  .loy-title{font-size:9px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;color:var(--accent-text-dark);margin-bottom:6px;}
+  .loy-dots{display:flex;justify-content:center;gap:3.5px;margin-bottom:6px;flex-wrap:wrap;}
+  .loy-dot{width:8px;height:8px;border-radius:50%;background:#ddd;}
+  .loy-dot.on{background:var(--accent-orange);}
+  .loy-msg{font-size:10px;color:#444;}
+  .loy-reward{background:rgba(var(--accent-rgb),.12);border-radius:5px;padding:5px 6px;font-size:11px;font-weight:800;color:var(--accent-text-dark);margin-top:2px;}
   .print-toolbar{display:flex;gap:8px;justify-content:center;margin:0 0 12px;width:100%;}
   @media screen{
     .print-toolbar button{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;}
@@ -2560,6 +2602,7 @@ window.printOrder=function(id){
     </div>`:''}
     ${o.garantiaActivada?`<div class="hr"></div><div class="center" style="font-size:11px;font-weight:700">✓ Garantía: ${o.garantiaDias||configData.garantia||30} días</div>`:''}
     <div class="foot">Conserve este comprobante para reclamar su equipo.<br>¡Gracias por su preferencia! — ${esc(configData.nombre)}</div>
+    ${loyaltyTicketHtml(o.telefono)}
     <div class="cutline">✂ - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
     <div class="tag-label">
       <div class="tag-title">Etiqueta · pegar al equipo</div>
@@ -2605,6 +2648,7 @@ window.printGarantiaTicket=function(id, overrides){
     <div style="font-size:9.5px;line-height:1.55;color:#222">
       ${condiciones.map(l=>`<div style="margin-bottom:2px">${esc(l)}</div>`).join('')}
     </div>
+    ${loyaltyTicketHtml(o.telefono)}
     <div class="foot">Presente este comprobante para hacer válida su garantía.<br>${esc(configData.nombre)}</div>
   `;
   openTicketPrintWindow('Garantía '+o.codigo, body);
@@ -3066,8 +3110,8 @@ window.renderDashboard=function(){
 };
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-function loadConfigUI(){document.getElementById('cfg-nombre').value=configData.nombre||'';document.getElementById('cfg-telefono').value=configData.telefono||'';document.getElementById('cfg-prefix').value=configData.prefix||'ORD-';document.getElementById('cfg-direccion').value=configData.direccion||'';document.getElementById('cfg-garantia').value=configData.garantia||30;document.getElementById('cfg-moneda').value=configData.moneda||'$';document.getElementById('cfg-ticket-ancho').value=String(configData.ticketAncho||70);document.getElementById('cfg-garantia-condiciones').value=configData.garantiaCondiciones||DEFAULT_GARANTIA_COND;document.getElementById('toggle-theme').checked=document.documentElement.getAttribute('data-theme')==='dark';document.getElementById('cfg-accent-custom').value=configData.accentColor||'#F0B90B';renderPaletteSwatches();updateFaviconPreview();}
-window.saveConfig=async function(){configData={...configData,nombre:document.getElementById('cfg-nombre').value.trim()||'Nextcom',telefono:document.getElementById('cfg-telefono').value.trim(),prefix:document.getElementById('cfg-prefix').value.trim()||'ORD-',direccion:document.getElementById('cfg-direccion').value.trim(),garantia:parseInt(document.getElementById('cfg-garantia').value)||30,moneda:document.getElementById('cfg-moneda').value||'$',ticketAncho:parseInt(document.getElementById('cfg-ticket-ancho').value)||70,garantiaCondiciones:document.getElementById('cfg-garantia-condiciones').value.trim()||DEFAULT_GARANTIA_COND,accentColor:document.getElementById('cfg-accent-custom').value||'#F0B90B',favicon:configData.favicon||''};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','config'),configData);toast('Configuración guardada','success');renderDashboard();}catch(e){toast('Error: '+e.message,'error');}};
+function loadConfigUI(){document.getElementById('cfg-nombre').value=configData.nombre||'';document.getElementById('cfg-telefono').value=configData.telefono||'';document.getElementById('cfg-prefix').value=configData.prefix||'ORD-';document.getElementById('cfg-direccion').value=configData.direccion||'';document.getElementById('cfg-garantia').value=configData.garantia||30;document.getElementById('cfg-moneda').value=configData.moneda||'$';document.getElementById('cfg-ticket-ancho').value=String(configData.ticketAncho||70);document.getElementById('cfg-garantia-condiciones').value=configData.garantiaCondiciones||DEFAULT_GARANTIA_COND;document.getElementById('toggle-theme').checked=document.documentElement.getAttribute('data-theme')==='dark';document.getElementById('cfg-accent-custom').value=configData.accentColor||'#F0B90B';document.getElementById('cfg-fidelidad-activa').checked=configData.fidelidadActiva!==false;document.getElementById('cfg-fidelidad-cada').value=configData.fidelidadCada||7;document.getElementById('cfg-fidelidad-descuento').value=configData.fidelidadDescuento||50;renderPaletteSwatches();updateFaviconPreview();}
+window.saveConfig=async function(){configData={...configData,nombre:document.getElementById('cfg-nombre').value.trim()||'Nextcom',telefono:document.getElementById('cfg-telefono').value.trim(),prefix:document.getElementById('cfg-prefix').value.trim()||'ORD-',direccion:document.getElementById('cfg-direccion').value.trim(),garantia:parseInt(document.getElementById('cfg-garantia').value)||30,moneda:document.getElementById('cfg-moneda').value||'$',ticketAncho:parseInt(document.getElementById('cfg-ticket-ancho').value)||70,garantiaCondiciones:document.getElementById('cfg-garantia-condiciones').value.trim()||DEFAULT_GARANTIA_COND,accentColor:document.getElementById('cfg-accent-custom').value||'#F0B90B',favicon:configData.favicon||'',fidelidadActiva:document.getElementById('cfg-fidelidad-activa').checked,fidelidadCada:parseInt(document.getElementById('cfg-fidelidad-cada').value)||7,fidelidadDescuento:parseInt(document.getElementById('cfg-fidelidad-descuento').value)||50};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','config'),configData);toast('Configuración guardada','success');renderDashboard();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── PALETA DE COLORES Y FAVICON ──────────────────────────────────────────────
 const ACCENT_PRESETS=[
@@ -3144,7 +3188,7 @@ window.toggleTheme=function(){
   }, 80);
 };
 window.exportData=function(){const blob=new Blob([JSON.stringify({orders,inventory,caja:cajaData,config:configData},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nextcom_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Exportado','success');};
-window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:''};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
+window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 window.updateBadges=function(){

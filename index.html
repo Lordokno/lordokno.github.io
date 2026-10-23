@@ -1032,7 +1032,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
               <div><label class="tf-label">Garantía (días)</label><input class="tf-input mono" id="cfg-garantia" type="number" placeholder="30"></div>
               <div><label class="tf-label">Moneda</label><select class="tf-select" id="cfg-moneda"><option value="$">$ (USD)</option><option value="Q">Q (GTQ)</option><option value="₡">₡ (CRC)</option></select></div>
             </div>
-            <div class="form-row mb-3"><div><label class="tf-label">Ancho de Ticket (impresora térmica)</label><select class="tf-select" id="cfg-ticket-ancho"><option value="70">7cm — 3 tiras por hoja carta (recomendado)</option><option value="80">8cm (estándar térmica)</option><option value="58">5.8cm</option></select><div style="font-size:10.5px;color:var(--text-muted);margin-top:4px">Carta mide ~21.6cm de ancho: recortada en tiras de 7cm rinden 3 tickets por hoja.</div></div></div>
+            <div class="form-row mb-3"><div><label class="tf-label">Ancho de Ticket (impresora térmica)</label><select class="tf-select" id="cfg-ticket-ancho"><option value="57">57mm — rollo térmico (recomendado)</option><option value="58">58mm</option><option value="70">70mm</option><option value="80">80mm — rollo térmico ancho</option></select><div style="font-size:10.5px;color:var(--text-muted);margin-top:4px">Se imprime ajustado al ancho del rollo y al alto del contenido, sin márgenes ni papel desperdiciado. En el diálogo de impresión elige tu impresora térmica con "Márgenes: ninguno" y escala 100%.</div></div></div>
             <div class="form-row mb-3"><div><label class="tf-label">Condiciones de la Garantía</label><textarea class="tf-input" id="cfg-garantia-condiciones" rows="5" placeholder="1. La garantía cubre únicamente la falla reparada.&#10;2. No cubre daños por golpes, líquidos u oxidación.&#10;3. No cubre software mal utilizado por el usuario.&#10;4. Debe presentar este comprobante para hacerla válida."></textarea></div></div>
             <button class="btn-p" onclick="saveConfig()"><i class="bi bi-save"></i> Guardar</button>
           </div>
@@ -1882,7 +1882,7 @@ const CATALOG = [
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const DEFAULT_GARANTIA_COND='1. La garantía cubre únicamente la falla reportada y reparada, indicada en este comprobante.\n2. No cubre daños posteriores por golpes, caídas, líquidos, humedad u oxidación.\n3. No cubre software, mal uso, virus, contraseñas olvidadas ni manipulación por terceros.\n4. Pérdida de datos: el taller no se hace responsable por información almacenada en el equipo.\n5. Es indispensable presentar este comprobante físico o digital para hacer válida la garantía.\n6. Fuera del plazo indicado, la garantía pierde validez automáticamente.';
-let orders=[], inventory=[], cajaData={balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};
+let orders=[], inventory=[], cajaData={balance:0,movimientos:[]}, configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:57,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};
 let nextOrderNum=1, cart=[], currentPrintOrder=null, brandFilter='';
 
 // ─── PAGINATION STATE ─────────────────────────────────────────────────────────
@@ -1964,7 +1964,7 @@ async function init() {
   setLoadMsg('Cargando configuración...');
   try {
     const cfgSnap=await getDoc(doc(db,'tf_meta','config'));
-    if(cfgSnap.exists()) configData={...configData,...cfgSnap.data()};
+    if(cfgSnap.exists()){ const _cd=cfgSnap.data(); configData={...configData,..._cd}; if(!_cd.ticketMigrated57) configData.ticketAncho=57; }
     applyAccentTheme(configData.accentColor||'#F0B90B');
     applyFavicon(configData.favicon||'');
     const cajaSnap=await getDoc(doc(db,'tf_meta','caja'));
@@ -2502,52 +2502,54 @@ window.printCurrentOrder=function(){if(currentPrintOrder)printOrder(currentPrint
 // hoja por la mitad y colocar la tira en el centro de la impresora, el ticket
 // quede perfectamente alineado.
 function ticketShellHTML(title, bodyHtml){
-  const w = (configData.ticketAncho||70); // mm
+  const w = (configData.ticketAncho||57); // mm — ancho real del rollo térmico
+  // Diseño de referencia ~57mm; el zoom adapta tipografía y espacios al ancho elegido
+  // y un pequeño refuerzo (1.1) evita que el texto se vea diminuto en papel angosto.
+  const z = +((w/57)*1.1).toFixed(3);
+  const L = +(w/z).toFixed(2); // ancho de maquetación (mm) -> renderizado = w mm
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{--accent-orange:${cssVar('--accent-orange')||'#F0B90B'};--accent-text-dark:${cssVar('--accent-text-dark')||'#8C6A00'};--accent-rgb:${cssVar('--accent-rgb')||'240,185,11'};}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  html,body{background:#e9e9e9;}
+  html,body{background:#e9e9e9;height:auto;}
   body{font-family:'Space Grotesk',sans-serif;color:#000;display:flex;justify-content:center;padding:16px 0 40px;}
-  .ticket{width:${w}mm;max-width:${w}mm;background:#fff;padding:4mm 3.5mm;font-size:11.5px;line-height:1.45;box-shadow:0 0 0 1px rgba(0,0,0,.06);}
+  .ticket{width:${L}mm;zoom:${z};background:#fff;padding:2mm 1.8mm 2.5mm;font-size:12px;line-height:1.4;box-shadow:0 0 0 1px rgba(0,0,0,.06);}
   .mono{font-family:'JetBrains Mono',monospace;}
   .center{text-align:center;}
-  .lbl{font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:#666;font-weight:700;}
-  .val{font-weight:600;margin-bottom:5px;word-break:break-word;}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;}
-  hr,.hr{border:none;border-top:1px dashed #999;margin:8px 0;}
-  .biggen{font-size:19px;font-weight:900;color:var(--accent-text-dark);margin:5px 0 2px;}
+  .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#444;font-weight:700;}
+  .val{font-weight:600;margin-bottom:4px;word-break:break-word;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 6px;}
+  hr,.hr{border:none;border-top:1px dashed #666;margin:6px 0;}
+  .biggen{font-size:19px;font-weight:900;color:var(--accent-text-dark);margin:4px 0 2px;}
   .shopname{font-size:15px;font-weight:800;}
-  .addr{font-size:10px;color:#555;margin-top:1px;}
+  .addr{font-size:10px;color:#333;margin-top:1px;}
   .total{font-size:15px;font-weight:800;}
   .firma-box{margin-top:22px;}
   .firma-line{border-top:1px solid #000;margin-top:26px;padding-top:3px;font-size:10px;text-align:center;}
-  .foot{margin-top:14px;color:#888;font-size:9px;text-align:center;}
-  .cutline{margin:16px 0 8px;text-align:center;font-size:11px;color:#888;letter-spacing:.5px;white-space:nowrap;overflow:hidden;}
-  .tag-label{border:1.5px dashed #444;border-radius:6px;padding:8px 9px 7px;}
-  .tag-title{font-size:8px;text-transform:uppercase;letter-spacing:.6px;color:#888;text-align:center;margin-bottom:6px;font-weight:700;}
-  .tag-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;padding:3px 0;border-bottom:1px dotted #ccc;}
+  .foot{margin-top:10px;color:#444;font-size:9.5px;text-align:center;}
+  .cutline{margin:12px 0 6px;text-align:center;font-size:11px;color:#444;letter-spacing:.5px;white-space:nowrap;overflow:hidden;}
+  .tag-label{border:1.5px dashed #222;border-radius:6px;padding:6px 7px 5px;}
+  .tag-title{font-size:8.5px;text-transform:uppercase;letter-spacing:.6px;color:#444;text-align:center;margin-bottom:5px;font-weight:700;}
+  .tag-row{display:flex;justify-content:space-between;gap:6px;font-size:11px;padding:3px 0;border-bottom:1px dotted #888;}
   .tag-row:last-child{border-bottom:none;}
-  .tag-k{color:#666;font-weight:600;white-space:nowrap;}
+  .tag-k{color:#444;font-weight:600;white-space:nowrap;}
   .tag-v{font-weight:700;text-align:right;}
-  .loy-box{border:1.5px dashed var(--accent-orange);border-radius:7px;padding:8px 9px;text-align:center;}
-  .loy-title{font-size:9px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;color:var(--accent-text-dark);margin-bottom:6px;}
-  .loy-dots{display:flex;justify-content:center;gap:3.5px;margin-bottom:6px;flex-wrap:wrap;}
-  .loy-dot{width:8px;height:8px;border-radius:50%;background:#ddd;}
-  .loy-dot.on{background:var(--accent-orange);}
-  .loy-msg{font-size:10px;color:#444;}
-  .loy-reward{background:rgba(var(--accent-rgb),.12);border-radius:5px;padding:5px 6px;font-size:11px;font-weight:800;color:var(--accent-text-dark);margin-top:2px;}
+  .loy-box{border:1.5px dashed #222;border-radius:7px;padding:6px 7px;text-align:center;}
+  .loy-title{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;color:#000;margin-bottom:5px;}
+  .loy-dots{display:flex;justify-content:center;gap:3.5px;margin-bottom:5px;flex-wrap:wrap;}
+  .loy-dot{width:8px;height:8px;border-radius:50%;background:#fff;border:1px solid #222;}
+  .loy-dot.on{background:#000;}
+  .loy-msg{font-size:10.5px;color:#222;}
+  .loy-reward{background:#eee;border-radius:5px;padding:4px 5px;font-size:11.5px;font-weight:800;color:#000;margin-top:2px;}
   .print-toolbar{display:flex;gap:8px;justify-content:center;margin:0 0 12px;width:100%;}
   @media screen{
     .print-toolbar button{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;}
     .print-toolbar button.p{background:var(--accent-orange);border-color:var(--accent-orange);color:#1a1a1a;}
   }
   @media print{
-    @page{size:letter;margin:0;}
-    html,body{background:#fff;}
-    body{padding:0;align-items:flex-start;}
-    .ticket{box-shadow:none;padding-top:6mm;}
+    html,body{background:#fff;width:${w}mm;margin:0;padding:0;display:block;}
+    .ticket{box-shadow:none;margin:0;}
     .print-toolbar{display:none!important;}
   }
 </style></head><body>
@@ -2565,8 +2567,23 @@ function openTicketPrintWindow(title, bodyHtml){
   if(!w){ toast('Habilita las ventanas emergentes para imprimir','error'); return; }
   w.document.write(ticketShellHTML(title, bodyHtml));
   w.document.close();
-  w.focus();
-  setTimeout(()=>{ try{ w.print(); }catch(e){} },450);
+  const W=configData.ticketAncho||57;
+  // Ajusta la página al alto REAL del contenido: sin márgenes ni papel desperdiciado.
+  const fitAndPrint=()=>{
+    try{
+      const t=w.document.querySelector('.ticket');
+      const mm=Math.ceil(t.getBoundingClientRect().height*25.4/96)+2;
+      const s=w.document.createElement('style');
+      s.textContent=`@page{size:${W}mm ${mm}mm;margin:0;}`;
+      w.document.head.appendChild(s);
+      w.focus();
+      setTimeout(()=>{ try{ w.print(); }catch(e){} },150);
+    }catch(e){ try{ w.focus(); w.print(); }catch(_){} }
+  };
+  const fontsReady=(w.document.fonts&&w.document.fonts.ready)
+    ? Promise.race([w.document.fonts.ready,new Promise(r=>setTimeout(r,1500))])
+    : Promise.resolve();
+  fontsReady.then(()=>setTimeout(fitAndPrint,100));
 }
 
 window.printOrder=function(id){
@@ -3110,8 +3127,8 @@ window.renderDashboard=function(){
 };
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
-function loadConfigUI(){document.getElementById('cfg-nombre').value=configData.nombre||'';document.getElementById('cfg-telefono').value=configData.telefono||'';document.getElementById('cfg-prefix').value=configData.prefix||'ORD-';document.getElementById('cfg-direccion').value=configData.direccion||'';document.getElementById('cfg-garantia').value=configData.garantia||30;document.getElementById('cfg-moneda').value=configData.moneda||'$';document.getElementById('cfg-ticket-ancho').value=String(configData.ticketAncho||70);document.getElementById('cfg-garantia-condiciones').value=configData.garantiaCondiciones||DEFAULT_GARANTIA_COND;document.getElementById('toggle-theme').checked=document.documentElement.getAttribute('data-theme')==='dark';document.getElementById('cfg-accent-custom').value=configData.accentColor||'#F0B90B';document.getElementById('cfg-fidelidad-activa').checked=configData.fidelidadActiva!==false;document.getElementById('cfg-fidelidad-cada').value=configData.fidelidadCada||7;document.getElementById('cfg-fidelidad-descuento').value=configData.fidelidadDescuento||50;renderPaletteSwatches();updateFaviconPreview();}
-window.saveConfig=async function(){configData={...configData,nombre:document.getElementById('cfg-nombre').value.trim()||'Nextcom',telefono:document.getElementById('cfg-telefono').value.trim(),prefix:document.getElementById('cfg-prefix').value.trim()||'ORD-',direccion:document.getElementById('cfg-direccion').value.trim(),garantia:parseInt(document.getElementById('cfg-garantia').value)||30,moneda:document.getElementById('cfg-moneda').value||'$',ticketAncho:parseInt(document.getElementById('cfg-ticket-ancho').value)||70,garantiaCondiciones:document.getElementById('cfg-garantia-condiciones').value.trim()||DEFAULT_GARANTIA_COND,accentColor:document.getElementById('cfg-accent-custom').value||'#F0B90B',favicon:configData.favicon||'',fidelidadActiva:document.getElementById('cfg-fidelidad-activa').checked,fidelidadCada:parseInt(document.getElementById('cfg-fidelidad-cada').value)||7,fidelidadDescuento:parseInt(document.getElementById('cfg-fidelidad-descuento').value)||50};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','config'),configData);toast('Configuración guardada','success');renderDashboard();}catch(e){toast('Error: '+e.message,'error');}};
+function loadConfigUI(){document.getElementById('cfg-nombre').value=configData.nombre||'';document.getElementById('cfg-telefono').value=configData.telefono||'';document.getElementById('cfg-prefix').value=configData.prefix||'ORD-';document.getElementById('cfg-direccion').value=configData.direccion||'';document.getElementById('cfg-garantia').value=configData.garantia||30;document.getElementById('cfg-moneda').value=configData.moneda||'$';document.getElementById('cfg-ticket-ancho').value=String(configData.ticketAncho||57);document.getElementById('cfg-garantia-condiciones').value=configData.garantiaCondiciones||DEFAULT_GARANTIA_COND;document.getElementById('toggle-theme').checked=document.documentElement.getAttribute('data-theme')==='dark';document.getElementById('cfg-accent-custom').value=configData.accentColor||'#F0B90B';document.getElementById('cfg-fidelidad-activa').checked=configData.fidelidadActiva!==false;document.getElementById('cfg-fidelidad-cada').value=configData.fidelidadCada||7;document.getElementById('cfg-fidelidad-descuento').value=configData.fidelidadDescuento||50;renderPaletteSwatches();updateFaviconPreview();}
+window.saveConfig=async function(){configData={...configData,nombre:document.getElementById('cfg-nombre').value.trim()||'Nextcom',telefono:document.getElementById('cfg-telefono').value.trim(),prefix:document.getElementById('cfg-prefix').value.trim()||'ORD-',direccion:document.getElementById('cfg-direccion').value.trim(),garantia:parseInt(document.getElementById('cfg-garantia').value)||30,moneda:document.getElementById('cfg-moneda').value||'$',ticketAncho:parseInt(document.getElementById('cfg-ticket-ancho').value)||57,ticketMigrated57:true,garantiaCondiciones:document.getElementById('cfg-garantia-condiciones').value.trim()||DEFAULT_GARANTIA_COND,accentColor:document.getElementById('cfg-accent-custom').value||'#F0B90B',favicon:configData.favicon||'',fidelidadActiva:document.getElementById('cfg-fidelidad-activa').checked,fidelidadCada:parseInt(document.getElementById('cfg-fidelidad-cada').value)||7,fidelidadDescuento:parseInt(document.getElementById('cfg-fidelidad-descuento').value)||50};setSyncStatus('syncing');try{await setDoc(doc(db,'tf_meta','config'),configData);toast('Configuración guardada','success');renderDashboard();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── PALETA DE COLORES Y FAVICON ──────────────────────────────────────────────
 const ACCENT_PRESETS=[
@@ -3188,7 +3205,7 @@ window.toggleTheme=function(){
   }, 80);
 };
 window.exportData=function(){const blob=new Blob([JSON.stringify({orders,inventory,caja:cajaData,config:configData},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`nextcom_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();toast('Exportado','success');};
-window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:70,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
+window.resetAll=async function(){if(!confirm('¿BORRAR TODOS LOS DATOS?'))return;if(!confirm('CONFIRMACIÓN FINAL: Se eliminarán órdenes, inventario y caja de Firestore.'))return;setSyncStatus('syncing');try{const batch=writeBatch(db);(await getDocs(collection(db,'tf_orders'))).forEach(d=>batch.delete(d.ref));(await getDocs(collection(db,'tf_inventory'))).forEach(d=>batch.delete(d.ref));batch.delete(doc(db,'tf_meta','caja'));batch.delete(doc(db,'tf_meta','config'));batch.delete(doc(db,'tf_meta','counters'));await batch.commit();cajaData={balance:0,movimientos:[]};configData={nombre:'Nextcom Multiservicos',telefono:'',prefix:'ORD-',direccion:'',garantia:30,moneda:'$',ticketAncho:57,garantiaCondiciones:DEFAULT_GARANTIA_COND,accentColor:'#F0B90B',favicon:'',fidelidadActiva:true,fidelidadCada:7,fidelidadDescuento:50};applyAccentTheme('#F0B90B');applyFavicon('');nextOrderNum=1;toast('Datos eliminados','info');renderAll();updateBadges();}catch(e){toast('Error: '+e.message,'error');}};
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 window.updateBadges=function(){
@@ -5256,7 +5273,7 @@ window.printCotizacionTicket=function(id){
 // ─── PDF (formato ticket angosto, igual ancho configurado en Órdenes) ────────
 function buildCotizacionPDF(c){
   const { jsPDF } = window.jspdf;
-  const w = configData.ticketAncho || 70;
+  const w = configData.ticketAncho || 57;
   const marginX = 4.5, innerW = w - marginX*2;
   const items = c.items||[];
 

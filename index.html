@@ -657,6 +657,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
   <div class="nav-item" onclick="navigate('pedidos')"><i class="bi bi-bag-plus"></i> Pedidos <span class="nav-badge" id="badge-pedidos" style="display:none">!</span></div>
   <div class="nav-item" onclick="navigate('encargos')"><i class="bi bi-box-arrow-in-down"></i> Encargos <span class="nav-badge" id="badge-encargos" style="display:none">0</span></div>
   <div class="nav-item" onclick="navigate('cotizaciones')"><i class="bi bi-file-earmark-text"></i> Cotizaciones</div>
+  <div class="nav-item" onclick="navigate('cuentas')"><i class="bi bi-person-lock"></i> Cuentas</div>
   <div class="nav-sec">Sistema</div>
   <div class="nav-item" onclick="navigate('garantias')"><i class="bi bi-shield-check"></i> Garantías</div>
   <div class="nav-item" onclick="navigate('reportes')"><i class="bi bi-bar-chart-line"></i> Reportes</div>
@@ -985,6 +986,26 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <div class="section-card">
         <div class="section-header"><div class="section-title"><i class="bi bi-file-earmark-text" style="color:var(--accent-orange)"></i> Cotizaciones</div></div>
         <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>Código</th><th>Cliente</th><th>Equipo</th><th>Fecha</th><th>Total</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="cotizaciones-body"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══ CUENTAS (Facebook, Gmail, Apple...) ══ -->
+    <div id="page-cuentas" class="page-section">
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap"><i class="bi bi-search"></i><input class="search-input" id="search-cuentas" placeholder="Buscar cliente, correo o plataforma..." oninput="renderCuentas()"></div>
+        </div>
+        <button class="btn-p no-print" onclick="openCuentaModal()"><i class="bi bi-plus-lg"></i> Nueva Cuenta</button>
+      </div>
+
+      <div class="row g-2 mb-3">
+        <div class="col-6 col-md-3"><div class="card-stat orange" style="padding:12px 16px"><div class="stat-label">Cuentas Creadas</div><div class="stat-value mono" style="font-size:22px" id="cta-kpi-total">0</div><div class="stat-sub">Registradas</div><i class="bi bi-person-lock stat-icon"></i></div></div>
+        <div class="col-6 col-md-3"><div class="card-stat green" style="padding:12px 16px"><div class="stat-label">Este Mes</div><div class="stat-value mono" style="font-size:22px" id="cta-kpi-mes">0</div><div class="stat-sub">Creadas</div><i class="bi bi-calendar-check stat-icon"></i></div></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-header"><div class="section-title"><i class="bi bi-person-lock" style="color:var(--accent-orange)"></i> Cuentas de Clientes</div></div>
+        <div style="overflow-x:auto"><table class="tf-table"><thead><tr><th>Plataforma</th><th>Cliente</th><th>Usuario / Correo</th><th>Contraseña</th><th>Fecha</th><th style="text-align:right">Acciones</th></tr></thead><tbody id="cuentas-body"></tbody></table></div>
       </div>
     </div>
 
@@ -1694,6 +1715,49 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 </div>
 
 <!-- ══ MODAL COTIZACIÓN ══ -->
+<!-- ══ MODAL CUENTA ══ -->
+<div class="modal-overlay" id="modal-cuenta">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cuenta-title"><i class="bi bi-person-lock" style="color:var(--accent-orange)"></i> Nueva Cuenta</div>
+      <button class="modal-close" onclick="closeModal('modal-cuenta')"><i class="bi bi-x"></i></button>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Plataforma *</label>
+        <input class="tf-input" id="cta-plataforma" list="cta-plataformas" placeholder="Facebook, Gmail, Apple ID..." autocomplete="off">
+        <datalist id="cta-plataformas"><option value="Facebook"><option value="Gmail"><option value="Apple ID"><option value="Instagram"><option value="TikTok"><option value="WhatsApp"><option value="Outlook / Hotmail"><option value="Yahoo"><option value="X (Twitter)"><option value="Telegram"><option value="Snapchat"><option value="Netflix"><option value="Spotify"></datalist>
+      </div>
+    </div>
+    <div class="form-row c2 mb-3">
+      <div><label class="tf-label">Cliente *</label><input class="tf-input" id="cta-cliente" placeholder="Nombre del cliente"></div>
+      <div><label class="tf-label">Teléfono</label><input class="tf-input mono" id="cta-telefono" placeholder="0000-0000"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Usuario / Correo *</label><input class="tf-input mono" id="cta-usuario" placeholder="cliente@gmail.com" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Contraseña *</label>
+        <div style="display:flex;gap:6px">
+          <input class="tf-input mono" id="cta-password" type="text" placeholder="Contraseña" autocomplete="off" autocapitalize="off" spellcheck="false" style="flex:1">
+          <button type="button" class="btn-s" style="padding:6px 11px;font-size:12px;white-space:nowrap" onclick="generarPasswordCuenta()" title="Generar contraseña segura"><i class="bi bi-magic"></i> Generar</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Correo / teléfono de recuperación</label><input class="tf-input mono" id="cta-recuperacion" placeholder="Opcional" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+    </div>
+    <div class="form-row mb-3">
+      <div><label class="tf-label">Notas</label><textarea class="tf-textarea" id="cta-notas" rows="2" placeholder="Opcional: fecha de nacimiento usada, preguntas de seguridad, etc."></textarea></div>
+    </div>
+    <input type="hidden" id="cta-edit-id">
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+      <button class="btn-s" onclick="closeModal('modal-cuenta')">Cancelar</button>
+      <button class="btn-s" id="btn-save-print-cuenta" onclick="saveCuenta(true)"><i class="bi bi-printer"></i> Guardar e imprimir</button>
+      <button class="btn-p" id="btn-save-cuenta" onclick="saveCuenta(false)"><i class="bi bi-save"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-cotizacion">
   <div class="modal-box" style="max-width:640px">
     <div class="modal-header">
@@ -1988,6 +2052,7 @@ async function init() {
     await loadProveedores();
     await loadEncargos();
     await loadCotizaciones();
+    await loadCuentas();
     initReportes();
 
   } catch(e){ console.error(e); setSyncStatus('error'); setLoadMsg('Error: '+e.message); setTimeout(hideLoader,3000); }
@@ -5410,6 +5475,190 @@ window.sendCotizacionWA = async function(id){
   setTimeout(()=>{ window.open(`https://wa.me/${fmtWA(c.telefono)}?text=${encodeURIComponent(msg)}`, '_blank'); }, 600);
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── MÓDULO CUENTAS (Facebook, Gmail, Apple ID... creadas para clientes) ─────
+// ═══════════════════════════════════════════════════════════════════════════════
+let cuentas = [];
+const COL_CTA = 'tf_cuentas';
+const cuentaReveal = new Set(); // ids con la contraseña visible en la tabla
+
+async function loadCuentas() {
+  try {
+    const snap = await getDocs(collection(db, COL_CTA));
+    cuentas = [];
+    snap.forEach(d => cuentas.push({id:d.id, ...d.data()}));
+    renderCuentas();
+  } catch(e) { console.error('Error cargando cuentas:', e); }
+}
+
+function cuentaIcon(nombre){
+  const n=(nombre||'').toLowerCase();
+  const map=[['face','bi-facebook'],['gmail','bi-google'],['google','bi-google'],['apple','bi-apple'],['icloud','bi-apple'],
+    ['insta','bi-instagram'],['tiktok','bi-tiktok'],['whats','bi-whatsapp'],['outlook','bi-microsoft'],['hotmail','bi-microsoft'],
+    ['microsoft','bi-microsoft'],['twitter','bi-twitter-x'],['x (','bi-twitter-x'],['telegram','bi-telegram'],['snap','bi-snapchat'],
+    ['spotify','bi-spotify'],['youtube','bi-youtube'],['yahoo','bi-envelope-at']];
+  for(const [k,i] of map) if(n.includes(k)) return i;
+  return 'bi-person-badge';
+}
+
+window.renderCuentas = function(){
+  const tb = document.getElementById('cuentas-body');
+  if(!tb) return;
+  const q = ((document.getElementById('search-cuentas')||{}).value||'').toLowerCase();
+  const list = cuentas.filter(c=>{
+    if(!q) return true;
+    return [c.plataforma,c.cliente,c.telefono,c.usuario].some(v=>(v||'').toLowerCase().includes(q));
+  }).sort((a,b)=> new Date(b.fecha||0) - new Date(a.fecha||0));
+
+  if(!list.length){
+    tb.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="bi bi-person-lock"></i><p>Sin cuentas registradas</p></div></td></tr>`;
+  } else {
+    tb.innerHTML = list.map(c=>{
+      const shown = cuentaReveal.has(c.id);
+      return `<tr>
+        <td><span style="display:inline-flex;align-items:center;gap:7px;font-weight:700"><i class="bi ${cuentaIcon(c.plataforma)}" style="color:var(--accent-orange);font-size:15px"></i>${esc(c.plataforma)}</span></td>
+        <td><div style="font-weight:600">${esc(c.cliente)}</div><div class="mono" style="font-size:10px;color:var(--text-muted)">${esc(c.telefono)}</div></td>
+        <td class="mono" style="font-size:12px;word-break:break-all">${esc(c.usuario)}</td>
+        <td class="mono" style="font-size:12px;white-space:nowrap">${shown?esc(c.password):'••••••••••'}
+          <button class="btn-action" style="margin-left:4px" onclick="toggleCuentaPass('${c.id}')" title="${shown?'Ocultar':'Mostrar'}"><i class="bi bi-eye${shown?'-slash':''}"></i></button></td>
+        <td>${fmtDate((c.fecha||'').slice(0,10))}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn-action" onclick="printCuentaTicket('${c.id}')" title="Imprimir ticket"><i class="bi bi-printer"></i></button>
+          <button class="btn-action" onclick="copyCuentaPass('${c.id}')" title="Copiar contraseña"><i class="bi bi-clipboard"></i></button>
+          <button class="btn-action" onclick="openCuentaModal('${c.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+          <button class="btn-action del" onclick="deleteCuenta('${c.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  const kt=document.getElementById('cta-kpi-total'), km=document.getElementById('cta-kpi-mes');
+  if(kt) kt.textContent = cuentas.length;
+  if(km){
+    const now=new Date(), ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    km.textContent = cuentas.filter(c=>(c.fecha||'').slice(0,7)===ym).length;
+  }
+};
+
+window.toggleCuentaPass = function(id){
+  if(cuentaReveal.has(id)) cuentaReveal.delete(id); else cuentaReveal.add(id);
+  renderCuentas();
+};
+
+window.copyCuentaPass = async function(id){
+  const c = cuentas.find(x=>x.id===id); if(!c) return;
+  try { await navigator.clipboard.writeText(c.password||''); toast('Contraseña copiada','success'); }
+  catch(e){
+    const t=document.createElement('textarea'); t.value=c.password||''; document.body.appendChild(t); t.select();
+    try{ document.execCommand('copy'); toast('Contraseña copiada','success'); }catch(_){ toast('No se pudo copiar','error'); }
+    t.remove();
+  }
+};
+
+// Contraseña aleatoria de 12 caracteres, sin caracteres confusos (0/O, 1/l/I) para que se lea bien impresa
+window.generarPasswordCuenta = function(){
+  const U='ABCDEFGHJKLMNPQRSTUVWXYZ', L='abcdefghijkmnpqrstuvwxyz', N='23456789', S='@#$%&*';
+  const all=U+L+N+S;
+  const rnd=n=>{ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]%n; };
+  const pick=set=>set[rnd(set.length)];
+  const chars=[pick(U),pick(L),pick(N),pick(S)];
+  while(chars.length<12) chars.push(pick(all));
+  for(let i=chars.length-1;i>0;i--){ const j=rnd(i+1); [chars[i],chars[j]]=[chars[j],chars[i]]; }
+  document.getElementById('cta-password').value = chars.join('');
+};
+
+window.openCuentaModal = function(id){
+  const f = k => document.getElementById('cta-'+k);
+  ['plataforma','cliente','telefono','usuario','password','recuperacion','notas'].forEach(k=>f(k).value='');
+  f('edit-id').value = id||'';
+  document.getElementById('modal-cuenta-title').innerHTML = id
+    ? '<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Cuenta'
+    : '<i class="bi bi-person-lock" style="color:var(--accent-orange)"></i> Nueva Cuenta';
+  if(id){
+    const c = cuentas.find(x=>x.id===id); if(!c) return;
+    ['plataforma','cliente','telefono','usuario','password','recuperacion','notas'].forEach(k=>f(k).value=c[k]||'');
+  }
+  showModal('modal-cuenta');
+};
+
+window.saveCuenta = async function(thenPrint){
+  const f = k => document.getElementById('cta-'+k).value.trim();
+  const data = {plataforma:f('plataforma'), cliente:f('cliente'), telefono:f('telefono'), usuario:f('usuario'),
+    password:document.getElementById('cta-password').value, recuperacion:f('recuperacion'), notas:f('notas')};
+  if(!data.plataforma||!data.cliente||!data.usuario||!data.password){ toast('Plataforma, cliente, usuario y contraseña son requeridos','error'); return; }
+  const btns=['btn-save-cuenta','btn-save-print-cuenta'].map(i=>document.getElementById(i));
+  btns.forEach(b=>b.disabled=true);
+  setSyncStatus('syncing');
+  try {
+    const editId = f('edit-id');
+    let id = editId;
+    if(editId){
+      await updateDoc(doc(db, COL_CTA, editId), data);
+      const i = cuentas.findIndex(x=>x.id===editId);
+      if(i>=0) cuentas[i] = {...cuentas[i], ...data};
+      toast('Cuenta actualizada','success');
+    } else {
+      data.fecha = new Date().toISOString();
+      const ref = await addDoc(collection(db, COL_CTA), data);
+      id = ref.id;
+      cuentas.push({id, ...data});
+      toast('Cuenta guardada','success');
+    }
+    setSyncStatus('ok');
+    closeModal('modal-cuenta');
+    renderCuentas();
+    if(thenPrint) printCuentaTicket(id);
+  } catch(e){ setSyncStatus('error'); toast('Error: '+e.message,'error'); }
+  btns.forEach(b=>b.disabled=false);
+};
+
+window.deleteCuenta = async function(id){
+  if(!confirm('¿Eliminar esta cuenta?')) return;
+  setSyncStatus('syncing');
+  try {
+    await deleteDoc(doc(db, COL_CTA, id));
+    cuentas = cuentas.filter(x=>x.id!==id);
+    cuentaReveal.delete(id);
+    setSyncStatus('ok');
+    toast('Cuenta eliminada','info');
+    renderCuentas();
+  } catch(e){ setSyncStatus('error'); toast('Error: '+e.message,'error'); }
+};
+
+// Elige el tamaño de letra según el largo del texto para que quepa en el ancho del ticket
+function fitFont(txt, steps, min){
+  const n=String(txt||'').length;
+  for(const [maxLen,size] of steps) if(n<=maxLen) return size;
+  return min;
+}
+
+// ─── IMPRIMIR TICKET DE CUENTA (mismo formato térmico que Órdenes) ───────────
+window.printCuentaTicket = function(id){
+  const c = cuentas.find(x=>x.id===id); if(!c) return;
+  const box = "border:1.5px solid #000;border-radius:4px;padding:3px 5px;margin:1px 0 4px;font-family:'JetBrains Mono','Courier New',monospace;font-weight:800;word-break:break-all;line-height:1.25;";
+  const body = `
+    <div class="center">
+      ${ticketLogoHtml()}
+      <div class="shopname">${esc(configData.nombre)}</div>
+      ${(configData.direccion||configData.telefono)?`<div class="addr">${esc(configData.direccion||'')}${configData.telefono?' · '+esc(configData.telefono):''}</div>`:''}
+      <div style="margin-top:4px;font-size:12px;font-weight:800;letter-spacing:.5px;border:1px solid #000;border-radius:4px;padding:2px 0">DATOS DE CUENTA</div>
+      <div class="biggen">${esc((c.plataforma||'').toUpperCase())}</div>
+    </div>
+    <div class="hr"></div>
+    <div class="lbl">Cliente</div><div class="val">${esc(c.cliente)}</div>
+    ${c.telefono?`<div class="lbl">Teléfono</div><div class="val mono">${esc(c.telefono)}</div>`:''}
+    <div class="lbl">Fecha</div><div class="val">${fmtDate((c.fecha||new Date().toISOString()).slice(0,10))}</div>
+    <div class="hr"></div>
+    <div class="lbl" style="margin-bottom:1px">Usuario / Correo</div>
+    <div style="${box}font-size:${fitFont(c.usuario,[[19,11.5],[24,10],[32,8.5]],7.5)}px;overflow-wrap:anywhere;word-break:normal">${esc(c.usuario).replace(/@/g,'<wbr>@')}</div>
+    <div class="lbl" style="margin-bottom:1px">Contraseña</div>
+    <div style="${box}font-size:${fitFont(c.password,[[14,14],[18,11.5],[24,9.5]],8)}px">${esc(c.password)}</div>
+    ${c.recuperacion?`<div class="lbl" style="margin-bottom:1px">Recuperación</div><div style="${box}font-size:${fitFont(c.recuperacion,[[19,11],[24,10],[32,8.5]],7.5)}px;font-weight:700;overflow-wrap:anywhere;word-break:normal">${esc(c.recuperacion).replace(/@/g,'<wbr>@')}</div>`:''}
+    ${c.notas?`<div class="lbl" style="margin-bottom:1px">Notas</div><div style="font-size:10.5px;font-weight:600;line-height:1.25;word-break:break-word">${esc(c.notas).replace(/\n/g,'<br>')}</div>`:''}
+    <div class="foot">Guarde estos datos en un lugar seguro.<br>Le recomendamos cambiar la contraseña al ingresar.<br>${esc(configData.nombre)}</div>
+  `;
+  openTicketPrintWindow('Cuenta '+(c.plataforma||''), body);
+};
+
 // ─── PHONE HELPER (+503 assumed) ─────────────────────────────────────────────
 function fmtWA(tel){
   // Strip spaces, dashes, parens — keep digits and leading +
@@ -5422,7 +5671,7 @@ function fmtWA(tel){
 }
 
 // ─── NAV ──────────────────────────────────────────────────────────────────────
-const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',reportes:'Reportes',config:'Configuración',pedidos:'Pedidos a Proveedores',clientes:'Clientes',encargos:'Encargos Especiales',cotizaciones:'Cotizaciones'};
+const pNames={dashboard:'Dashboard',orders:'Órdenes de Servicio',caja:'Caja',inventory:'Inventario',pos:'Venta POS',garantias:'Garantías',reportes:'Reportes',config:'Configuración',pedidos:'Pedidos a Proveedores',clientes:'Clientes',encargos:'Encargos Especiales',cotizaciones:'Cotizaciones',cuentas:'Cuentas'};
 window.closeMobileNav=function(activeId){
   // Update bottom nav active state
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -5431,7 +5680,7 @@ window.closeMobileNav=function(activeId){
   // Close sidebar on mobile
   if(window.innerWidth<=640) closeSidebar();
 };
-window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;if(window.innerWidth<=640)closeSidebar();const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,reportes:()=>{initReportes();renderReportes();},pedidos:renderPedidos,clientes:renderClientes,encargos:renderEncargos,cotizaciones:renderCotizaciones};if(fns[page])fns[page]();};
+window.navigate=function(page){document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));document.getElementById('page-'+page).classList.add('active');document.querySelector(`.nav-item[onclick="navigate('${page}')"]`)?.classList.add('active');document.getElementById('topbar-title').textContent=pNames[page]||page;if(window.innerWidth<=640)closeSidebar();const fns={dashboard:renderDashboard,orders:renderOrders,caja:renderCaja,inventory:renderInventory,pos:renderPOS,garantias:renderGarantias,reportes:()=>{initReportes();renderReportes();},pedidos:renderPedidos,clientes:renderClientes,encargos:renderEncargos,cotizaciones:renderCotizaciones,cuentas:renderCuentas};if(fns[page])fns[page]();};
 window.showModal=function(id){document.getElementById(id).classList.add('show');};
 window.closeModal=function(id){document.getElementById(id).classList.remove('show');};
 window.toggleSidebar=function(){

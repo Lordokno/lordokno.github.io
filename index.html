@@ -1034,7 +1034,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
             <div class="config-item" style="align-items:center">
               <div><div style="font-size:13px;font-weight:600">Favicon</div><div style="font-size:11px;color:var(--text-muted)">Ícono de la pestaña del navegador</div></div>
               <div style="display:flex;align-items:center;gap:8px">
-                <img id="cfg-favicon-preview" src="" style="width:30px;height:30px;border-radius:7px;border:1px solid var(--card-border);object-fit:cover;display:none;background:var(--input-bg)">
+                <img id="cfg-favicon-preview" src="" style="height:30px;width:auto;max-width:140px;border-radius:5px;border:1px solid var(--card-border);object-fit:contain;display:none;background:var(--input-bg)">
                 <label class="btn-s" style="font-size:11px;padding:5px 10px;cursor:pointer;margin:0"><i class="bi bi-upload"></i> Subir<input type="file" id="cfg-favicon-input" accept="image/*" style="display:none" onchange="handleFaviconUpload(event)"></label>
                 <button class="btn-action" style="width:30px;height:30px" title="Quitar" onclick="removeFavicon()"><i class="bi bi-x-lg"></i></button>
               </div>
@@ -1994,7 +1994,7 @@ function statusBadge(s){const m={'Recibido':'recibido','En Proceso':'proceso','L
 function mon(){return configData.moneda||'$';}
 function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 function accentRgbArr(){const s=cssVar('--accent-rgb')||'240,185,11';return s.split(',').map(n=>parseInt(n.trim(),10)||0);}
-function ticketLogoHtml(){return configData.favicon?`<img src="${configData.favicon}" style="width:44px;height:44px;object-fit:cover;border-radius:10px;margin-bottom:5px" alt="logo">`:'';}
+function ticketLogoHtml(){return configData.favicon?`<img src="${configData.favicon}" style="height:auto;width:auto;max-width:100%;max-height:60px;object-fit:contain;margin-bottom:5px" alt="logo">`:'';}
 
 // ─── PROGRAMA DE FIDELIDAD ─────────────────────────────────────────────────
 function getClientRepairCount(telefono){
@@ -2625,7 +2625,7 @@ function ticketShellHTML(title, bodyHtml){
   /* Térmica = solo negro: todo a negro puro, sin grises ni fondos que salgan punteados */
   .ticket *{color:#000!important;background:transparent!important;border-color:#000!important;}
   .ticket div[style*="padding:6px 7px"]{padding:1px 0!important;margin-top:2px!important;border-radius:0!important;}
-  .ticket img{width:9mm!important;height:9mm!important;margin-bottom:1px!important;border-radius:2px!important;filter:grayscale(1) contrast(1.8);}
+  .ticket img{width:auto!important;height:auto!important;max-width:100%!important;max-height:16mm!important;object-fit:contain!important;margin-bottom:1px!important;border-radius:0!important;filter:grayscale(1) contrast(1.8);}
   .mono{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;}
   .center{text-align:center;}
   .kv{margin-bottom:1.5px;word-break:break-word;}
@@ -3361,9 +3361,24 @@ document.getElementById('cfg-accent-custom')?.addEventListener('input',e=>{apply
 
 window.handleFaviconUpload=function(ev){
   const file=ev.target.files[0]; if(!file)return;
-  if(file.size>500*1024){toast('Imagen muy grande, usa una menor a 500KB','error');return;}
   const reader=new FileReader();
-  reader.onload=()=>{configData.favicon=reader.result;applyFavicon(reader.result);updateFaviconPreview();};
+  reader.onload=()=>{
+    const im=new Image();
+    im.onload=()=>{
+      // Sin límite de largo: se conserva la proporción; solo se reduce si es enorme (Firestore limita el documento a 1MB)
+      const MAXW=900,MAXH=400; let w=im.naturalWidth,h=im.naturalHeight;
+      const k=Math.min(1,MAXW/w,MAXH/h); let out=reader.result;
+      if(k<1||file.size>400*1024){
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w*k)); c.height=Math.max(1,Math.round(h*k));
+        c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+        out=c.toDataURL('image/png');
+        if(out.length>700*1024) out=c.toDataURL('image/webp',0.85);
+      }
+      configData.favicon=out;applyFavicon(out);updateFaviconPreview();
+    };
+    im.onerror=()=>toast('No se pudo leer la imagen','error');
+    im.src=reader.result;
+  };
   reader.readAsDataURL(file);
 };
 window.removeFavicon=function(){configData.favicon='';applyFavicon('');updateFaviconPreview();};
@@ -3371,11 +3386,11 @@ function applyFavicon(dataUrl){
   let link=document.getElementById('app-favicon');
   if(!link){link=document.createElement('link');link.id='app-favicon';link.rel='icon';document.head.appendChild(link);}
   link.href=dataUrl||'data:,';
-  const imgHtml=`<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+  const imgHtml=`<img src="${dataUrl}" style="height:100%;width:auto;max-width:170px;object-fit:contain;display:block">`;
   const loaderLogo=document.getElementById('app-loader-logo');
   const logoIcon=document.getElementById('app-logo-icon');
-  if(loaderLogo) loaderLogo.innerHTML = dataUrl ? imgHtml : 'NC';
-  if(logoIcon) logoIcon.innerHTML = dataUrl ? imgHtml : 'NC';
+  if(loaderLogo){ loaderLogo.innerHTML = dataUrl ? imgHtml : 'NC'; loaderLogo.style.width=dataUrl?'auto':''; loaderLogo.style.background=dataUrl?'transparent':''; loaderLogo.style.maxWidth=dataUrl?'200px':''; }
+  if(logoIcon){ logoIcon.innerHTML = dataUrl ? imgHtml : 'NC'; logoIcon.style.width=dataUrl?'auto':''; logoIcon.style.background=dataUrl?'transparent':''; logoIcon.style.maxWidth=dataUrl?'170px':''; }
 }
 function updateFaviconPreview(){
   const img=document.getElementById('cfg-favicon-preview'); if(!img)return;
@@ -4682,6 +4697,10 @@ function getWeekRange(refDate){
   const fmtShort = x=>x.toLocaleDateString('es-SV',{day:'2-digit',month:'short'});
   return { start: iso(monday), end: iso(sunday), label: `Semana del ${fmtShort(monday)} al ${fmtShort(sunday)} de ${sunday.getFullYear()}` };
 }
+function pdfLogoDims(pdf,maxW,maxH){
+  const pr=pdf.getImageProperties(configData.favicon); const ar=(pr.width||1)/(pr.height||1);
+  let w=maxH*ar,h=maxH; if(w>maxW){w=maxW;h=maxW/ar;} return {w,h};
+}
 function imgFormatFromDataUrl(du){
   const m=String(du||'').match(/^data:image\/(\w+);/);
   if(!m) return 'PNG';
@@ -4704,11 +4723,11 @@ function buildReportePDF(range, titulo){
   const marginX = 14;
   let y = 18;
 
-  let logoOk=false;
+  let logoOk=false, logoW=0;
   if(configData.favicon){
-    try{ pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), marginX, y-10, 14, 14, undefined, 'FAST'); logoOk=true; }catch(e){}
+    try{ const d=pdfLogoDims(pdf,50,14); pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), marginX, y-10, d.w, d.h, undefined, 'FAST'); logoOk=true; logoW=d.w; }catch(e){}
   }
-  const textX = logoOk ? marginX+18 : marginX;
+  const textX = logoOk ? marginX+logoW+4 : marginX;
 
   pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(20,20,20);
   pdf.text(configData.nombre || 'Nextcom Multiservicos', textX, y);
@@ -5493,7 +5512,7 @@ function buildCotizacionPDF(c){
   const cx = w/2;
 
   if(configData.favicon){
-    try{ pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), cx-6, y, 12, 12, undefined, 'FAST'); y+=15; }catch(e){}
+    try{ const d=pdfLogoDims(pdf,Math.min(40,w-10),14); pdf.addImage(configData.favicon, imgFormatFromDataUrl(configData.favicon), cx-d.w/2, y, d.w, d.h, undefined, 'FAST'); y+=d.h+3; }catch(e){}
   }
   pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(20,20,20);
   pdf.text(configData.nombre||'Nextcom Multiservicos', cx, y, {align:'center'}); y+=4.6;

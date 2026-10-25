@@ -605,6 +605,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
 @media(max-width:580px){
   .col-hide-xs{display:none!important;}
 }
+
+/* Etiqueta del equipo (modal de orden) */
+.etq-chip{cursor:pointer;margin:0;}
+.etq-chip input{display:none;}
+.etq-chip span{display:inline-flex;align-items:center;padding:5px 11px;border-radius:99px;border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-secondary);font-size:11.5px;font-weight:600;transition:var(--tr);user-select:none;}
+.etq-chip:hover span{border-color:var(--accent-orange);}
+.etq-chip input:checked+span{background:rgba(var(--accent-rgb),.18);border-color:var(--accent-orange);color:var(--accent-orange);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
@@ -1355,6 +1362,26 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
       <input type="hidden" id="ord-patron">
     </div>
 
+    <!-- ETIQUETA DEL EQUIPO -->
+    <div style="margin-top:4px;margin-bottom:16px">
+      <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
+        <span><i class="bi bi-tag" style="margin-right:5px;color:var(--accent-orange)"></i>Etiqueta del Equipo</span>
+        <span style="font-size:9px;color:var(--text-muted);font-weight:400">Para pegar al teléfono</span>
+      </label>
+      <div style="font-size:11px;color:var(--text-muted);margin:2px 0 8px">Incluye orden, cliente, equipo, falla, teléfono y fecha de entrega.</div>
+      <div class="tf-label" style="margin-bottom:4px">Accesorios que deja</div>
+      <div id="etq-accesorios" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"><label class="etq-chip"><input type="checkbox" value="SIM"><span>SIM</span></label><label class="etq-chip"><input type="checkbox" value="Memoria SD"><span>Memoria SD</span></label><label class="etq-chip"><input type="checkbox" value="Funda"><span>Funda</span></label><label class="etq-chip"><input type="checkbox" value="Cargador"><span>Cargador</span></label><label class="etq-chip"><input type="checkbox" value="Batería"><span>Batería</span></label><label class="etq-chip"><input type="checkbox" value="Tapa"><span>Tapa</span></label></div>
+      <div class="form-row c2 mb-2">
+        <div><label class="tf-label">Ubicación en el taller</label><input class="tf-input" id="etq-ubicacion" placeholder="Ej: Estante A3"></div>
+        <div><label class="tf-label">Copias</label><select class="tf-select" id="etq-copias"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div>
+      </div>
+      <div class="form-row mb-2"><div><label class="tf-label">Nota en la etiqueta</label><input class="tf-input" id="etq-nota" placeholder="Ej: Urgente, pasa a las 5pm"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;margin:0"><input type="checkbox" id="etq-auto"> Imprimir etiqueta al guardar</label>
+        <button type="button" class="btn-s" id="btn-etq-print" style="font-size:11px;padding:6px 11px;display:none" onclick="printEtiquetaFromModal()"><i class="bi bi-printer"></i> Imprimir etiqueta</button>
+      </div>
+    </div>
+
     <!-- PHOTOS SECTION -->
     <div style="margin-top:4px">
       <label class="tf-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -1424,6 +1451,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--body-bg);color:var(
     <div class="modal-footer">
       <button class="btn-s" onclick="closeModal('modal-view-order')">Cerrar</button>
       <button class="btn-s" onclick="printGarantiaTicketFromModal()"><i class="bi bi-shield-check"></i> Ticket Garantía</button>
+      <button class="btn-s" onclick="printEtiquetaFromView()"><i class="bi bi-tag"></i> Etiqueta</button>
       <button class="btn-p" onclick="printCurrentOrder()"><i class="bi bi-printer"></i> Imprimir</button>
     </div>
   </div>
@@ -2503,8 +2531,9 @@ window.openOrderModal=function(id=null){
   document.getElementById('anticipo-preview').style.display='none';
   renderFallas(); popRep();
   setPatternFromValue('');
+  resetEtqForm();
   // Photos reset handled after if(id) block
-  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();resetPhotoState(o.fotos||[]);setPatternFromValue(o.patron||'');}else{resetPhotoState([]);}
+  if(id){const o=orders.find(x=>x.id===id);if(!o)return;document.getElementById('ord-edit-id').value=id;document.getElementById('modal-order-title').innerHTML=`<i class="bi bi-pencil" style="color:var(--accent-orange)"></i> Editar Orden ${o.codigo}`;document.getElementById('ord-cliente').value=o.cliente||'';document.getElementById('ord-telefono').value=o.telefono||'';document.getElementById('ord-marca').value=o.marca||'';document.getElementById('ord-modelo').value=o.modelo||'';document.getElementById('ord-imei').value=o.imei||'';document.getElementById('ord-desc').value=o.descripcion||'';document.getElementById('ord-fecha-rec').value=o.fechaRecibido||today;document.getElementById('ord-fecha-prom').value=o.fechaPromesa||'';document.getElementById('ord-total').value=o.total||'';document.getElementById('ord-garantia').value=o.garantiaDias||30;document.getElementById('ord-tecnico').value=o.tecnico||'';renderFallas(o.fallas||[]);popRep(o.repuestoId||'');document.getElementById('ord-anticipo').value=o.anticipo||'';document.getElementById('ord-anticipo-metodo').value=o.anticipoMetodo||'efectivo';previewAnticipo();resetPhotoState(o.fotos||[]);setPatternFromValue(o.patron||'');fillEtqForm(o);}else{resetPhotoState([]);}
   setupClienteAutocomplete();
   showModal('modal-order');
 };
@@ -2515,15 +2544,16 @@ window.saveOrder=async function(){
   const btn=document.getElementById('btn-save-order'); btn.disabled=true; btn.innerHTML='<i class="bi bi-hourglass"></i> Guardando...';
   setSyncStatus('syncing');
   const editId=document.getElementById('ord-edit-id').value, repId=document.getElementById('ord-repuesto').value;
+  let _labelCode=editId?((orders.find(x=>x.id===editId)||{}).codigo||null):null;
   try {
     if(editId){// Upload any new photos
       const newUploaded = await uploadPendingPhotos(editId);
       const allPhotos = [...currentOrderPhotos, ...newUploaded];
-      await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value,fotos:allPhotos,patron:document.getElementById('ord-patron').value||''});toast('Orden actualizada','success');}
+      await updateDoc(doc(db,'tf_orders',editId),{cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),anticipo:parseFloat(document.getElementById('ord-anticipo').value)||0,anticipoMetodo:document.getElementById('ord-anticipo-metodo').value,fotos:allPhotos,patron:document.getElementById('ord-patron').value||'',...getEtqData()});toast('Orden actualizada','success');}
     else {
       let pp=false,rn=null;
       if(repId){const item=inventory.find(i=>i.id===repId);if(item){rn=item.nombre;if(item.stock>0)await updateDoc(doc(db,'tf_inventory',repId),{stock:item.stock-1});else pp=true;}}
-      const cod=(configData.prefix||'ORD-')+String(nextOrderNum).padStart(4,'0'); nextOrderNum++;
+      const cod=(configData.prefix||'ORD-')+String(nextOrderNum).padStart(4,'0'); nextOrderNum++; _labelCode=cod;
       await setDoc(doc(db,'tf_meta','counters'),{orderNum:nextOrderNum});
       const anticipo=parseFloat(document.getElementById('ord-anticipo').value)||0;
       const anticipoMetodo=document.getElementById('ord-anticipo-metodo').value;
@@ -2533,7 +2563,7 @@ window.saveOrder=async function(){
         cajaData.movimientos.push({fecha:new Date().toISOString(),tipo:'anticipo',desc:`Anticipo orden ${cod} — ${cliente} (${anticipoMetodo})`,monto:anticipo});
         await setDoc(doc(db,'tf_meta','caja'),cajaData);
       }
-      const ordRef = await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false,fotos:[],patron:document.getElementById('ord-patron').value||''});
+      const ordRef = await addDoc(collection(db,'tf_orders'),{codigo:cod,cliente,telefono,marca,modelo,imei:document.getElementById('ord-imei').value.trim(),fallas:getSF(),descripcion:document.getElementById('ord-desc').value.trim(),fechaRecibido:document.getElementById('ord-fecha-rec').value,fechaPromesa:document.getElementById('ord-fecha-prom').value,total:parseFloat(document.getElementById('ord-total').value)||0,garantiaDias:parseInt(document.getElementById('ord-garantia').value)||30,tecnico:document.getElementById('ord-tecnico').value.trim(),estado:'Recibido',piezaPendiente:pp,repuestoId:repId||null,repuestoNombre:rn,fechaCreado:serverTimestamp(),garantiaActivada:false,anticipo,anticipoMetodo,anticipoLiberado:false,fotos:[],patron:document.getElementById('ord-patron').value||'',...getEtqData()});
       // Upload photos after we have the order ID
       if(pendingPhotos.length) {
         const uploaded = await uploadPendingPhotos(ordRef.id);
@@ -2542,6 +2572,10 @@ window.saveOrder=async function(){
       const toastMsg=`Orden ${cod} creada${anticipo>0?' — Anticipo '+mon()+anticipo.toFixed(2):''}${pp?' — Pieza Pendiente':''}`;
       toast(toastMsg,pp?'warning':'success');
       await autoSaveCliente(cliente, telefono);
+    }
+    if(document.getElementById('etq-auto').checked && _labelCode){
+      const _lab=collectEtiquetaForm(_labelCode);
+      setTimeout(()=>printEtiquetaData(_lab),300);
     }
     closeModal('modal-order');
   } catch(e){toast('Error: '+e.message,'error');}
@@ -2712,6 +2746,82 @@ window.printOrder=function(id){
   openTicketPrintWindow(o.codigo, body);
 };
 
+
+// ─── ETIQUETA DEL EQUIPO (para pegar al teléfono) ───────────────────────────
+function getEtqData(){
+  return {
+    etqAccesorios:[...document.querySelectorAll('#etq-accesorios input:checked')].map(i=>i.value),
+    etqUbicacion:document.getElementById('etq-ubicacion').value.trim(),
+    etqNota:document.getElementById('etq-nota').value.trim(),
+    etqCopias:parseInt(document.getElementById('etq-copias').value)||1
+  };
+}
+function updateEtqUi(){
+  const b=document.getElementById('btn-etq-print');
+  if(b) b.style.display=document.getElementById('ord-edit-id').value?'':'none';
+}
+function resetEtqForm(){
+  document.querySelectorAll('#etq-accesorios input').forEach(i=>i.checked=false);
+  document.getElementById('etq-ubicacion').value='';
+  document.getElementById('etq-nota').value='';
+  document.getElementById('etq-copias').value='1';
+  let auto=false; try{ auto=localStorage.getItem('nc_etq_auto')==='1'; }catch(e){}
+  document.getElementById('etq-auto').checked=auto;
+  updateEtqUi();
+}
+function fillEtqForm(o){
+  const acc=o.etqAccesorios||[];
+  document.querySelectorAll('#etq-accesorios input').forEach(i=>i.checked=acc.includes(i.value));
+  document.getElementById('etq-ubicacion').value=o.etqUbicacion||'';
+  document.getElementById('etq-nota').value=o.etqNota||'';
+  document.getElementById('etq-copias').value=String(o.etqCopias||1);
+  updateEtqUi();
+}
+document.getElementById('etq-auto')?.addEventListener('change',e=>{ try{ localStorage.setItem('nc_etq_auto',e.target.checked?'1':'0'); }catch(_){} });
+
+// Toma los datos actuales del formulario (aunque aún no estén guardados)
+function collectEtiquetaForm(codigo){
+  return {codigo,
+    cliente:document.getElementById('ord-cliente').value.trim(),
+    telefono:document.getElementById('ord-telefono').value.trim(),
+    marca:document.getElementById('ord-marca').value,
+    modelo:document.getElementById('ord-modelo').value.trim(),
+    fallas:getSF(),
+    fechaPromesa:document.getElementById('ord-fecha-prom').value,
+    ...getEtqData()};
+}
+window.printEtiquetaFromModal=function(){
+  const o0=orders.find(x=>x.id===document.getElementById('ord-edit-id').value);
+  if(!o0){ toast('Guarda la orden para imprimir la etiqueta','info'); return; }
+  printEtiquetaData(collectEtiquetaForm(o0.codigo));
+};
+window.printEtiqueta=function(id){
+  const o=orders.find(x=>x.id===id); if(!o) return;
+  printEtiquetaData(o);
+};
+window.printEtiquetaFromView=function(){ if(currentPrintOrder) printEtiqueta(currentPrintOrder.id); };
+
+window.printEtiquetaData=function(o){
+  const copies=Math.max(1,Math.min(5,parseInt(o.etqCopias)||1));
+  const acc=o.etqAccesorios||[];
+  const one=`
+    <div style="border:1.5px dashed #000;border-radius:5px;padding:3px 5px 2px">
+      <div class="center" style="font-size:8.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase">${esc(configData.nombre)}</div>
+      <div class="center biggen" style="font-size:22px;margin:1px 0 2px">${esc(o.codigo)}</div>
+      <div class="hr"></div>
+      <div class="lbl">Cliente</div><div class="val">${esc(o.cliente)}</div>
+      <div class="lbl">Equipo</div><div class="val">${esc(((o.marca||'')+' '+(o.modelo||'')).trim())}</div>
+      <div class="lbl">Falla</div><div class="val">${esc((o.fallas||[]).join(', ')||'—')}</div>
+      <div class="lbl">Tel</div><div class="val mono">${esc(o.telefono)}</div>
+      ${o.fechaPromesa?`<div class="lbl">Entrega</div><div class="val">${fmtDate(o.fechaPromesa)}</div>`:''}
+      ${acc.length?`<div class="lbl">Deja</div><div class="val">${esc(acc.join(', '))}</div>`:''}
+      ${o.etqUbicacion?`<div class="lbl">Ubicación</div><div class="val">${esc(o.etqUbicacion)}</div>`:''}
+      ${o.etqNota?`<div class="lbl">Nota</div><div class="val">${esc(o.etqNota)}</div>`:''}
+    </div>`;
+  const cut='<div class="cutline">✂ - - - - - - - - - - - - - - - - - - - - -</div>';
+  openTicketPrintWindow('Etiqueta '+o.codigo, Array.from({length:copies},()=>one).join(cut));
+};
+
 // ─── TICKET DE GARANTÍA (se entrega al cliente al retirar el equipo) ─────────
 window.printGarantiaTicket=function(id, overrides){
   const o=orders.find(x=>x.id===id); if(!o) return;
@@ -2799,6 +2909,7 @@ window.renderOrders=function(){
       <button class="btn-action view" onclick="viewOrder('${o.id}')" title="Ver"><i class="bi bi-eye"></i></button>
       <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
       <button class="btn-action print" onclick="printOrder('${o.id}')" title="Imprimir"><i class="bi bi-printer"></i></button>
+      <button class="btn-action" onclick="printEtiqueta('${o.id}')" title="Etiqueta para el equipo"><i class="bi bi-tag"></i></button>
       ${o.garantiaActivada?`<button class="btn-action" onclick="printGarantiaTicket('${o.id}')" title="Ticket de Garantía"><i class="bi bi-shield-check"></i></button>`:''}
       <button class="btn-action wa" onclick="sendWA('${o.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
       <button class="btn-action status" onclick="openStatusModal('${o.id}')" title="Estado"><i class="bi bi-arrow-repeat"></i></button>
@@ -2862,6 +2973,7 @@ window.renderOrders=function(){
             <button class="btn-action edit" onclick="openOrderModal('${o.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
             <button class="btn-action wa" onclick="sendWA('${o.id}')" title="WhatsApp"><i class="bi bi-whatsapp"></i></button>
             <button class="btn-action print" onclick="printOrder('${o.id}')" title="Imprimir"><i class="bi bi-printer"></i></button>
+      <button class="btn-action" onclick="printEtiqueta('${o.id}')" title="Etiqueta para el equipo"><i class="bi bi-tag"></i></button>
             ${o.garantiaActivada?`<button class="btn-action" onclick="printGarantiaTicket('${o.id}')" title="Ticket de Garantía"><i class="bi bi-shield-check"></i></button>`:''}
             <button class="btn-g" onclick="openStatusModal('${o.id}')"><i class="bi bi-arrow-repeat"></i> Estado</button>
             <button class="btn-action del" onclick="deleteOrder('${o.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
